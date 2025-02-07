@@ -29,11 +29,13 @@ const formSchema = z.object({
     (a) => parseInt(z.string().parse(a), 10),
     z.number().gte(1).lte(10)
   ),
+  server_ip: z.string().nonempty("Server IP is required").ip("Invalid IP address"),
 });
 
 export default function NumberOfRouters() {
   const [routerConfigs, setRouterConfigs] = useState<RouterConfig[]>([]);
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
+  const [serverIp, setServerIp] = useState<string | undefined>(undefined);
 
   const { toast } = useToast()
 
@@ -47,10 +49,12 @@ export default function NumberOfRouters() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       number_of_routers: 0,
+      server_ip: "192.168.1.16",
     },
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    setServerIp(values.server_ip);
     setRouterConfigs(
       Array(values.number_of_routers).fill({
         routerName: "",
@@ -94,8 +98,9 @@ export default function NumberOfRouters() {
     console.log(JSON.stringify(formattedConfig))
 
   
-    try { // http://192.168.1.16:5000/configure http://localhost:5000/configure
-      const response = await fetch("http://192.168.1.16:5000/configure", {
+    try {
+      const config_api = "http://" + serverIp + ":5000/configure"
+      const response = await fetch(config_api, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -131,7 +136,7 @@ export default function NumberOfRouters() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-fit mx-auto flex space-x-2"
+          className="space-y-5 w-fit mx-auto"
         >
           <FormField
             control={form.control}
@@ -146,7 +151,20 @@ export default function NumberOfRouters() {
               </FormItem>
             )}
           />
-          <Button type="submit">Submit</Button>
+          <FormField
+            control={form.control}
+            name="server_ip"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>What is the server IP?</FormLabel>
+                <FormControl>
+                  <Input type="text" className="w-full" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="mx-auto">Submit</Button>
         </form>
       </Form>
 
