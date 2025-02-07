@@ -1,0 +1,146 @@
+cd dhcp
+sudo containerlab deploy
+
+CEOS1:
+ssh admin@clab-dhcp-ceos1
+
+
+Assegnamento indirizzo ip ad eth1
+enable
+configure
+interface eth1
+no switchport
+ip address 192.168.10.1 255.255.255.0
+
+show active
+(verificare correttezza)
+exit
+
+CEOS2:
+ssh admin@clab-dhcp-ceos2
+
+Assegnamento indirizzo ip ad eth1
+enable
+configure
+interface eth1
+no switchport
+ip address 192.168.10.2 255.255.255.0
+
+show active
+(verificare correttezza)
+exit
+
+
+CEOS1:
+ssh admin@clab-dhcp-ceos1
+Assegnamento indirizzo ip ad eth2
+enable
+configure
+interface eth2
+no switchport
+ip address 192.168.100.1/24
+dhcp server ipv4
+
+show active
+(verificare correttezza)
+exit
+
+Pool indirizzi dhcp
+dhcp server
+subnet 192.168.100.0/24
+range 192.168.100.10 192.168.100.99
+exit
+show active
+(verificare correttezza)
+exit
+
+N1:
+docker exec -it clab-dhcp-n1 sh
+udhcpc -i eth1
+(attendere ottenimento indirizzo IP)
+(testare il ping con 192.168.10.1)
+
+CEOS2:
+ssh admin@clab-dhcp-ceos2
+Assegnamento indirizzo ip ad eth2
+enable
+configure
+interface eth2
+no switchport
+ip address 192.168.101.1/24
+dhcp server ipv4
+
+show active
+(verificare correttezza)
+exit
+
+Pool indirizzi dhcp
+dhcp server
+subnet 192.168.101.0/24
+range 192.168.101.10 192.168.101.99
+exit
+show active
+(verificare corretta)
+exit
+
+N2:
+docker exec -it clab-dhcp-n2 sh
+udhcp -i eth1
+(attendere ottenimento indirizzo IP)
+(testare il ping con 192.168.10.2)
+
+TABELLA DI ROUTING N1, N1:
+ip route del default via 172.20.20.1 dev eth0
+ip route add default via 192.168.100.1 dev eth1
+
+TABELLA DI ROUTING N2, N2:
+ip route del default via 172.20.20.1 dev eth0
+ip route add default via 192.168.101.1 dev eth1
+
+ROTTE STATICHE DI RITORNO PER C2, C2:
+enable
+configure
+ip route 192.168.100.0/24 192.168.10.1
+show ip route
+
+ROTTE STATICHE DI RITORNO PER C1, C1:
+enable
+configure
+ip route 192.168.101.0/24 192.168.10.2
+show ip route
+
+Testare il ping tra N1 e N2
+
+UTILIZZO DI ROTTE DINAMICHE CON OSFP
+IN C2:
+enable
+configure
+no ip route 192.168.100.0/24 192.168.10.1
+router ospf 1
+router-id 10.1.1.1
+network 192.168.100.0/24 area 0
+network 192.168.10.0/24 area 0
+
+show ip ospf neighbour
+
+IN C1:
+enable
+configure
+no ip route 192.168.101.0/24 192.168.10.2
+router ospf 1
+router-id 10.1.1.2
+network 192.168.101.0/24 area 0
+network 192.168.10.0/24 area 0
+
+AL RIAVVIO:
+- Rifare il deploy
+- Seguire la procedura sopra con attenzione o comunque quanto è scritto nella startup config
+- N1 E N2 devono richiedere l'IP al dhcp server
+TABELLA DI ROUTING N1, N1:
+ip route del default via 172.20.20.1 dev eth0
+ip route add default via 192.168.100.1 dev eth1
+
+TABELLA DI ROUTING N2, N2:
+ip route del default via 172.20.20.1 dev eth0
+ip route add default via 192.168.101.1 dev eth1
+

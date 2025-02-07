@@ -1,0 +1,21 @@
+name: dhcp
+
+topology:
+  nodes:
+    ceos1:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+    ceos2:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+    n1:
+      kind: linux
+      image: alpine:latest
+    n2:
+      kind: linux
+      image: alpine:latest
+  links:
+    - endpoints: ["ceos1:eth1", "ceos2:eth1"]
+    - endpoints: ["n1:eth1", "ceos1:eth2"]
+    - endpoints: ["n2:eth1", "ceos2:eth2"]
+
