@@ -30,10 +30,6 @@ def configure():
         data = request.get_json()
         if not data:
             return jsonify({"error": "Invalid JSON"}), 400
-        
-        # print("Received Configuration:")
-        # print(json.dumps(data, indent=4))
-        # sys.stdout.flush()
 
         try:
             validated_data = NetworkConfig(**data)
@@ -41,15 +37,20 @@ def configure():
             generate_arista_configs(data["routers"])
             sys.stdout.flush()
 
-            return jsonify({"message": "Configuration received successfully"}), 200
+            # execute the command to auto deploy the network
+            # os.system(f"sudo containerlab deploy -t ./config/topology.clab.yml")
+
+            return jsonify({"message": "Network deployed successfully"}), 200
         except Exception as e:
+            print(e)
+            sys.stdout.flush()
             return jsonify({"error ": "Validation error"}), 400
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 def generate_containerlab_config(routers):
-    """ Generates the containerlab configuration file and writes it to disk """
+    """ Generates the containerlab configuration file and writes it in the ./config folder """
     template = env.get_template("containerlab.j2")
     config_content = template.render(routers=routers)
 
@@ -59,19 +60,16 @@ def generate_containerlab_config(routers):
 
 
 def generate_arista_configs(routers):
-    """ Generates the Arista configuration files for each router and writes them to disk """
+    """ Generates the Arista configuration files for each router and writes them in the ./config folder """
     template = env.get_template("arista_config.j2")
     files = []
 
+    # for each interface of each router, add to the json the network and than
+    # create the config file
     for router in routers:
-        # for each interface of the router, add to the json the network using get_interface_network of the NetworkConfig class
-
         for interface in router["interfaces"]:
-            # modify router interface to include the network address
             interface["network"] = get_network_address(interface["ip"])
     
-        print(router)
-        sys.stdout.flush()
         config_content = template.render(router=router)
         file_path = os.path.join(CONFIG_DIR, f"{router['name']}.cfg")
 
