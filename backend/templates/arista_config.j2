@@ -1,0 +1,47 @@
+!
+hostname {{ router.name }}
+!
+ip routing
+!
+{% for iface in router.interfaces %}
+{% if iface.name == 'Loopback0' %}
+router-id {{ iface.ip.split("/")[0] }}
+{% endif %}
+interface {{ iface.name }}
+  no switchport
+  ip address {{ iface.ip }}
+{% endfor %}
+!
+router bgp {{ router.asn }}
+  {% for neighbor in router.neighbors %}
+  {% if neighbor.asn != router.asn %}
+  neighbor {{ neighbor.ip }} remote-as {{ neighbor.asn }}
+  {% endif %}
+  {% endfor %}
+!
+ip routing
+!
+router multicast
+  ipv4
+    software-forwarding kernel
+  !
+  ipv6
+    software-forwarding kernel
+!
+router ospf 1
+{% for iface in router.interfaces %}
+{% if iface.name == 'Loopback0' -%}
+  router-id {{ iface.ip.split("/")[0] }}
+{% else %}
+  network {{ iface.network }} area 0.0.0.0
+{%- endif %}
+{% endfor %}
+  max-lsa 12000
+!
+{% if router.dhcp -%}
+dhcp server
+  subnet {{ router.dhcp.subnet }}
+  range {{ router.dhcp.range[0] }} {{ router.dhcp.range[1] }}
+{%- endif %}
+!
+end

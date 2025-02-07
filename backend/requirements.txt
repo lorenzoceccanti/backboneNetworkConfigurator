@@ -1,0 +1,4 @@
+Flask
+flask-cors
+jinja2
+pydantic

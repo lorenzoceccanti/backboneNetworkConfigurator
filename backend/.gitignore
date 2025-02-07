@@ -1,0 +1,3 @@
+config/*
+!config/.gitkeep
+.DS_Store

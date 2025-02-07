@@ -1,0 +1,18 @@
+name: bgp_config
+topology:
+  nodes:
+  {% for router in routers %}
+    {{ router.name }}:
+      kind: arista_ceos
+      image: ceos:ceos:4.33.0F
+      startup-config: {{ router.name }}.cfg
+  {% endfor %}
+
+  links:
+  {% for router in routers -%}
+    {% for iface in router.interfaces %}
+    {% if iface.name != 'Loopback0' %}
+    - endpoints: [{{ router.name }}:{{ iface.name }}, {{ iface.peer.name }}:{{ iface.peer.interface }}]
+    {% endif %}
+    {% endfor %}
+  {%- endfor %}
