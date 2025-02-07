@@ -85,9 +85,13 @@ exit
 
 N2:
 docker exec -it clab-dhcp-n2 sh
-udhcp -i eth1
+udhcpc -i eth1
 (attendere ottenimento indirizzo IP)
 (testare il ping con 192.168.10.2)
+
+N1:
+docker exec -it clab-dhcp-n1 sh
+udhcpc -i eth1
 
 TABELLA DI ROUTING N1, N1:
 ip route del default via 172.20.20.1 dev eth0
