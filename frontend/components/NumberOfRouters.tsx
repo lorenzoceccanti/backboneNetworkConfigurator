@@ -94,8 +94,8 @@ export default function NumberOfRouters() {
     console.log(JSON.stringify(formattedConfig))
 
   
-    try { //http://192.168.1.16:5000/configure
-      const response = await fetch("http://localhost:5000/configure", {
+    try { // http://192.168.1.16:5000/configure http://localhost:5000/configure
+      const response = await fetch("http://192.168.1.16:5000/configure", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
