@@ -20,9 +20,9 @@ topology:
       exec:
         {% for iface in host.interfaces %}
         {% if iface.dhcp %}
-        - udhcpc -i {{ iface.name }}
+        - udhcpc -i {{ iface.linux_name }}
         {% else %}
-        - ip addr add {{ iface.ip }} dev {{ iface.name }}
+        - ip addr add {{ iface.ip }} dev {{ iface.linux_name }}
         {% endif %}
         {% endfor %}
         {% if host.dhcp_enabled == false %}
@@ -34,7 +34,7 @@ topology:
   {% for router in routers -%}
     {% for iface in router.interfaces %}
     {% if iface.name != 'Loopback0' %}
-    - endpoints: [{{ router.name }}:{{ iface.name }}, {{ iface.peer.name }}:{{ iface.peer.interface }}]
+    - endpoints: [{{ router.name }}:{{ iface.linux_name }}, {{ iface.peer.name }}:{{ iface.peer.linux_interface }}]
     {% endif %}
     {% endfor %}
   {%- endfor %}

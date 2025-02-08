@@ -35,7 +35,6 @@ def configure():
             validated_data = NetworkConfig(**data)
             generate_containerlab_config(data["routers"], data["hosts"])
             generate_arista_configs(data["routers"])
-            sys.stdout.flush()
 
             # execute the command to auto deploy the network
             # os.system(f"sudo containerlab deploy -t ./config/topology.clab.yml")
@@ -49,6 +48,34 @@ def configure():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+def convert_interfaces(routers, hosts):
+    """ This function converts the interface's names to the format expected by containerlab 
+        in the frontend the interfaces are named like "Ethernet0", but in the containerlab
+        the interfaces are named like "eth0" """
+    interfaces_map = {
+        "Ethernet": "eth",
+        "Loopback": "lo",
+        "Vlan": "vlan",
+        "Management": "mgmt"
+    }
+
+    for router in routers:
+        for interface in router["interfaces"]:
+            for key, value in interfaces_map.items():
+                if key in interface["name"]:
+                    interface["linux_name"] = interface["name"].replace(key, value)
+
+                if key in interface["peer"]["interface"]:
+                    interface["peer"]["linux_interface"] = interface["peer"]["interface"].replace(key, value)
+                    break
+
+    for host in hosts:
+        for interface in host["interfaces"]:
+            for key, value in interfaces_map.items():
+                if key in interface["name"]:
+                    interface["linux_name"] = interface["name"].replace(key, value)
+                    break
+
 def generate_containerlab_config(routers, hosts):
     """ Generates the containerlab configuration file and writes it in the ./config folder """
     # if any of the interfaces of the host has the dhcp enabled, then insert a field
@@ -61,6 +88,8 @@ def generate_containerlab_config(routers, hosts):
         else:
             host["dhcp_enabled"] = False
     
+    convert_interfaces(routers, hosts)
+
     template = env.get_template("containerlab.j2")
     config_content = template.render(routers=routers, hosts=hosts)
 

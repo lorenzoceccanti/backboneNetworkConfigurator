@@ -1,7 +1,16 @@
 import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch"
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { HostConfig } from "@/lib/definitions";
 import { X } from "lucide-react";
 import { ipWithMaskSchema, ipSchema } from "@/lib/definitions";
@@ -19,9 +28,14 @@ export default function HostConfiguration({
   const [config, setConfig] = useState<HostConfig>(initialValues);
   const [ifaceIPError, setIfaceIPError] = useState<boolean[]>([]);
   const [gatewayIpError, setGatewayIpError] = useState<boolean | undefined>(undefined);
+  const [selectedInterfaces, setSelectedInterfaces] = useState<string[]>([]);
+
+  const availableInterfaces = ["Ethernet1", "Ethernet2", "Ethernet3", "Ethernet4"];
 
   useEffect(() => {
     setConfig(initialValues);
+    const selected = initialValues.interfaces.map((iface) => iface.name);
+    setSelectedInterfaces(selected);
   }, [initialValues]);
 
   const handleChange = <K extends keyof HostConfig>(field: K, value: HostConfig[K]) => {
@@ -63,9 +77,25 @@ export default function HostConfiguration({
     }
   };
 
+  const handleInterfaceSelect = (index: number, value: string) => {
+    const updatedInterfaces = [...config.interfaces];
+    updatedInterfaces[index] = { ...updatedInterfaces[index], name: value };
+    handleChange("interfaces", updatedInterfaces);
+    setSelectedInterfaces((prev) => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  };
+
+  const availableInterfacesOptions = (index: number) => {
+    return availableInterfaces.filter((iface) => !selectedInterfaces.includes(iface) || selectedInterfaces[index] === iface);
+  };
+
   const removeInterface = (index: number) => {
     const updatedInterfaces = config.interfaces.filter((_, i) => i !== index);
     handleChange("interfaces", updatedInterfaces);
+    setSelectedInterfaces((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -84,18 +114,23 @@ export default function HostConfiguration({
         <label className="block text-sm font-medium">Interfaces</label>
         {config.interfaces.map((iface, i) => (
           <div key={i} className="flex space-x-2 my-2">
-            <Input
-              placeholder="Name"
-              className={`border ${iface.name ? 'border-green-500' : ''}`}
-              value={iface.name}
-              onChange={(e) => {
-                const updatedInterfaces = [...config.interfaces];
-                updatedInterfaces[i] = { ...iface, name: e.target.value };
-                handleChange("interfaces", updatedInterfaces);
-                }}
-              />
-              {!config.interfaces[i].dhcp && (
-                <Input
+            <Select value={config.interfaces[i].name} onValueChange={(value) => handleInterfaceSelect(i, value)}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select an Interface" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Interfaces</SelectLabel>
+                  {availableInterfacesOptions(i).map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {!config.interfaces[i].dhcp && (
+              <Input
                 className={`border ${ifaceIPError[i] !== undefined ? (ifaceIPError[i] ? 'border-red-500' : 'border-green-500') : ''}`}
                 placeholder="IP Address (eg. 192.168.10.1/24)"
                 value={iface.ip}
@@ -105,8 +140,8 @@ export default function HostConfiguration({
                   handleChange("interfaces", updatedInterfaces);
                   validateIp("iface", e.target.value, i);
                 }}
-                />
-              )}
+              />
+            )}
             <div className="flex space-x-4 my-2">
               <label className="block text-sm font-medium text-nowrap">Enable DHCP</label>
               <Switch
@@ -138,19 +173,21 @@ export default function HostConfiguration({
         </Button>
       </div>
 
-      {!config.interfaces.some((iface) => iface.dhcp) && ( <div>
-        <label className="block text-sm font-medium">Gateway</label>
-        <Input
-          type="text"
-          placeholder="IP Address (eg. 192.168.1.1)"
-          value={config.gateway}
-          className={`border ${gatewayIpError !== undefined ? (gatewayIpError ? 'border-red-500' : 'border-green-500') : ''}`}
-          onChange={(e) => {
-            handleChange("gateway", e.target.value)
-            validateIp("gateway", e.target.value, 0);
-          }}
-        />
-      </div>)}
+      {!config.interfaces.some((iface) => iface.dhcp) && (
+        <div>
+          <label className="block text-sm font-medium">Gateway</label>
+          <Input
+            type="text"
+            placeholder="IP Address (eg. 192.168.1.1)"
+            value={config.gateway}
+            className={`border ${gatewayIpError !== undefined ? (gatewayIpError ? 'border-red-500' : 'border-green-500') : ''}`}
+            onChange={(e) => {
+              handleChange("gateway", e.target.value);
+              validateIp("gateway", e.target.value, 0);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

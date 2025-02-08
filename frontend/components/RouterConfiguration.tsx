@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { RouterConfig } from "@/lib/definitions";
 import { X } from "lucide-react";
 import { ipWithMaskSchema, ipSchema } from "@/lib/definitions";
@@ -22,9 +31,14 @@ export default function RouterConfiguration({
   const [subnetIPError, setSubnetIPError] = useState<boolean | null>(null);
   const [dhcpStartIPError, setDhcpStartIPError] = useState<boolean | null>(null);
   const [dhcpEndIPError, setDhcpEndIPError] = useState<boolean | null>(null);
+  const [selectedInterfaces, setSelectedInterfaces] = useState<string[]>([]);
+
+  const availableInterfaces = ["Ethernet1", "Ethernet2", "Ethernet3", "Ethernet4"];
 
   useEffect(() => {
     setConfig(initialValues);
+    const selected = initialValues.interfaces.map((iface) => iface.name !== "Loopback0" ? iface.name : "");
+    setSelectedInterfaces(selected);
   }, [initialValues]);
 
   const handleChange = <K extends keyof RouterConfig>(field: K, value: RouterConfig[K]) => {
@@ -104,9 +118,29 @@ export default function RouterConfiguration({
     }
   };
 
+  const handleInterfaceSelect = (index: number, value: string) => {
+    const updatedInterfaces = [...config.interfaces];
+    updatedInterfaces[index] = { ...updatedInterfaces[index], name: value };
+    handleChange("interfaces", updatedInterfaces);
+    setSelectedInterfaces((prev) => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  };
+
+  const availableInterfacesOptions = (index: number) => {
+    return availableInterfaces.filter((iface) => !selectedInterfaces.includes(iface) || selectedInterfaces[index] === iface);
+  };
+
+  const availableDhcpOptions = () => {
+    return selectedInterfaces.filter((iface) => iface !== "");
+  };
+
   const removeInterface = (index: number) => {
     const updatedInterfaces = config.interfaces.filter((_, i) => i !== index);
     handleChange("interfaces", updatedInterfaces);
+    setSelectedInterfaces((prev) => prev.filter((_, i) => i !== index));
   };
 
   const removeNeighbor = (index: number) => {
@@ -142,17 +176,30 @@ export default function RouterConfiguration({
         <label className="block text-sm font-medium">Interfaces</label>
         {config.interfaces.map((iface, i) => (
           <div key={i} className="flex space-x-2 my-2">
-            <Input
-              placeholder="Name"
-              className={`border ${iface.name ? 'border-green-500' : ''}`}
-              disabled={i === 0}
-              value={iface.name}
-              onChange={(e) => {
-                const updatedInterfaces = [...config.interfaces];
-                updatedInterfaces[i] = { ...iface, name: e.target.value };
-                handleChange("interfaces", updatedInterfaces);
-                }}
-              />
+            {i == 0 && (
+              <Input
+                  placeholder="Interface Name"
+                  value={iface.name}
+                  disabled
+              /> 
+            )}
+            { i != 0 && (
+              <Select value={iface.name} onValueChange={(value) => handleInterfaceSelect(i, value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an Interface" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Interfaces</SelectLabel>
+                    {availableInterfacesOptions(i).map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
               <Input
                 className={`border ${ifaceIPError[i] !== undefined ? (ifaceIPError[i] ? 'border-red-500' : 'border-green-500') : ''}`}
                 placeholder="IP Address (eg. 192.168.10.1/24)"
@@ -273,14 +320,21 @@ export default function RouterConfiguration({
               }}
             />
             <label className="block text-sm font-medium">Interface Name</label>
-            <Input
-              className={`border ${config.dhcp.interface ? 'border-green-500' : ''}`}
-              placeholder="Ethernet1"
-              value={config.dhcp.interface}
-              onChange={(e) => {
-                handleChange("dhcp", { ...config.dhcp!, interface: e.target.value })
-              }}
-            />
+            <Select value={config.dhcp.interface} onValueChange={(value) => handleChange("dhcp", { ...config.dhcp!, interface: value })}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select an Interface" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Interfaces</SelectLabel>
+                  {availableDhcpOptions().map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
             <label className="block text-sm font-medium">DHCP Range</label>
             <div className="flex space-x-2">
               <Input
