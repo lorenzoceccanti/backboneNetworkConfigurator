@@ -1,32 +1,34 @@
 name: bgp_config
 topology:
   nodes:
-  {% set mgmt_ip_counter = 1 %}
+  {% set ns_mgmt_ip_counter = namespace(mgmt_ip_counter=1) %}
   {% for router in routers %}
     {{ router.name }}:
       kind: arista_ceos
       image: ceos:4.33.0F
-      mgmt_ipv4: 172.20.20.{{ mgmt_ip_counter }}
+      mgmt_ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
       startup-config: {{ router.name }}.cfg
-    {% set mgmt_ip_counter = mgmt_ip_counter + 1 %}
+    {% set ns_mgmt_ip_counter.mgmt_ip_counter = ns_mgmt_ip_counter.mgmt_ip_counter + 1 %}
   {% endfor %}
 
   {% for host in hosts %}
     {{ host.name }}:
       kind: linux
       image: alpine:latest
-      mgmt_ipv4: 172.20.20.{{ mgmt_ip_counter }}
+      mgmt_ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
       network-mode: none
       exec:
         {% for iface in host.interfaces %}
         {% if iface.dhcp %}
-        - udhcpc -i {{ iface.name }}
+        - dhclient {{ iface.name }}
         {% else %}
         - ip addr add {{ iface.ip }} dev {{ iface.name }}
         {% endif %}
         {% endfor %}
+        {% if host.dhcp_enabled == false %}
         - ip route add default via {{ host.gateway }}
-      {% set mgmt_ip_counter = mgmt_ip_counter + 1 %}
+        {% endif %}
+   {% set ns_mgmt_ip_counter.mgmt_ip_counter = ns_mgmt_ip_counter.mgmt_ip_counter + 1 %}
   {% endfor %}
   links:
   {% for router in routers -%}

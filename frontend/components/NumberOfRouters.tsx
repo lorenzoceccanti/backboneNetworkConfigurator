@@ -259,7 +259,8 @@ export default function NumberOfRouters() {
           config.hostName &&
           config.interfaces.length > 0 &&
           config.interfaces.every(iface => iface.name && (iface.dhcp || iface.ip)) &&
-          config.gateway
+          // if none of the interfaces have dhcp enabled, then gateway is required
+          (config.interfaces.some(iface => iface.dhcp) || config.gateway)
          ) && (
           <Button className="w-fit my-4" onClick={() => handleGenerateConfiguration(routerConfigs, hostConfigs)}>
             Generate Configuration

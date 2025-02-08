@@ -138,7 +138,7 @@ export default function HostConfiguration({
         </Button>
       </div>
 
-      <div>
+      {!config.interfaces.some((iface) => iface.dhcp) && ( <div>
         <label className="block text-sm font-medium">Gateway</label>
         <Input
           type="text"
@@ -150,7 +150,7 @@ export default function HostConfiguration({
             validateIp("gateway", e.target.value, 0);
           }}
         />
-      </div>
+      </div>)}
     </div>
   );
 }

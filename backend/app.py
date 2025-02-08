@@ -35,7 +35,6 @@ def configure():
             validated_data = NetworkConfig(**data)
             generate_containerlab_config(data["routers"], data["hosts"])
             generate_arista_configs(data["routers"])
-            print(data["hosts"])
             sys.stdout.flush()
 
             # execute the command to auto deploy the network
@@ -52,6 +51,16 @@ def configure():
 
 def generate_containerlab_config(routers, hosts):
     """ Generates the containerlab configuration file and writes it in the ./config folder """
+    # if any of the interfaces of the host has the dhcp enabled, then insert a field
+    # named "dhcp_enabled" with the value "true" in the host dictionary
+    for host in hosts:
+        for interface in host["interfaces"]:
+            if interface["dhcp"]:
+                host["dhcp_enabled"] = True
+                break
+        else:
+            host["dhcp_enabled"] = False
+    
     template = env.get_template("containerlab.j2")
     config_content = template.render(routers=routers, hosts=hosts)
 
