@@ -7,7 +7,7 @@ import sys
 from network_config import NetworkConfig, get_network_address
 
 app = Flask(__name__, static_folder="out", static_url_path="")
-CORS(app, resources={r"/*": {"origins": "http://localhost:5000"}}) # http://localhost:3000
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}) # http://localhost:5000
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "templates")
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), "config")
@@ -33,8 +33,9 @@ def configure():
 
         try:
             validated_data = NetworkConfig(**data)
-            generate_containerlab_config(data["routers"])
+            generate_containerlab_config(data["routers"], data["hosts"])
             generate_arista_configs(data["routers"])
+            print(data["hosts"])
             sys.stdout.flush()
 
             # execute the command to auto deploy the network
@@ -49,10 +50,10 @@ def configure():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-def generate_containerlab_config(routers):
+def generate_containerlab_config(routers, hosts):
     """ Generates the containerlab configuration file and writes it in the ./config folder """
     template = env.get_template("containerlab.j2")
-    config_content = template.render(routers=routers)
+    config_content = template.render(routers=routers, hosts=hosts)
 
     containerlab_file = os.path.join(CONFIG_DIR, "topology.clab.yml")
     with open(containerlab_file, "w") as f:

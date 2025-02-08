@@ -1,6 +1,6 @@
 "use client";
 
-import { RouterConfig } from "@/lib/definitions";
+import { RouterConfig, HostConfig } from "@/lib/definitions";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import RouterConfiguration from "./RouterConfiguration";
+import HostConfiguration from "./HostConfiguration";
 
 const formSchema = z.object({
   number_of_routers: z.preprocess(
+    (a) => parseInt(z.string().parse(a), 10),
+    z.number().gte(1).lte(10)
+  ),
+  number_of_hosts: z.preprocess(
     (a) => parseInt(z.string().parse(a), 10),
     z.number().gte(1).lte(10)
   ),
@@ -34,21 +39,29 @@ const formSchema = z.object({
 
 export default function NumberOfRouters() {
   const [routerConfigs, setRouterConfigs] = useState<RouterConfig[]>([]);
+  const [hostConfigs, setHostConfigs] = useState<HostConfig[]>([]);
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
 
   const { toast } = useToast()
 
   const handleRouterConfigChange = (index: number, config: RouterConfig) => {
-    const newConfigs = [...routerConfigs];
-    newConfigs[index] = config;
-    setRouterConfigs(newConfigs);
+    const newRouterConfigs = [...routerConfigs];
+    newRouterConfigs[index] = config;
+    setRouterConfigs(newRouterConfigs);
   };
+
+  const handleHostConfigChange = (index: number, config: HostConfig) => {
+    const newHostConfigs = [...hostConfigs];
+    newHostConfigs[index] = config;
+    setHostConfigs(newHostConfigs);
+  }
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       number_of_routers: 0,
+      number_of_hosts: 0,
       server_ip: "192.168.1.16",
     },
   });
@@ -72,9 +85,16 @@ export default function NumberOfRouters() {
         neighbors: [],
       })
     );
+    setHostConfigs(
+      Array(values.number_of_hosts).fill({
+        hostName: "",
+        interfaces: [],
+        gateway: "",
+      })
+    );
   }
 
-  const handleGenerateConfiguration = async (routerConfigs: RouterConfig[]) => {
+  const handleGenerateConfiguration = async (routerConfigs: RouterConfig[], hostConfigs: HostConfig[]) => {
     const formattedConfig = {
       routers: routerConfigs.map((router) => ({
         name: router.routerName,
@@ -93,11 +113,19 @@ export default function NumberOfRouters() {
         })),
         ...(router.dhcp && { dhcp: router.dhcp }),
       })),
+      hosts: hostConfigs.map((host) => ({
+        name: host.hostName,
+        interfaces: host.interfaces.map((iface) => ({
+          name: iface.name,
+          dhcp: iface.dhcp,
+          ...(iface.dhcp ? {} : { ip: iface.ip }),
+        })),
+        gateway: host.gateway,
+      })),
     };
 
     console.log(JSON.stringify(formattedConfig))
 
-  
     try {
       const config_api = "http://" + serverIp + ":5000/configure"
       const response = await fetch(config_api, {
@@ -138,37 +166,52 @@ export default function NumberOfRouters() {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-5 w-fit mx-auto"
         >
-          <FormField
-            control={form.control}
-            name="number_of_routers"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>How many routers?</FormLabel>
-                <FormControl>
-                  <Input type="number" min={1} max={10} className="w-full" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="server_ip"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>What is the server IP?</FormLabel>
-                <FormControl>
-                  <Input type="text" className="w-full" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" className="mx-auto">Submit</Button>
+          <div className="grid grid-cols-3 space-x-4">
+            <FormField
+              control={form.control}
+              name="number_of_routers"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>How many routers?</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={1} max={10} className="w-full" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="number_of_hosts"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>How many hosts?</FormLabel>
+                  <FormControl>
+                    <Input type="number" min={1} max={10} className="w-full" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="server_ip"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>What is the server IP?</FormLabel>
+                  <FormControl>
+                    <Input type="text" className="w-full" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <Button type="submit" className="mx-auto w-full">Submit</Button>
         </form>
       </Form>
 
-      <div className="space-y-4 max-w-5xl mx-auto my-10">
+      <div className="space-y-4 max-w-5xl lg:mx-auto my-10 mx-10">
         <Accordion
           type="single"
           collapsible
@@ -188,16 +231,37 @@ export default function NumberOfRouters() {
               </AccordionContent>
             </AccordionItem>
           ))}
+          {hostConfigs.map((config, index) => (
+              <AccordionItem key={index} value={`item-${routerConfigs.length + index + 1}`}>
+                <AccordionTrigger>Host {index + 1}</AccordionTrigger>
+                <AccordionContent>
+                  <HostConfiguration
+                    initialValues={config}
+                    onChange={(updatedConfig) =>
+                      handleHostConfigChange(index, updatedConfig)
+                    }
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            ))}
         </Accordion>
-        {routerConfigs.length > 0 && routerConfigs.every(config => 
+        {routerConfigs.length > 0 && 
+         hostConfigs.length > 0 && 
+         routerConfigs.every(config => 
           config.routerName && 
           config.asNumber && 
           config.interfaces.length > 0 && 
           config.neighbors.length > 0 &&
           config.interfaces.every(iface => iface.name && iface.ip && iface.peer) &&
           config.neighbors.every(neighbor => neighbor.ip && neighbor.asNumber)
-        ) && (
-          <Button className="w-fit my-4" onClick={() => handleGenerateConfiguration(routerConfigs)}>
+         ) && 
+         hostConfigs.every(config =>
+          config.hostName &&
+          config.interfaces.length > 0 &&
+          config.interfaces.every(iface => iface.name && (iface.dhcp || iface.ip)) &&
+          config.gateway
+         ) && (
+          <Button className="w-fit my-4" onClick={() => handleGenerateConfiguration(routerConfigs, hostConfigs)}>
             Generate Configuration
           </Button>
         )}

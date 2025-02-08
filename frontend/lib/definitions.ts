@@ -6,7 +6,7 @@ export type DHCPConfig = {
   range: [string, string];
 };
 
-export type Interface = {
+export type RouterInterface = {
   name: string;
   ip: string;
   peer: {
@@ -23,9 +23,21 @@ export type Neighbor = {
 export type RouterConfig = {
   routerName: string;
   asNumber: number;
-  interfaces: Interface[];
+  interfaces: RouterInterface[];
   neighbors: Neighbor[];
   dhcp?: DHCPConfig;
+};
+
+export type HostInterface = {
+  name: string;
+  dhcp: boolean;
+  ip?: string;
+};
+
+export type HostConfig = {
+  hostName: string;
+  interfaces: HostInterface[];
+  gateway: string;
 };
 
 export const ipWithMaskSchema = z.string().regex(

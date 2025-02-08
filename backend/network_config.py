@@ -6,7 +6,7 @@ class Peer(BaseModel):
   name: str
   interface: str
 
-class Interface(BaseModel):
+class RouterInterface(BaseModel):
   name: str
   ip: str
   peer: Peer
@@ -62,13 +62,33 @@ class DHCPConfig(BaseModel):
 
 class Router(BaseModel):
   name: str
-  asn: int = Field(..., ge=1, le=4294967295)
-  interfaces: List[Interface]
+  asn: int = Field(..., ge=1, le=65534)
+  interfaces: List[RouterInterface]
   neighbors: List[Neighbor]
   dhcp: Optional[DHCPConfig] = None
 
+class HostInterface(BaseModel):
+  name: str
+  dhcp: bool
+  ip: Optional[str] = None
+
+  @validator("ip")
+  def validate_ip(cls, v):
+    try:
+      ipaddress.IPv4Network(v, strict=False)
+    except ValueError:
+      print(f"Invalid IP network format: {v}")
+      raise ValueError(f"Invalid IP network format: {v}")
+    return v
+
+class Hosts(BaseModel):
+  name: str
+  interfaces: List[HostInterface]
+  gateway: str
+
 class NetworkConfig(BaseModel):
   routers: List[Router]
+  hosts: List[Hosts]
 
 def get_network_address(ip: str) -> str:
     return str(ipaddress.ip_network(ip, strict=False))
