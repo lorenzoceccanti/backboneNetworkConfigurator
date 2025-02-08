@@ -256,7 +256,7 @@ export default function RouterConfiguration({
           <Switch
             checked={config.dhcp?.enabled ?? false}
             onCheckedChange={(checked) =>
-              handleChange("dhcp", checked ? { enabled: true, subnet: "", range: ["", ""] } : undefined)
+              handleChange("dhcp", checked ? { enabled: true, subnet: "", interface: "", range: ["", ""] } : undefined)
             }
           />
         </div>
@@ -270,6 +270,15 @@ export default function RouterConfiguration({
               onChange={(e) => {
                 handleChange("dhcp", { ...config.dhcp!, subnet: e.target.value })
                 validateIp("subnet", e.target.value, 0);
+              }}
+            />
+            <label className="block text-sm font-medium">Interface Name</label>
+            <Input
+              className={`border ${config.dhcp.interface ? 'border-green-500' : ''}`}
+              placeholder="Ethernet1"
+              value={config.dhcp.interface}
+              onChange={(e) => {
+                handleChange("dhcp", { ...config.dhcp!, interface: e.target.value })
               }}
             />
             <label className="block text-sm font-medium">DHCP Range</label>

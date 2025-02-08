@@ -20,7 +20,7 @@ topology:
       exec:
         {% for iface in host.interfaces %}
         {% if iface.dhcp %}
-        - dhclient {{ iface.name }}
+        - udhcpc -i {{ iface.name }}
         {% else %}
         - ip addr add {{ iface.ip }} dev {{ iface.name }}
         {% endif %}

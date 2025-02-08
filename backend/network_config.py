@@ -36,6 +36,7 @@ class Neighbor(BaseModel):
 class DHCPConfig(BaseModel):
   enabled: bool
   subnet: str
+  interface: str
   range: List[str]
 
   @validator("subnet")

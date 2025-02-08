@@ -3,6 +3,7 @@ import { z } from "zod";
 export type DHCPConfig = {
   enabled: boolean;
   subnet: string;
+  interface: string;
   range: [string, string];
 };
 

@@ -10,6 +10,9 @@ router-id {{ iface.ip.split("/")[0] }}
 interface {{ iface.name }}
   no switchport
   ip address {{ iface.ip }}
+  {% if router.dhcp and iface.name == router.dhcp.interface %}
+  dhcp server ipv4
+  {% endif %}
 {% endfor %}
 !
 router bgp {{ router.asn }}
