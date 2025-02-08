@@ -7,7 +7,7 @@ import sys
 from network_config import NetworkConfig, get_network_address
 
 app = Flask(__name__, static_folder="out", static_url_path="")
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}) # http://localhost:5000
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "templates")
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), "config")

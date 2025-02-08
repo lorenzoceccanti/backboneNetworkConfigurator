@@ -1,12 +1,13 @@
 name: bgp_config
 topology:
   nodes:
-  {% set ns_mgmt_ip_counter = namespace(mgmt_ip_counter=1) %}
+  {% set ns_mgmt_ip_counter = namespace(mgmt_ip_counter=2) %}
   {% for router in routers %}
     {{ router.name }}:
       kind: arista_ceos
       image: ceos:4.33.0F
-      mgmt_ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
       startup-config: {{ router.name }}.cfg
     {% set ns_mgmt_ip_counter.mgmt_ip_counter = ns_mgmt_ip_counter.mgmt_ip_counter + 1 %}
   {% endfor %}
@@ -15,8 +16,8 @@ topology:
     {{ host.name }}:
       kind: linux
       image: alpine:latest
-      mgmt_ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
-      network-mode: none
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
       exec:
         {% for iface in host.interfaces %}
         {% if iface.dhcp %}
