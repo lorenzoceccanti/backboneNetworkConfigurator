@@ -13,11 +13,9 @@ sudo containerlab destroy
 sudo containerlab deploy
 docker exec -it clab-dhcp-n1 sh -c " # name of the container it's a parameter depends on .yml
 	udhcpc -i eth1
-	ip route del default via 172.20.20.1 dev eth0
 	ip route add default via 192.168.100.1 dev eth1 #ip address depends on DHCP subnet ceos1
 "
 docker exec -it clab-dhcp-n2 sh -c " # name of the container it's a parameter depends on .yml
 	udhcpc -i eth1
-	ip route del default via 172.20.20.1 dev eth0
 	ip route add default via 192.168.101.1 dev eth1 # ip address depends on DHCP subnet ceos2
 " 

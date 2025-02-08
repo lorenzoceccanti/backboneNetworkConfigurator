@@ -5,15 +5,29 @@ topology:
     ceos1:
       kind: arista_ceos
       image: ceos:4.33.0F
+      restart-policy: always
     ceos2:
       kind: arista_ceos
       image: ceos:4.33.0F
+      restart-policy: always
     n1:
       kind: linux
       image: alpine:latest
+      network-mode: none
+      restart-policy: always
+      binds:
+        - ~/startup_node1.sh:/node1.sh
+      exec:
+        - sh /node1.sh
     n2:
       kind: linux
       image: alpine:latest
+      network-mode: none
+      restart-policy: always
+      binds:
+        - ~/startup_node2.sh:/node2.sh
+      exec:
+        - sh /node2.sh
   links:
     - endpoints: ["ceos1:eth1", "ceos2:eth1"]
     - endpoints: ["n1:eth1", "ceos1:eth2"]
