@@ -4,6 +4,10 @@ from jinja2 import Environment, FileSystemLoader
 import json
 import os
 import sys
+import hashlib
+import secrets
+import base64
+import ipaddress
 from network_config import NetworkConfig, get_network_address
 
 app = Flask(__name__, static_folder="out", static_url_path="")
@@ -76,6 +80,19 @@ def convert_interfaces(routers, hosts):
                     interface["linux_name"] = interface["name"].replace(key, value)
                     break
 
+def generate_password_hash():
+    """ Generates a password hash for the admin user
+        The hash is in the format $6$salt$hash with the sha512 algorithm """
+    password = "admin".encode("utf-8")
+    # generate a 16 bytes random salt to add to the password
+    salt = base64.b64encode(secrets.token_bytes(16)).decode("utf-8").rstrip("=")[:16]
+
+    hashed = hashlib.sha512((salt + password.decode()).encode()).digest()
+    hash_b64 = base64.b64encode(hashed).decode("utf-8").rstrip("=")
+
+    # return the hash in the format $6$salt$hash
+    return f"$6${salt}${hash_b64}"
+
 def generate_containerlab_config(routers, hosts):
     """ Generates the containerlab configuration file and writes it in the ./config folder """
     # if any of the interfaces of the host has the dhcp enabled, then insert a field
@@ -88,6 +105,9 @@ def generate_containerlab_config(routers, hosts):
         else:
             host["dhcp_enabled"] = False
     
+    # with this function we convert the interface names to the format expected by containerlab
+    # for example, in the frontend the interfaces are named like "Ethernet0", but in the containerlab
+    # the interfaces are named like "eth0"
     convert_interfaces(routers, hosts)
 
     template = env.get_template("containerlab.j2")
@@ -103,12 +123,19 @@ def generate_arista_configs(routers):
     template = env.get_template("arista_config.j2")
     files = []
 
-    # for each interface of each router, add to the json the network and than
-    # create the config file
-    for router in routers:
+    # generate the management IP addresses for each router 
+    # also generate the network address for each interface
+    ipv4_base = ipaddress.IPv4Address("172.20.20.2")
+    ipv6_base = ipaddress.IPv6Address("3fff:172:20:20::2")
+    for i, router in enumerate(routers):
+        router["mngt_ipv4"] = f"{str(ipv4_base + i)}/24"
+        router["mngt_ipv6"] = f"{str(ipv6_base + i)}/64"
         for interface in router["interfaces"]:
             interface["network"] = get_network_address(interface["ip"])
     
+        # generate the password hash for the admin user and add it to the json
+        router["admin_password"] = generate_password_hash()
+
         config_content = template.render(router=router)
         file_path = os.path.join(CONFIG_DIR, f"{router['name']}.cfg")
 

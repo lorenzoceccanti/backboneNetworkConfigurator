@@ -62,7 +62,7 @@ export default function NumberOfRouters() {
     defaultValues: {
       number_of_routers: 0,
       number_of_hosts: 0,
-      server_ip: "192.168.1.16",
+      server_ip: "127.0.0.1",
     },
   });
 
@@ -70,25 +70,49 @@ export default function NumberOfRouters() {
     setServerIp(values.server_ip);
     setRouterConfigs(
       Array(values.number_of_routers).fill({
-        routerName: "",
-        asNumber: 0,
+        routerName: "r1",
+        asNumber: 10,
         interfaces: [
           {
             name: "Loopback0",
-            ip: "",
+            ip: "1.1.1.1/24",
             peer: {
               name: "",
               interface: "",
             },
           },
+          {
+            name: "Ethernet1",
+            ip: "192.168.100.1/24",
+            peer: {
+              name: "h1",
+              interface: "Ethernet1",
+            },
+          },
         ],
-        neighbors: [],
+        neighbors: [
+          {
+            ip: "192.168.200.1",
+            asNumber: 20,
+          }
+        ],
+        dhcp: {
+          enabled: true,
+          subnet: "192.168.100.0/24",
+          interface: "Ethernet1",
+          range: ["192.168.100.10", "192.168.100.99"]
+        }
       })
     );
     setHostConfigs(
       Array(values.number_of_hosts).fill({
-        hostName: "",
-        interfaces: [],
+        hostName: "h1",
+        interfaces: [
+          {
+            name: "Ethernet1",
+            dhcp: true,
+          }
+        ],
         gateway: "",
       })
     );
