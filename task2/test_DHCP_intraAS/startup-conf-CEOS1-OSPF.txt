@@ -15,6 +15,7 @@ management api http-commands
 dhcp server
    subnet 192.168.100.0/24
       range 192.168.100.10 192.168.100.99
+      default-gateway 192.168.100.1
 !
 no service interface inactive port-id allocation disabled
 !

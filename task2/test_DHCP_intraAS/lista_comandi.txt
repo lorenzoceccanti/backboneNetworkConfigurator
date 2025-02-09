@@ -49,6 +49,7 @@ Pool indirizzi dhcp
 dhcp server
 subnet 192.168.100.0/24
 range 192.168.100.10 192.168.100.99
+default-gateway 192.168.100.1
 exit
 show active
 (verificare correttezza)
@@ -78,6 +79,7 @@ Pool indirizzi dhcp
 dhcp server
 subnet 192.168.101.0/24
 range 192.168.101.10 192.168.101.99
+default-gateway 192.168.101.1
 exit
 show active
 (verificare corretta)
