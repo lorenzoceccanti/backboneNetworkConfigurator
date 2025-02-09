@@ -80,6 +80,37 @@ def convert_interfaces(routers, hosts):
                     interface["linux_name"] = interface["name"].replace(key, value)
                     break
 
+def generate_links_from_routers(routers):
+    """ Generates the links between the routers based on the 
+        interfaces peer information, this function was created to avoid 
+        duplicate links in the containerlab configuration """
+    
+    # a set doesn't allow duplicate elements, 
+    # so we can use it to store the links
+    links_set = set()
+    for router in routers:
+        for iface in router["interfaces"]:
+            peer_name = iface["peer"]["name"] 
+            peer_intf = iface["peer"].get("linux_interface", "") # Get peer interface, default to ""
+
+            # check if the peer name and interface are not empty
+            # (for example, the Loopback0 interface doesn't have a peer)
+            if peer_name and peer_intf:
+                endpoint1 = f"{router["name"]}:{iface['linux_name']}"
+                endpoint2 = f"{peer_name}:{peer_intf}"
+                # to avoid duplicates like "router1:eth0" and "router2:eth0"
+                # we sort the endpoints and add them to the set
+                sorted_endpoints = tuple(sorted([endpoint1, endpoint2]))
+                # if the link is already in the set, it won't be added
+                links_set.add(sorted_endpoints)
+
+    # convert the set to a list of dictionaries
+    links_list = []
+    for link_tuple in links_set:
+        links_list.append({"endpoints": list(link_tuple)})
+
+    return links_list
+    
 def generate_password_hash():
     """ Generates a password hash for the admin user
         The hash is in the format $6$salt$hash with the sha512 algorithm """
@@ -110,8 +141,10 @@ def generate_containerlab_config(routers, hosts):
     # the interfaces are named like "eth0"
     convert_interfaces(routers, hosts)
 
+    links = generate_links_from_routers(routers)
+    
     template = env.get_template("containerlab.j2")
-    config_content = template.render(routers=routers, hosts=hosts)
+    config_content = template.render(routers=routers, hosts=hosts, links=links)
 
     containerlab_file = os.path.join(CONFIG_DIR, "topology.clab.yml")
     with open(containerlab_file, "w") as f:

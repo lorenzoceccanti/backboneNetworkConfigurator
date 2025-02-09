@@ -1,4 +1,4 @@
-name: bgp_config
+name: test01
 topology:
   nodes:
   {% set ns_mgmt_ip_counter = namespace(mgmt_ip_counter=2) %}
@@ -17,6 +17,7 @@ topology:
       kind: linux
       image: alpine:latest
       restart-policy: always
+      network-mode: none
       mgmt-ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
       exec:
         {% for iface in host.interfaces %}
@@ -32,10 +33,8 @@ topology:
    {% set ns_mgmt_ip_counter.mgmt_ip_counter = ns_mgmt_ip_counter.mgmt_ip_counter + 1 %}
   {% endfor %}
   links:
-  {% for router in routers -%}
-    {% for iface in router.interfaces %}
-    {% if iface.name != 'Loopback0' %}
-    - endpoints: [{{ router.name }}:{{ iface.linux_name }}, {{ iface.peer.name }}:{{ iface.peer.linux_interface }}]
-    {% endif %}
-    {% endfor %}
-  {%- endfor %}
+
+  {% for link in links %}
+    - endpoints: ["{{link.endpoints[0]}}", "{{link.endpoints[1]}}"]
+  {% endfor %}
+

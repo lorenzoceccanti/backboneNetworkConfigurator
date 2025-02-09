@@ -75,6 +75,11 @@ router ospf 1
 dhcp server
   subnet {{ router.dhcp.subnet }}
   range {{ router.dhcp.range[0] }} {{ router.dhcp.range[1] }}
+  {% for iface in router.interfaces %}
+  {% if iface.name == router.dhcp.interface -%}
+  default-gateway {{ iface.ip.split("/")[0] }}
+  {%- endif %}
+  {%- endfor %}
 {%- endif %}
 !
 end
