@@ -51,7 +51,7 @@ def configure():
 
 @app.route("/deploy", methods=["POST"])
 def deploy():
-    os.system(f"sudo containerlab destroy -t ./config/topology.clab.yml && sudo containerlab deploy -t ./config/topology.clab.yml")
+    os.system(f"sudo containerlab destroy -t ./config/topology.clab.yml && sudo containerlab deploy -t ./config/topology.clab.yml -d")
     # os.system("echo 'Deploying network' && sleep 10")
     return jsonify({"message": "Network deployed successfully"}), 200
 

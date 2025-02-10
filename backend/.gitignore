@@ -3,3 +3,4 @@ config/*
 .DS_Store
 __pycache__/*
 my_backend/*
+clab-test01/*
