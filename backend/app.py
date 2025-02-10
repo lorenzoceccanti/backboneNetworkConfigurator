@@ -96,7 +96,7 @@ def generate_links_from_routers(routers):
             # check if the peer name and interface are not empty
             # (for example, the Loopback0 interface doesn't have a peer)
             if peer_name and peer_intf:
-                endpoint1 = f"{router["name"]}:{iface['linux_name']}"
+                endpoint1 = f"{router['name']}:{iface['linux_name']}"
                 endpoint2 = f"{peer_name}:{peer_intf}"
                 # to avoid duplicates like "router1:eth0" and "router2:eth0"
                 # we sort the endpoints and add them to the set
