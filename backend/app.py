@@ -8,7 +8,6 @@ import hashlib
 import secrets
 import base64
 import ipaddress
-import subprocess
 from network_config import NetworkConfig, get_network_address
 
 app = Flask(__name__, static_folder="out", static_url_path="")
@@ -52,9 +51,8 @@ def configure():
 
 @app.route("/deploy", methods=["POST"])
 def deploy():
-    # os.system(f"cd config && sudo containerlab destroy && sudo containerlab deploy -t topology.clab.yml -d")
+    os.system(f"./deploy_network.sh")
     # os.system("echo 'Deploying network' && sleep 10")
-    subprocess.run(["cd", "config", "&&", "sudo", "containerlab", "deploy", "-t", "topology.clab.yml", "-d"], check=True)
     return jsonify({"message": "Network deployed successfully"}), 200
 
 
