@@ -36,12 +36,9 @@ def configure():
             return jsonify({"error": "Invalid JSON"}), 400
 
         try:
-            validated_data = NetworkConfig(**data)
+            NetworkConfig(**data)
             generate_containerlab_config(data["routers"], data["hosts"])
             generate_arista_configs(data["routers"])
-
-            # execute the command to auto deploy the network
-            # os.system(f"sudo containerlab deploy -t ./config/topology.clab.yml")
 
             return jsonify({"message": "Network deployed successfully"}), 200
         except Exception as e:
@@ -51,6 +48,13 @@ def configure():
         
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/deploy", methods=["POST"])
+def deploy():
+    os.system(f"sudo containerlab destroy -t ./config/topology.clab.yml && sudo containerlab deploy -t ./config/topology.clab.yml")
+    # os.system("echo 'Deploying network' && sleep 10")
+    return jsonify({"message": "Network deployed successfully"}), 200
+
 
 def convert_interfaces(routers, hosts):
     """ This function converts the interface's names to the format expected by containerlab 

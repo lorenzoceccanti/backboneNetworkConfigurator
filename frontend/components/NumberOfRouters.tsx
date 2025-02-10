@@ -24,6 +24,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import RouterConfiguration from "./RouterConfiguration";
 import HostConfiguration from "./HostConfiguration";
+import { Spinner } from "./Spinner";
 
 const formSchema = z.object({
   number_of_routers: z.preprocess(
@@ -42,6 +43,8 @@ export default function NumberOfRouters() {
   const [hostConfigs, setHostConfigs] = useState<HostConfig[]>([]);
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
+  const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
+  const [isDeploying, setIsDeploying] = useState<boolean>(false);
 
   const { toast } = useToast()
 
@@ -166,6 +169,7 @@ export default function NumberOfRouters() {
           title: "Uh oh! Something went wrong.",
           description: "There was a problem with your request: " + response.statusText,
         })
+        setIsConfigGenerated(false);
         throw new Error(`Error on request: ${response.statusText}`);
       }
   
@@ -174,14 +178,52 @@ export default function NumberOfRouters() {
         title: "Configuration generated!",
         description: "The configuration has been generated successfully.",
       })
+      setIsConfigGenerated(true);
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
       })
+      setIsConfigGenerated(false);
     }
   };
+
+  const handleDeployNetwork = async () => {
+    setIsDeploying(true);
+    try {
+      const deploy_api = "http://" + serverIp + ":5000/deploy"
+      const response = await fetch(deploy_api, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: "There was a problem with your request: " + response.statusText,
+        })
+        throw new Error(`Error on request: ${response.statusText}`);
+      }
+  
+      toast({
+        variant: "default",
+        title: "Network deployed!",
+        description: "The network has been deployed successfully.",
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request: " + error,
+      })
+    } finally {
+      setIsDeploying(false);
+    }
+  }
   
   return (
     <>
@@ -269,28 +311,33 @@ export default function NumberOfRouters() {
               </AccordionItem>
             ))}
         </Accordion>
-        {routerConfigs.length > 0 && 
-         hostConfigs.length > 0 && 
-         routerConfigs.every(config => 
-          config.routerName && 
-          config.asNumber && 
-          config.interfaces.length > 0 && 
-          config.neighbors.length > 0 &&
-          config.interfaces.every(iface => iface.name && iface.ip && iface.peer) &&
-          config.neighbors.every(neighbor => neighbor.ip && neighbor.asNumber)
-         ) && 
-         hostConfigs.every(config =>
-          config.hostName &&
-          config.interfaces.length > 0 &&
-          config.interfaces.every(iface => iface.name && (iface.dhcp || iface.ip)) &&
-          // if none of the interfaces have dhcp enabled, then gateway is required
-          (config.interfaces.some(iface => iface.dhcp) || config.gateway)
-         ) && (
-          <Button className="w-fit my-4" onClick={() => handleGenerateConfiguration(routerConfigs, hostConfigs)}>
-            Generate Configuration
-          </Button>
-        )}
-      </div>
+          {routerConfigs.length > 0 && 
+          hostConfigs.length > 0 && 
+          routerConfigs.every(config => 
+            config.routerName && 
+            config.asNumber && 
+            config.interfaces.length > 0 && 
+            config.neighbors.length > 0 &&
+            config.interfaces.every(iface => iface.name && iface.ip && iface.peer) &&
+            config.neighbors.every(neighbor => neighbor.ip && neighbor.asNumber)
+          ) && 
+          hostConfigs.every(config =>
+            config.hostName &&
+            config.interfaces.length > 0 &&
+            config.interfaces.every(iface => iface.name && (iface.dhcp || iface.ip)) &&
+            // if none of the interfaces have dhcp enabled, then gateway is required
+            (config.interfaces.some(iface => iface.dhcp) || config.gateway)
+          ) && (
+            <div className="space-x-3">
+              <Button className="w-fit my-4" onClick={() => handleGenerateConfiguration(routerConfigs, hostConfigs)}>
+                Generate Configuration
+              </Button>
+              <Button disabled={!isConfigGenerated} className="w-fit my-4" onClick={() => handleDeployNetwork()}>
+                Deploy Network {isDeploying ? <Spinner /> : ""}
+              </Button>
+            </div>
+          )}
+        </div>
     </>
   );
 }
