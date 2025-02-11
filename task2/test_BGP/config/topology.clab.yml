@@ -1,0 +1,138 @@
+name: test01
+topology:
+  nodes:
+  
+  
+    R2:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.2
+      startup-config: R2.cfg
+    
+  
+    R1:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.3
+      startup-config: R1.cfg
+    
+  
+    R20:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.4
+      startup-config: R20.cfg
+    
+  
+    R10:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.5
+      startup-config: R10.cfg
+    
+  
+
+  
+    H1:
+      kind: linux
+      image: alpine:latest
+      restart-policy: always
+      network-mode: none
+      mgmt-ipv4: 172.20.20.6
+      #stages:
+      #  create:
+      #    wait-for:
+      #      - node: r1
+      #        stage: running  
+      exec:
+        
+        
+        - udhcpc -i eth1
+        
+        
+        
+   
+  
+    H2:
+      kind: linux
+      image: alpine:latest
+      restart-policy: always
+      network-mode: none
+      mgmt-ipv4: 172.20.20.7
+      #stages:
+      #  create:
+      #    wait-for:
+      #      - node: r1
+      #        stage: running  
+      exec:
+        
+        
+        - udhcpc -i eth1
+        
+        
+        
+   
+  
+    H3:
+      kind: linux
+      image: alpine:latest
+      restart-policy: always
+      network-mode: none
+      mgmt-ipv4: 172.20.20.8
+      #stages:
+      #  create:
+      #    wait-for:
+      #      - node: r1
+      #        stage: running  
+      exec:
+        
+        
+        - udhcpc -i eth1
+        
+        
+        
+   
+  
+    H4:
+      kind: linux
+      image: alpine:latest
+      restart-policy: always
+      network-mode: none
+      mgmt-ipv4: 172.20.20.9
+      #stages:
+      #  create:
+      #    wait-for:
+      #      - node: r1
+      #        stage: running  
+      exec:
+        
+        
+        - udhcpc -i eth1
+        
+        
+        
+   
+  
+  links:
+
+  
+    - endpoints: ["R10:eth2", "R2:eth3"]
+  
+    - endpoints: ["H1:eth1", "R2:eth1"]
+  
+    - endpoints: ["R1:eth1", "R2:eth2"]
+  
+    - endpoints: ["R1:eth2", "R20:eth1"]
+  
+    - endpoints: ["H2:eth1", "R1:eth3"]
+  
+    - endpoints: ["R10:eth1", "R20:eth2"]
+  
+    - endpoints: ["H3:eth1", "R20:eth3"]
+  
+    - endpoints: ["H4:eth1", "R10:eth3"]
+  

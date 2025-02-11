@@ -1,0 +1,18 @@
+R2:
+bgp missing-policy direction in action deny-in-out
+bgp missing-policy direction out action deny-in-out
+
+// Creare la route-map
+router bgp
+
+R1:
+bgp missing-policy direction in action deny-in-out
+bgp missing-policy direction out action deny-in-out
+
+R20:
+bgp missing-policy direction in action deny-in-out
+bgp missing-policy direction out action deny-in-out
+
+R10:
+bgp missing-policy direction in action deny-in-out
+bgp missing-policy direction out action deny-in-out
