@@ -1,9 +1,26 @@
 R2:
-bgp missing-policy direction in action deny-in-out
-bgp missing-policy direction out action deny-in-out
+ip as-path access-list AS55001-IN permit ^55001$ (MANCA)
 
-// Creare la route-map
-router bgp
+route-map RM-IN-55001 permit 10 (MANCA)
+   match as-path AS55001-IN (MANCA)
+
+route-map RM-IN-55001 deny 99 (MANCA)
+
+ip prefix-list R2-NETWORKS permit 192.168.102.0/24 (MANCA)
+
+route-map RM-OUT permit 10 (MANCA)
+   match ip address prefix-list R2-NETWORKS (MANCA)
+route-map RM-OUT deny 99 (MANCA)
+
+router bgp 55002
+    router-id 1.1.1.2 (MANCA)
+    bgp missing-policy direction in action deny-in-out (MANCA)
+    bgp missing-policy direction out action deny-in-out (MANCA)
+    neighbor 131.114.28.1 remote-as 55001 (OK)
+    neighbor 131.114.28.1 route-map RM-IN-55001 in (?)
+    neighbor 131.114.28.1 route-map RM-OUT out (?)
+    neighbor 131.114.28.6 remote-as 55010 (OK)
+    network 192.168.102.0/24 (MANCA)
 
 R1:
 bgp missing-policy direction in action deny-in-out

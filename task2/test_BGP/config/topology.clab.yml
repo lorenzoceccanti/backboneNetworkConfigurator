@@ -43,11 +43,11 @@ topology:
       restart-policy: always
       network-mode: none
       mgmt-ipv4: 172.20.20.6
-      #stages:
-      #  create:
-      #    wait-for:
-      #      - node: r1
-      #        stage: running  
+      stages:
+        create:
+          wait-for:
+            - node: R2
+              stage: create  
       exec:
         
         
@@ -63,11 +63,11 @@ topology:
       restart-policy: always
       network-mode: none
       mgmt-ipv4: 172.20.20.7
-      #stages:
-      #  create:
-      #    wait-for:
-      #      - node: r1
-      #        stage: running  
+      stages:
+        create:
+          wait-for:
+            - node: R1
+              stage: create  
       exec:
         
         
@@ -83,11 +83,11 @@ topology:
       restart-policy: always
       network-mode: none
       mgmt-ipv4: 172.20.20.8
-      #stages:
-      #  create:
-      #    wait-for:
-      #      - node: r1
-      #        stage: running  
+      stages:
+        create:
+          wait-for:
+            - node: R20
+              stage: create  
       exec:
         
         
@@ -103,11 +103,11 @@ topology:
       restart-policy: always
       network-mode: none
       mgmt-ipv4: 172.20.20.9
-      #stages:
-      #  create:
-      #    wait-for:
-      #      - node: r1
-      #        stage: running  
+      stages:
+        create:
+          wait-for:
+            - node: R10
+              stage: create  
       exec:
         
         

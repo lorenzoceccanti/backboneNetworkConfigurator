@@ -1,0 +1,96 @@
+R2(config)#show startup-config
+! Command: show startup-config
+! Startup-config last modified at Tue Feb 11 16:53:25 2025 by root
+! device: R2 (cEOSLab, EOS-4.33.0F-39050855.4330F (engineering build))
+!
+no aaa root
+!
+management api http-commands
+   no shutdown
+!
+dhcp server
+   subnet 192.168.102.0/24
+      range 192.168.102.10 192.168.102.99
+      default-gateway 192.168.102.1
+!
+no service interface inactive port-id allocation disabled
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname R2
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+management api gnmi
+   transport grpc default
+!
+management api netconf
+   transport ssh default
+!
+interface Ethernet1
+   no switchport
+   ip address 192.168.102.1/24
+   dhcp server ipv4
+!
+interface Ethernet2
+   no switchport
+   ip address 131.114.28.0/31
+!
+interface Ethernet3
+   no switchport
+   ip address 131.114.28.7/31
+!
+interface Loopback0
+   ip address 1.1.1.2/32
+!
+interface Management0
+   ip address 172.20.20.2/24
+   ipv6 address 3fff:172:20:20::4/64
+!
+ip routing
+!
+ip as-path access-list AS55001-IN permit ^55001$ any
+ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24
+!
+ip route 0.0.0.0/0 172.20.20.1
+!
+route-map RM-IN-55001 permit 10
+   match as-path AS55001-IN
+!
+route-map RM-IN-55001 deny 99
+!
+route-map RM-OUT permit 10
+   match ip address prefix-list R2-NETWORKS
+!
+route-map RM-OUT deny 99
+!
+router bgp 55002
+   router-id 1.1.1.2
+   bgp missing-policy direction in action deny-in-out
+   bgp missing-policy direction out action deny-in-out
+   neighbor 131.114.28.1 remote-as 55001
+   neighbor 131.114.28.1 route-map RM-IN-55001 in
+   neighbor 131.114.28.1 route-map RM-OUT out
+   neighbor 131.114.28.6 remote-as 55010
+   network 192.168.102.0/24
+!
+router multicast
+   ipv4
+      software-forwarding kernel
+   !
+   ipv6
+      software-forwarding kernel
+!
+router ospf 1
+   router-id 1.1.1.2
+   network 192.168.102.0/24 area 0.0.0.0
+   max-lsa 12000
+!
+end
+R2(config)#
