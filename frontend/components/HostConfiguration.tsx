@@ -143,8 +143,9 @@ export default function HostConfiguration({
               />
             )}
             <div className="flex space-x-4 my-2">
-              <label className="block text-sm font-medium text-nowrap">Enable DHCP</label>
+              <label className="block text-sm font-medium text-nowrap my-auto">Enable DHCP</label>
               <Switch
+                className="my-auto"
                 checked={config.interfaces[i].dhcp}
                 onCheckedChange={(checked) =>
                   handleChange("interfaces", [
