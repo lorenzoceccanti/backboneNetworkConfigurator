@@ -27,6 +27,7 @@ export default function RouterConfiguration({
 }: RouterConfigurationProps) {
   const [config, setConfig] = useState<RouterConfig>(initialValues);
   const [ifaceIPError, setIfaceIPError] = useState<boolean[]>([]);
+  const [peerIfaceError, setPeerIfaceError] = useState<boolean[]>([]);
   const [neighborIPError, setNeighborIPError] = useState<boolean[]>([]);
   const [subnetIPError, setSubnetIPError] = useState<boolean | null>(null);
   const [dhcpStartIPError, setDhcpStartIPError] = useState<boolean | null>(null);
@@ -46,6 +47,27 @@ export default function RouterConfiguration({
     setConfig(updatedConfig);
     onChange(updatedConfig);
   };
+
+  const handlePeerInterfaceChange = (index: number, value: string) => {
+    // if the selected interface is not in the available interfaces, set error
+    if (!availableInterfaces.includes(value)) {
+      setPeerIfaceError((prev) => {
+        const updated = [...prev];
+        updated[index] = true;
+        return updated;
+      });
+    } else {
+      setPeerIfaceError((prev) => {
+        const updated = [...prev];
+        updated[index] = false;
+        return updated;
+      });
+    }
+
+    const updatedInterfaces = [...config.interfaces];
+    updatedInterfaces[index] = { ...updatedInterfaces[index], peer: { ...updatedInterfaces[index].peer, interface: value } };
+    handleChange("interfaces", updatedInterfaces);
+}
 
   const validateIp = (type: string, ip: string, index: number) => {
     switch (type) {
@@ -175,7 +197,7 @@ export default function RouterConfiguration({
       <div>
         <label className="block text-sm font-medium">Interfaces</label>
         {config.interfaces.map((iface, i) => (
-          <div key={i} className="flex space-x-2 my-2">
+          <div key={i} className="md:flex md:space-x-2 my-2 space-y-3 md:space-y-0 mb-10 md:mb-0">
             {i == 0 && (
               <Input
                   placeholder="Interface Name"
@@ -226,24 +248,32 @@ export default function RouterConfiguration({
               placeholder="Peer Interface"
               disabled={i === 0}
               value={iface.peer.interface}
-              className={`border ${iface.peer.interface ? 'border-green-500' : ''}`}
+              className={`border ${peerIfaceError[i] !== undefined ? (peerIfaceError[i] ? 'border-red-500' : 'border-green-500') : ''}`}
               onChange={(e) => {
                 const updatedInterfaces = [...config.interfaces];
                 updatedInterfaces[i] = { ...iface, peer: { ...iface.peer, interface: e.target.value } };
-                handleChange("interfaces", updatedInterfaces);
+                handlePeerInterfaceChange(i, e.target.value);
               }}
             />
             <button
               disabled={i === 0}
               onClick={() => removeInterface(i)}
-              className="text-red-500 hover:text-red-700"
+              className="text-red-500 hover:text-red-700 md:border-none md:bg-transparent md:p-0 border border-red-500 rounded-md px-2 py-1 flex items-center md:hidden"
+            >
+              <span className="mr-1">Delete Interface</span>
+              <X size={20} />
+            </button>
+            <button
+              disabled={i === 0}
+              onClick={() => removeInterface(i)}
+              className="text-red-500 hover:text-red-700 hidden sm:block"
             >
               <X size={20} />
             </button>
           </div>
         ))}
         <Button
-          className="mt-2"
+          className="md:mt-2 mb-5 md:mb-0"
           onClick={() =>
             handleChange("interfaces", [...config.interfaces, { name: "", ip: "", peer: { name: "", interface: "" } }])
           }
@@ -255,7 +285,7 @@ export default function RouterConfiguration({
       <div>
         <label className="block text-sm font-medium">BGP Neighbors</label>
         {config.neighbors.map((neighbor, i) => (
-          <div key={i} className="flex space-x-2 my-2">
+          <div key={i} className="md:flex md:space-x-2 my-2 space-y-3 md:space-y-0 mb-10 md:mb-0">
             <Input
               className={`border ${neighborIPError[i] !== undefined ? (neighborIPError[i] ? 'border-red-500' : 'border-green-500') : ''}`}
               placeholder="Neighbor IP (eg. 192.168.10.2)"
@@ -281,15 +311,24 @@ export default function RouterConfiguration({
               }}
             />
             <button
+              disabled={i === 0}
               onClick={() => removeNeighbor(i)}
-              className="text-red-500 hover:text-red-700"
+              className="text-red-500 hover:text-red-700 md:border-none md:bg-transparent md:p-0 border border-red-500 rounded-md px-2 py-1 flex items-center md:hidden"
+            >
+              <span className="mr-1">Delete Neighbor</span>
+              <X size={20} />
+            </button>
+            <button
+              disabled={i === 0}
+              onClick={() => removeNeighbor(i)}
+              className="text-red-500 hover:text-red-700 hidden sm:block"
             >
               <X size={20} />
             </button>
           </div>
         ))}
         <Button
-          className="mt-2"
+          className="md:mt-2 mb-5 md:mb-0"
           onClick={() =>
             handleChange("neighbors", [...config.neighbors, { ip: "", asNumber: 0 }])
           }
@@ -336,7 +375,7 @@ export default function RouterConfiguration({
               </SelectContent>
             </Select>
             <label className="block text-sm font-medium">DHCP Range</label>
-            <div className="flex space-x-2">
+            <div className="md:flex md:space-x-2 space-y-3 md:space-y-0 mb-10 md:mb-0">
               <Input
                 className={`border ${dhcpStartIPError !== null ? (dhcpStartIPError ? 'border-red-500' : 'border-green-500') : ''}`}
                 placeholder="Start IP (eg. 192.168.10.1)"

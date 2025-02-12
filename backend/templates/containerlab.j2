@@ -1,4 +1,4 @@
-name: test01
+name: {{ project_name }}
 topology:
   nodes:
   {% set ns_mgmt_ip_counter = namespace(mgmt_ip_counter=2) %}
@@ -19,6 +19,13 @@ topology:
       restart-policy: always
       network-mode: none
       mgmt-ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
+      stages:
+        create:
+          wait-for:
+          {% for router in routers %}
+            - node: {{ router.name }}
+              stage: create
+          {% endfor %}
       exec:
         {% for iface in host.interfaces %}
         {% if iface.dhcp %}

@@ -46,6 +46,11 @@ interface {{ iface.name }}
 {% endfor %}
 !
 router bgp {{ router.asn }}
+  {% for iface in router.interfaces %}
+  {% if iface.name == 'Loopback0' %}
+  router-id {{ iface.ip.split("/")[0] }}
+  {% endif %}
+  {% endfor %}
   {% for neighbor in router.neighbors %}
   {% if neighbor.asn != router.asn %}
   neighbor {{ neighbor.ip }} remote-as {{ neighbor.asn }}
@@ -65,7 +70,7 @@ router ospf 1
 {% for iface in router.interfaces %}
 {% if iface.name == 'Loopback0' -%}
   router-id {{ iface.ip.split("/")[0] }}
-{% else %}
+{% elif iface.network %}
   network {{ iface.network }} area 0.0.0.0
 {%- endif %}
 {% endfor %}

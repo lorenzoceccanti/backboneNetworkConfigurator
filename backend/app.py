@@ -37,7 +37,7 @@ def configure():
 
         try:
             NetworkConfig(**data)
-            generate_containerlab_config(data["routers"], data["hosts"])
+            generate_containerlab_config(data["routers"], data["hosts"], data["project_name"])
             generate_arista_configs(data["routers"])
 
             return jsonify({"message": "Network deployed successfully"}), 200
@@ -128,7 +128,7 @@ def generate_password_hash():
     # return the hash in the format $6$salt$hash
     return f"$6${salt}${hash_b64}"
 
-def generate_containerlab_config(routers, hosts):
+def generate_containerlab_config(routers, hosts, project_name):
     """ Generates the containerlab configuration file and writes it in the ./config folder """
     # if any of the interfaces of the host has the dhcp enabled, then insert a field
     # named "dhcp_enabled" with the value "true" in the host dictionary
@@ -148,7 +148,7 @@ def generate_containerlab_config(routers, hosts):
     links = generate_links_from_routers(routers)
     
     template = env.get_template("containerlab.j2")
-    config_content = template.render(routers=routers, hosts=hosts, links=links)
+    config_content = template.render(project_name=project_name, routers=routers, hosts=hosts, links=links)
 
     containerlab_file = os.path.join(CONFIG_DIR, "topology.clab.yml")
     with open(containerlab_file, "w") as f:
@@ -167,8 +167,23 @@ def generate_arista_configs(routers):
     for i, router in enumerate(routers):
         router["mngt_ipv4"] = f"{str(ipv4_base + i)}/24"
         router["mngt_ipv6"] = f"{str(ipv6_base + i)}/64"
+        # also generate the network address for each interface that is used in ospf configuration
         for interface in router["interfaces"]:
-            interface["network"] = get_network_address(interface["ip"])
+            # for the ospf settings, we need to know the network address of the interface
+            # but if that network address is on the same network as the neighbor, 
+            # we don't need to add it, since it will be added in the neighbor's configuration
+            for neighbor in router["neighbors"]:
+                network_mask = interface["ip"].split("/")[1]
+                neighbor_network = get_network_address(neighbor["ip"] + "/" + network_mask)
+                interface_network = get_network_address(interface["ip"])
+
+                if neighbor_network == interface_network:
+                    # if the neighbor is on the same network as the interface, break the loop
+                    break
+            else:
+                # if none of the neighbors are on the same network as the interface, add the network
+                interface["network"] = interface_network
+                print(f"Network: {interface['network']}")
     
         # generate the password hash for the admin user and add it to the json
         router["admin_password"] = generate_password_hash()

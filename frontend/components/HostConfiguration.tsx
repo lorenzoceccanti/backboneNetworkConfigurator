@@ -113,7 +113,7 @@ export default function HostConfiguration({
       <div>
         <label className="block text-sm font-medium">Interfaces</label>
         {config.interfaces.map((iface, i) => (
-          <div key={i} className="flex space-x-2 my-2">
+          <div key={i} className="md:flex md:space-x-2 my-2 space-y-3 md:space-y-0 mb-10 md:mb-0">
             <Select value={config.interfaces[i].name} onValueChange={(value) => handleInterfaceSelect(i, value)}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select an Interface" />
@@ -156,15 +156,24 @@ export default function HostConfiguration({
               />
             </div>
             <button
+              disabled={i === 0}
               onClick={() => removeInterface(i)}
-              className="text-red-500 hover:text-red-700"
+              className="text-red-500 hover:text-red-700 md:border-none md:bg-transparent md:p-0 border border-red-500 rounded-md px-2 py-1 flex items-center md:hidden"
+            >
+              <span className="mr-1">Delete Interface</span>
+              <X size={20} />
+            </button>
+            <button
+              disabled={i === 0}
+              onClick={() => removeInterface(i)}
+              className="text-red-500 hover:text-red-700 hidden sm:block"
             >
               <X size={20} />
             </button>
           </div>
         ))}
         <Button
-          className="mt-2"
+          className="md:mt-2 mb-5 md:mb-0"
           onClick={() =>
             handleChange("interfaces", [...config.interfaces, { name: "", ip: "", dhcp: false }])
           }

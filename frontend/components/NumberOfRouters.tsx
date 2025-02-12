@@ -36,6 +36,7 @@ const formSchema = z.object({
     z.number().gte(1).lte(10)
   ),
   server_ip: z.string().nonempty("Server IP is required").ip("Invalid IP address"),
+  project_name: z.string().nonempty("Project name is required"),
 });
 
 export default function NumberOfRouters() {
@@ -66,6 +67,7 @@ export default function NumberOfRouters() {
       number_of_routers: 0,
       number_of_hosts: 0,
       server_ip: "127.0.0.1",
+      project_name: "test01",
     },
   });
 
@@ -78,7 +80,7 @@ export default function NumberOfRouters() {
         interfaces: [
           {
             name: "Loopback0",
-            ip: "1.1.1.1/24",
+            ip: "1.1.1.1/32",
             peer: {
               name: "",
               interface: "",
@@ -123,6 +125,7 @@ export default function NumberOfRouters() {
 
   const handleGenerateConfiguration = async (routerConfigs: RouterConfig[], hostConfigs: HostConfig[]) => {
     const formattedConfig = {
+      project_name: form.getValues("project_name"),
       routers: routerConfigs.map((router) => ({
         name: router.routerName,
         asn: router.asNumber,
@@ -232,7 +235,7 @@ export default function NumberOfRouters() {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-5 w-fit mx-auto"
         >
-          <div className="grid grid-cols-3 space-x-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="number_of_routers"
@@ -265,6 +268,19 @@ export default function NumberOfRouters() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>What is the server IP?</FormLabel>
+                  <FormControl>
+                    <Input type="text" className="w-full" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="project_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>What is the name of the project?</FormLabel>
                   <FormControl>
                     <Input type="text" className="w-full" {...field} />
                   </FormControl>
@@ -328,7 +344,7 @@ export default function NumberOfRouters() {
             // if none of the interfaces have dhcp enabled, then gateway is required
             (config.interfaces.some(iface => iface.dhcp) || config.gateway)
           ) && (
-            <div className="space-x-3">
+            <div className="sm:space-x-3">
               <Button className="w-fit my-4" onClick={() => handleGenerateConfiguration(routerConfigs, hostConfigs)}>
                 Generate Configuration
               </Button>
