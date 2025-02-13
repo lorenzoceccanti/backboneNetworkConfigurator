@@ -1,0 +1,5 @@
+sudo dhclient enp0s8
+sudo ip link add name vSwitch type bridge
+sudo ip link set vSwitch up
+sudo ip link set enp0s8 master vSwitch  # Connetti il bridge a Internet
+sudo dhclient vSwitch
