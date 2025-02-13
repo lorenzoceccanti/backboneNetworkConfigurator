@@ -1,6 +1,5 @@
-R2(config)#show startup-config
 ! Command: show startup-config
-! Startup-config last modified at Thu Feb 13 10:56:59 2025 by root
+! Startup-config last modified at Thu Feb 13 12:10:56 2025 by root
 ! device: R2 (cEOSLab, EOS-4.33.0F-39050855.4330F (engineering build))
 !
 no aaa root
@@ -56,6 +55,7 @@ interface Management0
 ip routing
 !
 ip as-path access-list AS55001-IN permit ^55001_ any
+ip as-path access-list AS55010-IN permit ^55010_ any
 ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24
 !
 ip route 0.0.0.0/0 172.20.20.1
@@ -64,6 +64,11 @@ route-map RM-IN-55001 permit 10
    match as-path AS55001-IN
 !
 route-map RM-IN-55001 deny 99
+!
+route-map RM-IN-55010 permit 10
+   match as-path AS55010-IN
+!
+route-map RM-IN-55010 deny 99
 !
 route-map RM-OUT permit 10
    match ip address prefix-list R2-NETWORKS
@@ -77,8 +82,9 @@ router bgp 55002
    neighbor 131.114.28.1 remote-as 55001
    neighbor 131.114.28.1 route-map RM-IN-55001 in
    neighbor 131.114.28.1 route-map RM-OUT out
-   neighbor 134.114.28.1 remote-as 55010
-   neighbor 134.114.28.1 route-map RM-OUT out
+   neighbor 134.114.28.2 remote-as 55010
+   neighbor 134.114.28.2 route-map RM-IN-55010 in
+   neighbor 134.114.28.2 route-map RM-OUT out
    network 192.168.102.0/24
 !
 router multicast
@@ -94,4 +100,3 @@ router ospf 1
    max-lsa 12000
 !
 end
-R2(config)#
