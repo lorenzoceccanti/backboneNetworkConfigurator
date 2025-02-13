@@ -4,7 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 import json
 import os
 import sys
-import crypt
+#import crypt
 import ipaddress
 from jsonrpclib import Server
 from dotenv import load_dotenv
@@ -245,8 +245,8 @@ def transit():
 
         for through_router_ip in through_router_ips:
             if through_router_ip["asn"] == from_asn:
-                commands_from.append(f"   neighbor {through_router_ip['router_ip']} remote-as {through_asn}")
-                commands_from.append(f"   neighbor {through_router_ip['router_ip']} route-map RM-IN-{through_asn} in")
+                commands_from.append(f"   neighbor {through_router_ip['my_router_ip']} remote-as {through_asn}")
+                commands_from.append(f"   neighbor {through_router_ip['my_router_ip']} route-map RM-IN-{through_asn} in")
                 commands_from.append(f"exit")
 
         mngt_ip_from = transit["from"]["mngt_ip"]
@@ -278,8 +278,8 @@ def transit():
 
                 for through_router_ip in through_router_ips:
                     if through_router_ip["asn"] == to_asn:
-                        commands_to.append(f"   neighbor {through_router_ip['router_ip']} remote-as {through_asn}")
-                        commands_to.append(f"   neighbor {through_router_ip['router_ip']} route-map RM-IN-{through_asn} in")
+                        commands_to.append(f"   neighbor {through_router_ip['my_router_ip']} remote-as {through_asn}")
+                        commands_to.append(f"   neighbor {through_router_ip['my_router_ip']} route-map RM-IN-{through_asn} in")
                         commands_to.append(f"exit")
 
                 mngt_ip_to = to["mngt_ip"]
@@ -341,5 +341,86 @@ def transit():
             f.write("\n".join(commands_through))
 
     return jsonify({"message": "Transit configuration initiated"}), 200
+
+
+@app.route('/announce', methods=['POST'])
+def announce():
+    """
+    This endpoint is used to send the announce configuration to the Arista routers
+    """
+    data = request.get_json()
+
+    if not data or "router" not in data or "asn" not in data or "mngt_ip" not in data or "network_to_announce" not in data or "to" not in data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
+    router = data["router"]
+    asn = data["asn"]
+    mngt_ip = data["mngt_ip"]
+    network_to_announce = data["network_to_announce"]
+    to_list = data["to"]
+
+    commands = [
+        f"enable",
+        f"configure",
+        f"ip prefix-list {router}-NETWORKS seq 10 permit {network_to_announce}",
+        f"route-map RM-OUT permit 10",
+        f"   match ip address prefix-list {router}-NETWORKS",
+        f"route-map RM-OUT deny 99"
+        f"exit",
+        f"router bgp {asn}",
+        f"   bgp missing-policy direction in action deny",
+        f"   bgp missing-policy direction out action deny",
+        f"   network {network_to_announce}",
+    ]
+
+    for to in to_list:
+        his_router_ip = to["his_router_ip"]
+        commands.append(f"   neighbor {his_router_ip} route-map RM-OUT out")
+
+    commands.append(f"exit")
+
+    response = send_arista_commands(mngt_ip, commands)
+    print(response)
+    # save on file the router configuration
+    with open(f"config/{router}_ANNOUNCE.cfg", "w") as f:
+        f.write("\n".join(commands))
+
+    return jsonify({"message": "Announce configuration sent"}), 200
+
+@app.route('/stop-announce', methods=['POST'])
+def stop_announce():
+    """
+    This endpoint is used to stop the announce configuration on the Arista routers
+    """
+    data = request.get_json()
+
+    if not data or "router" not in data or "asn" not in data or "mngt_ip" not in data or "to" not in data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
+    router = data["router"]
+    asn = data["asn"]
+    mngt_ip = data["mngt_ip"]
+    to_list = data["to"]
+
+    commands = [
+        f"enable",
+        f"configure",
+        f"router bgp {asn}",
+    ]
+
+    for to in to_list:
+        his_router_ip = to["his_router_ip"]
+        commands.append(f"   no neighbor {his_router_ip} route-map RM-OUT out")
+
+    commands.append(f"exit")
+
+    response = send_arista_commands(mngt_ip, commands)
+    print(response)
+    # save on file the router configuration
+    with open(f"config/{router}_STOP_ANNOUNCE.cfg", "w") as f:
+        f.write("\n".join(commands))
+
+    return jsonify({"message": "Stop announce configuration sent"}), 200
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
