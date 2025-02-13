@@ -232,7 +232,7 @@ def transit():
 
         commands_from = [
             f"enable",
-            f"config",
+            f"configure",
             f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
             f"route-map RM-IN-{through_asn} permit 10",
             f"   match as-path AS{through_asn}-IN",
@@ -265,7 +265,7 @@ def transit():
 
                 commands_to = [
                     f"enable",
-                    f"config",
+                    f"configure",
                     f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
                     f"route-map RM-IN-{through_asn} permit 10",
                     f"   match as-path AS{through_asn}-IN",
@@ -291,7 +291,7 @@ def transit():
 
         commands_through = [
             f"enable",
-            f"config",
+            f"configure",
             f"ip as-path access-list AS{from_asn}-IN permit ^{from_asn}$ any",
             f"ip as-path access-list AS{from_asn}-OUT permit ^{from_asn}$ any",
             f"route-map RM-IN-{from_asn} permit 10",
