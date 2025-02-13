@@ -2,3 +2,5 @@ Flask
 flask-cors
 jinja2
 pydantic
+jsonrpclib
+python-dotenv

@@ -8,6 +8,8 @@ import hashlib
 import secrets
 import base64
 import ipaddress
+from jsonrpclib import Server
+from dotenv import load_dotenv
 from network_config import NetworkConfig, get_network_address
 
 app = Flask(__name__, static_folder="out", static_url_path="")
@@ -17,6 +19,11 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "templates")
 CONFIG_DIR = os.path.join(os.path.dirname(__file__), "config")
 os.makedirs(CONFIG_DIR, exist_ok=True) # create the config directory if it doesn't exist
 env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))
+
+load_dotenv()
+
+USERNAME = os.getenv("USERNAME")
+PASSWORD = os.getenv("PASSWORD")
 
 @app.route("/")
 def serve_index():
@@ -52,7 +59,6 @@ def configure():
 @app.route("/deploy", methods=["POST"])
 def deploy():
     os.system(f"./deploy_network.sh")
-    # os.system("echo 'Deploying network' && sleep 10")
     return jsonify({"message": "Network deployed successfully"}), 200
 
 
@@ -196,6 +202,187 @@ def generate_arista_configs(routers):
 
         files.append(file_path)
 
+def send_arista_commands(mngt_ip, commands):
+    """ Sends the commands to the Arista switch using the eAPI """
+    if not mngt_ip:
+        return {"error": "Management IP non specificato"}
+
+    url = f"http://{USERNAME}:{PASSWORD}@{mngt_ip}/command-api"
+
+    try:
+        switch = Server(url)
+        response = switch.runCmds(1, commands)
+        return response
+    except Exception as e:
+        return {"error": str(e)}
+    
+@app.route('/transit', methods=['POST'])
+def transit():
+    """
+    This endpoint is used to send the transit configuration to the Arista routers
+    """
+    data = request.get_json()
+
+    if not data or "transit" not in data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
+    transits = data["transit"]
+    
+    for transit in transits:
+        from_asn = transit["from"]["asn"]
+        from_router = transit["from"]["router"]
+
+        through_asn = transit["through"]["asn"]
+        through_router = transit["through"]["router"]
+
+        # print(f"\n## Configurazione BGP per {from_router} (AS {from_asn})")
+
+        # Access-List of the through routers
+        # print(f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any")
+        
+        # Route-Map of the through routers
+        # print(f"route-map RM-IN-{through_asn} permit 10")
+        # print(f"   match as-path AS{through_asn}-IN")
+        # print(f"route-map RM-IN-{through_asn} deny 99")
+        
+        # BGP configuration of the FROM router
+        # print(f"router bgp {from_asn}")
+        # print(f"   bgp missing-policy direction in action deny")
+        # print(f"   bgp missing-policy direction out action deny")
+        # print(f"   neighbor {through_router} remote-as {through_asn}")
+        # print(f"   neighbor {through_router} route-map RM-IN-{through_asn} in")
+        # print(f"   neighbor {through_router} route-map RM-OUT out")
+
+        commands = [
+            f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
+            f"route-map RM-IN-{through_asn} permit 10",
+            f"   match as-path AS{through_asn}-IN",
+            f"route-map RM-IN-{through_asn} deny 99",
+            f"router bgp {from_asn}",
+            f"   bgp missing-policy direction in action deny",
+            f"   bgp missing-policy direction out action deny",
+            f"   neighbor {through_router} remote-as {through_asn}",
+            f"   neighbor {through_router} route-map RM-IN-{through_asn} in",
+        ]
+        mngt_ip_from = transit["from"].get("mngt_ip")
+        response = send_arista_commands(mngt_ip_from, commands)
+        print(response)
+
+        # BGP configuration of the TO routers
+        for to in transit["to"]:
+            if isinstance(to, dict):  # in this way we exclude the "Internet" field
+                to_asn = to["asn"]
+                to_router = to["router"]
+
+                # print(f"\n## Configurazione BGP per {to_router} (AS {to_asn})")
+                # Access-List of the through routers
+                # print(f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any")
+                
+                # Route-Map of the through routers
+                # print(f"route-map RM-IN-{through_asn} permit 10")
+                # print(f"   match as-path AS{through_asn}-IN")
+                # print(f"route-map RM-IN-{through_asn} deny 99")
+
+                # BGP configuration of the TO router
+                # print(f"router bgp {to_asn}")
+                # print(f"   bgp missing-policy direction in action deny")
+                # print(f"   bgp missing-policy direction out action deny")
+                # print(f"   neighbor {through_router} remote-as {through_asn}")
+                # print(f"   neighbor {through_router} route-map RM-IN-{through_asn} in")
+
+                commands_to = [
+                    f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
+                    f"route-map RM-IN-{through_asn} permit 10",
+                    f"   match as-path AS{through_asn}-IN",
+                    f"route-map RM-IN-{through_asn} deny 99",
+                    f"router bgp {to_asn}",
+                    f"   bgp missing-policy direction in action deny",
+                    f"   bgp missing-policy direction out action deny",
+                    f"   neighbor {through_router} remote-as {through_asn}",
+                    f"   neighbor {through_router} route-map RM-IN-{through_asn} in"
+                ]
+                mngt_ip_to = to.get("mngt_ip")
+                response = send_arista_commands(mngt_ip_to, commands_to)
+                print(response)
+
+
+        # THROUGH router configuration
+        # print(f"\n## Configurazione BGP per {through_router} (AS {through_asn})")
+
+        # Access-List of the from routers
+        # print(f"ip as-path access-list AS{from_asn}-IN permit ^{from_asn}$ any")
+        # print(f"ip as-path access-list AS{from_asn}-OUT permit ^{from_asn}$ any")
+
+        # Route-Map of the from routers
+        # print(f"route-map RM-IN-{from_asn} permit 10")
+        # print(f"   match as-path AS{from_asn}-IN")
+        # print(f"route-map RM-IN-{from_asn} deny 99")
+
+        commands_through = [
+            f"ip as-path access-list AS{from_asn}-IN permit ^{from_asn}$ any",
+            f"ip as-path access-list AS{from_asn}-OUT permit ^{from_asn}$ any",
+            f"route-map RM-IN-{from_asn} permit 10",
+            f"   match as-path AS{from_asn}-IN",
+            f"route-map RM-IN-{from_asn} deny 99",
+            f"router bgp {through_asn}",
+            f"   bgp missing-policy direction in action deny",
+            f"   bgp missing-policy direction out action deny",
+            f"   neighbor {from_router} remote-as {from_asn}",
+            f"   neighbor {from_router} route-map RM-IN-{from_asn} in",
+            f"   neighbor {from_router} route-map RM-OUT-{to_asn} out"
+        ]
+
+        for to in transit["to"]:
+            if isinstance(to, dict):
+                # Access-List of the to routers
+                to_asn = to["asn"]
+                # print(f"ip as-path access-list AS{to_asn}-IN permit ^{to_asn}$ any")
+                # print(f"ip as-path access-list AS{to_asn}-OUT permit ^{to_asn}$ any")
+                # print(f"route-map RM-IN-{to_asn} permit 10")
+
+                # Route-Map of the to routers
+                # print(f"   match as-path AS{to_asn}-IN")
+                # print(f"route-map RM-IN-{to_asn} deny 99")
+
+                # print(f"route-map RM-OUT-{to_asn} permit 10")
+                # print(f"   match as-path AS{to_asn}-OUT")
+
+                commands_through.append(f"ip as-path access-list AS{to_asn}-IN permit ^{to_asn}$ any")
+                commands_through.append(f"ip as-path access-list AS{to_asn}-OUT permit ^{to_asn}$ any")
+                commands_through.append(f"route-map RM-IN-{to_asn} permit 10")
+                commands_through.append(f"   match as-path AS{to_asn}-IN")
+                commands_through.append(f"route-map RM-IN-{to_asn} deny 99")
+                commands_through.append(f"route-map RM-OUT-{to_asn} permit 10")
+                commands_through.append(f"   match as-path AS{to_asn}-OUT")
+                commands_through.append(f"router bgp {through_asn}")
+                commands_through.append(f"   neighbor {to_router} remote-as {to_asn}")
+                commands_through.append(f"   neighbor {to_router} route-map RM-IN-{to_asn} in")
+                commands_through.append(f"   neighbor {to_router} route-map RM-OUT-{from_asn} out")
+        
+        mngt_ip_through = transit["through"].get("mngt_ip")
+        response = send_arista_commands(mngt_ip_through, commands_through)
+        print(response)
+        
+        # BGP configuration of the THROUGH router
+        # print(f"\nrouter bgp {through_asn}")
+        # print(f"   bgp missing-policy direction in action deny")
+        # print(f"   bgp missing-policy direction out action deny")
+        
+        # BGP Neighbors (FROM)
+        # print(f"   neighbor {from_router} remote-as {from_asn}")
+        # print(f"   neighbor {from_router} route-map RM-IN-{from_asn} in")
+        #print(f"   neighbor {from_router} route-map RM-OUT-{to_asn} out")
+        
+        # BGP Neighbors (TO)
+        # for to in transit["to"]:
+        #     if isinstance(to, dict):  # Escludo "Internet"
+        #         to_asn = to["asn"]
+        #         to_router = to["router"]
+        #         print(f"   neighbor {to_router} remote-as {to_asn}")
+        #         print(f"   neighbor {to_router} route-map RM-IN-{to_asn} in")
+        #         print(f"   neighbor {to_router} route-map RM-OUT-{from_asn} out")
+
+    return jsonify({"message": "Transit configuration initiated"}), 200
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
