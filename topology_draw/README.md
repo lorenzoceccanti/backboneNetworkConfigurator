@@ -1,0 +1,1 @@
+This folder contains the drawed network topology for the project.
