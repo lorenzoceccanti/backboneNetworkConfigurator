@@ -4,7 +4,8 @@ no aaa root
 username admin privilege 15 role network-admin secret sha512 {{ router.admin_password }}
 !
 management api http-commands
-   no shutdown
+  protocol http
+  no shutdown
 !
 no service interface inactive port-id allocation disabled
 !

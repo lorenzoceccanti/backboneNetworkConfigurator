@@ -4,9 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 import json
 import os
 import sys
-import hashlib
-import secrets
-import base64
+import crypt
 import ipaddress
 from jsonrpclib import Server
 from dotenv import load_dotenv
@@ -124,15 +122,10 @@ def generate_links_from_routers(routers):
 def generate_password_hash():
     """ Generates a password hash for the admin user
         The hash is in the format $6$salt$hash with the sha512 algorithm """
-    password = "admin".encode("utf-8")
-    # generate a 16 bytes random salt to add to the password
-    salt = base64.b64encode(secrets.token_bytes(16)).decode("utf-8").rstrip("=")[:16]
-
-    hashed = hashlib.sha512((salt + password.decode()).encode()).digest()
-    hash_b64 = base64.b64encode(hashed).decode("utf-8").rstrip("=")
-
-    # return the hash in the format $6$salt$hash
-    return f"$6${salt}${hash_b64}"
+    password = "admin"
+    salt = crypt.mksalt(crypt.METHOD_SHA512)
+    hashed_password = crypt.crypt(password, salt)
+    return hashed_password
 
 def generate_containerlab_config(routers, hosts, project_name):
     """ Generates the containerlab configuration file and writes it in the ./config folder """
@@ -237,10 +230,13 @@ def transit():
         through_router = transit["through"]["router"]
         through_router_ips = transit["through"]["router_ip"]
 
-        commands = [
+        commands_from = [
+            f"enable",
+            f"config",
             f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
             f"route-map RM-IN-{through_asn} permit 10",
             f"   match as-path AS{through_asn}-IN",
+            f"exit",
             f"route-map RM-IN-{through_asn} deny 99",
             f"router bgp {from_asn}",
             f"   bgp missing-policy direction in action deny",
@@ -249,15 +245,16 @@ def transit():
 
         for through_router_ip in through_router_ips:
             if through_router_ip["asn"] == from_asn:
-                commands.append(f"   neighbor {through_router_ip['router_ip']} remote-as {through_asn}")
-                commands.append(f"   neighbor {through_router_ip['router_ip']} route-map RM-IN-{through_asn} in")
+                commands_from.append(f"   neighbor {through_router_ip['router_ip']} remote-as {through_asn}")
+                commands_from.append(f"   neighbor {through_router_ip['router_ip']} route-map RM-IN-{through_asn} in")
+                commands_from.append(f"exit")
 
         mngt_ip_from = transit["from"]["mngt_ip"]
-        response = send_arista_commands(mngt_ip_from, commands)
+        response = send_arista_commands(mngt_ip_from, commands_from)
         print(response)
         # save on file the from router configuration
         with open(f"config/{from_router}_BGP.cfg", "w") as f:
-            f.write("\n".join(commands))
+            f.write("\n".join(commands_from))
 
         # BGP configuration of the TO routers
         for to in transit["to"]:
@@ -267,9 +264,12 @@ def transit():
                 to_router_ip = to["router_ip"]
 
                 commands_to = [
+                    f"enable",
+                    f"config",
                     f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
                     f"route-map RM-IN-{through_asn} permit 10",
                     f"   match as-path AS{through_asn}-IN",
+                    f"exit",
                     f"route-map RM-IN-{through_asn} deny 99",
                     f"router bgp {to_asn}",
                     f"   bgp missing-policy direction in action deny",
@@ -280,6 +280,7 @@ def transit():
                     if through_router_ip["asn"] == to_asn:
                         commands_to.append(f"   neighbor {through_router_ip['router_ip']} remote-as {through_asn}")
                         commands_to.append(f"   neighbor {through_router_ip['router_ip']} route-map RM-IN-{through_asn} in")
+                        commands_to.append(f"exit")
 
                 mngt_ip_to = to["mngt_ip"]
                 response = send_arista_commands(mngt_ip_to, commands_to)
@@ -289,17 +290,21 @@ def transit():
                     f.write("\n".join(commands_to))
 
         commands_through = [
+            f"enable",
+            f"config",
             f"ip as-path access-list AS{from_asn}-IN permit ^{from_asn}$ any",
             f"ip as-path access-list AS{from_asn}-OUT permit ^{from_asn}$ any",
             f"route-map RM-IN-{from_asn} permit 10",
             f"   match as-path AS{from_asn}-IN",
+            f"exit",
             f"route-map RM-IN-{from_asn} deny 99",
             f"router bgp {through_asn}",
             f"   bgp missing-policy direction in action deny",
             f"   bgp missing-policy direction out action deny",
             f"   neighbor {from_router_ip} remote-as {from_asn}",
             f"   neighbor {from_router_ip} route-map RM-IN-{from_asn} in",
-            f"   neighbor {from_router_ip} route-map RM-OUT-{to_asn} out"
+            f"   neighbor {from_router_ip} route-map RM-OUT-{to_asn} out",
+            f"exit",
         ]
 
         for to in transit["to"]:
@@ -311,9 +316,11 @@ def transit():
                 commands_through.append(f"ip as-path access-list AS{to_asn}-OUT permit ^{to_asn}$ any")
                 commands_through.append(f"route-map RM-IN-{to_asn} permit 10")
                 commands_through.append(f"   match as-path AS{to_asn}-IN")
+                commands_through.append(f"exit")
                 commands_through.append(f"route-map RM-IN-{to_asn} deny 99")
                 commands_through.append(f"route-map RM-OUT-{to_asn} permit 10")
                 commands_through.append(f"   match as-path AS{to_asn}-OUT")
+                commands_through.append(f"exit")
 
                 for through_router_ip in through_router_ips:
                     if through_router_ip["asn"] == to_asn:
@@ -321,8 +328,10 @@ def transit():
                         commands_through.append(f"   neighbor {to_router_ip} remote-as {to_asn}")
                         commands_through.append(f"   neighbor {to_router_ip} route-map RM-IN-{to_asn} in")
                         commands_through.append(f"   neighbor {to_router_ip} route-map RM-OUT-{from_asn} out")
+                        commands_through.append(f"exit")
                         commands_through.append(f"route-map RM-OUT-{from_asn} permit 10")
                         commands_through.append(f"   match as-path AS{from_asn}-OUT")
+                        commands_through.append(f"exit")
                         commands_through.append(f"route-map RM-OUT-{from_asn} deny 99")
         
         mngt_ip_through = transit["through"]["mngt_ip"]
