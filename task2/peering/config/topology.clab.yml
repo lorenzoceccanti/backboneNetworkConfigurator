@@ -1,0 +1,265 @@
+name: test02
+topology:
+  nodes:
+  
+  
+    R2:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.2
+      startup-config: R2.cfg
+    
+  
+    R1:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.3
+      startup-config: R1.cfg
+    
+  
+    R20:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.4
+      startup-config: R20.cfg
+    
+  
+    R10:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.5
+      startup-config: R10.cfg
+    
+  
+    R11:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.6
+      startup-config: R11.cfg
+    
+  
+    R30:
+      kind: arista_ceos
+      image: ceos:4.33.0F
+      restart-policy: always
+      mgmt-ipv4: 172.20.20.7
+      startup-config: R30.cfg
+    
+  
+
+  
+    H1:
+      kind: linux
+      image: alpine:latest
+      restart-policy: always
+      network-mode: none
+      mgmt-ipv4: 172.20.20.8
+      stages:
+        create:
+          wait-for:
+          
+            - node: R2
+              stage: create
+          
+            - node: R1
+              stage: create
+          
+            - node: R20
+              stage: create
+          
+            - node: R10
+              stage: create
+          
+            - node: R11
+              stage: create
+          
+            - node: R30
+              stage: create
+          
+      exec:
+        
+        
+        - udhcpc -i eth1
+        
+        
+        
+   
+  
+    H2:
+      kind: linux
+      image: alpine:latest
+      restart-policy: always
+      network-mode: none
+      mgmt-ipv4: 172.20.20.9
+      stages:
+        create:
+          wait-for:
+          
+            - node: R2
+              stage: create
+          
+            - node: R1
+              stage: create
+          
+            - node: R20
+              stage: create
+          
+            - node: R10
+              stage: create
+          
+            - node: R11
+              stage: create
+          
+            - node: R30
+              stage: create
+          
+      exec:
+        
+        
+        - udhcpc -i eth1
+        
+        
+        
+   
+  
+    H3:
+      kind: linux
+      image: alpine:latest
+      restart-policy: always
+      network-mode: none
+      mgmt-ipv4: 172.20.20.10
+      stages:
+        create:
+          wait-for:
+          
+            - node: R2
+              stage: create
+          
+            - node: R1
+              stage: create
+          
+            - node: R20
+              stage: create
+          
+            - node: R10
+              stage: create
+          
+            - node: R11
+              stage: create
+          
+            - node: R30
+              stage: create
+          
+      exec:
+        
+        
+        - udhcpc -i eth1
+        
+        
+        
+   
+  
+    H4:
+      kind: linux
+      image: alpine:latest
+      restart-policy: always
+      network-mode: none
+      mgmt-ipv4: 172.20.20.11
+      stages:
+        create:
+          wait-for:
+          
+            - node: R2
+              stage: create
+          
+            - node: R1
+              stage: create
+          
+            - node: R20
+              stage: create
+          
+            - node: R10
+              stage: create
+          
+            - node: R11
+              stage: create
+          
+            - node: R30
+              stage: create
+          
+      exec:
+        
+        
+        - udhcpc -i eth1
+        
+        
+        
+   
+  
+    H5:
+      kind: linux
+      image: alpine:latest
+      restart-policy: always
+      network-mode: none
+      mgmt-ipv4: 172.20.20.12
+      stages:
+        create:
+          wait-for:
+          
+            - node: R2
+              stage: create
+          
+            - node: R1
+              stage: create
+          
+            - node: R20
+              stage: create
+          
+            - node: R10
+              stage: create
+          
+            - node: R11
+              stage: create
+          
+            - node: R30
+              stage: create
+          
+      exec:
+        
+        
+        - udhcpc -i eth1
+        
+        
+        
+   
+  
+  links:
+
+  
+    - endpoints: ["R1:eth2", "R20:eth1"]
+  
+    - endpoints: ["R10:eth1", "R20:eth2"]
+  
+    - endpoints: ["R10:eth2", "R2:eth3"]
+  
+    - endpoints: ["H2:eth1", "R1:eth3"]
+  
+    - endpoints: ["H1:eth1", "R2:eth1"]
+  
+    - endpoints: ["R11:eth3", "R30:eth1"]
+  
+    - endpoints: ["H3:eth1", "R20:eth3"]
+  
+    - endpoints: ["R10:eth3", "R11:eth2"]
+  
+    - endpoints: ["H5:eth1", "R30:eth3"]
+  
+    - endpoints: ["H4:eth1", "R11:eth1"]
+  
+    - endpoints: ["R1:eth1", "R2:eth2"]
+  
