@@ -234,7 +234,8 @@ topology:
         
         - udhcpc -i eth1
         
-   
+    gateway1:
+      kind: ovs-bridge
   
       
   links:
@@ -262,4 +263,4 @@ topology:
   
     - endpoints: ["R1:eth1", "R2:eth2"]
   
-    - endpoints: ["R30:eth2", "macvlan:enp0s8"]
+    - endpoints: ["R30:eth2", "gateway1:veth1-peer"]
