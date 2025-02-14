@@ -1,4 +1,4 @@
-name: test01
+name: test02
 topology:
   nodes:
   
@@ -34,6 +34,7 @@ topology:
       mgmt-ipv4: 172.20.20.5
       startup-config: R10.cfg
     
+  
     R11:
       kind: arista_ceos
       image: ceos:4.33.0F
@@ -41,12 +42,15 @@ topology:
       mgmt-ipv4: 172.20.20.6
       startup-config: R11.cfg
     
+  
     R30:
       kind: arista_ceos
       image: ceos:4.33.0F
       restart-policy: always
       mgmt-ipv4: 172.20.20.7
       startup-config: R30.cfg
+    
+  
 
   
     H1:
@@ -58,8 +62,25 @@ topology:
       stages:
         create:
           wait-for:
+          
             - node: R2
-              stage: create  
+              stage: create
+          
+            - node: R1
+              stage: create
+          
+            - node: R20
+              stage: create
+          
+            - node: R10
+              stage: create
+          
+            - node: R11
+              stage: create
+          
+            - node: R30
+              stage: create
+          
       exec:
         
         
@@ -78,8 +99,25 @@ topology:
       stages:
         create:
           wait-for:
+          
+            - node: R2
+              stage: create
+          
             - node: R1
-              stage: create  
+              stage: create
+          
+            - node: R20
+              stage: create
+          
+            - node: R10
+              stage: create
+          
+            - node: R11
+              stage: create
+          
+            - node: R30
+              stage: create
+          
       exec:
         
         
@@ -98,8 +136,25 @@ topology:
       stages:
         create:
           wait-for:
+          
+            - node: R2
+              stage: create
+          
+            - node: R1
+              stage: create
+          
             - node: R20
-              stage: create  
+              stage: create
+          
+            - node: R10
+              stage: create
+          
+            - node: R11
+              stage: create
+          
+            - node: R30
+              stage: create
+          
       exec:
         
         
@@ -118,13 +173,34 @@ topology:
       stages:
         create:
           wait-for:
+          
+            - node: R2
+              stage: create
+          
+            - node: R1
+              stage: create
+          
+            - node: R20
+              stage: create
+          
+            - node: R10
+              stage: create
+          
             - node: R11
-              stage: create  
+              stage: create
+          
+            - node: R30
+              stage: create
+          
       exec:
         
         
         - udhcpc -i eth1
-    
+        
+        
+        
+   
+  
     H5:
       kind: linux
       image: alpine:latest
@@ -134,41 +210,56 @@ topology:
       stages:
         create:
           wait-for:
+          
+            - node: R2
+              stage: create
+          
+            - node: R1
+              stage: create
+          
+            - node: R20
+              stage: create
+          
+            - node: R10
+              stage: create
+          
+            - node: R11
+              stage: create
+          
             - node: R30
-              stage: create  
+              stage: create
+          
       exec:
         
         
         - udhcpc -i eth1
-      
-      
-        
-        
         
    
   
+      
   links:
 
   
-    - endpoints: ["R10:eth2", "R2:eth3"]
-  
-    - endpoints: ["H1:eth1", "R2:eth1"]
-  
-    - endpoints: ["R1:eth1", "R2:eth2"]
-  
     - endpoints: ["R1:eth2", "R20:eth1"]
+  
+    - endpoints: ["R10:eth1", "R20:eth2"]
+  
+    - endpoints: ["R10:eth2", "R2:eth3"]
   
     - endpoints: ["H2:eth1", "R1:eth3"]
   
-    - endpoints: ["R10:eth1", "R20:eth2"]
-
-    - endpoints: ["R10:eth3", "R11:eth2"]
+    - endpoints: ["H1:eth1", "R2:eth1"]
+  
+    - endpoints: ["R11:eth3", "R30:eth1"]
   
     - endpoints: ["H3:eth1", "R20:eth3"]
   
-    - endpoints: ["H4:eth1", "R11:eth1"]
-
-    - endpoints: ["R11:eth3", "R30:eth1"]
-
+    - endpoints: ["R10:eth3", "R11:eth2"]
+  
     - endpoints: ["H5:eth1", "R30:eth3"]
   
+    - endpoints: ["H4:eth1", "R11:eth1"]
+  
+    - endpoints: ["R1:eth1", "R2:eth2"]
+  
+    - endpoints: ["R30:eth2", "macvlan:enp0s8"]
