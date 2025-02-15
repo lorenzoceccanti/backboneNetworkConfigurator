@@ -2,11 +2,11 @@
 
 # PROCEDURA CON OVS - connessione della macchina allo switch virtuale
 sudo ovs-vsctl --if-exists del-br gateway1
-sudo dhclient enp0s8
+sudo dhclient enp0s8 <-
 sudo ovs-vsctl add-br gateway1
 sudo ovs-vsctl add-port gateway1 enp0s8
-sudo ip addr flush dev enp0s8
-sudo dhclient gateway1
+sudo ip addr flush dev enp0s8 <-
+sudo dhclient gateway1 <-
 
 -> Prende l'indirizzo che solitamente si prende enp0s8
 A questo punto la macchina è connessa
@@ -20,4 +20,6 @@ sudo ovs-vsctl add-port gateway1 veth1
 
 -> La macchina deve usare veth1-peer
 
-ovs-vsctl show -> Verificare la connessione
+sudo ovs-vsctl show -> Verificare la connessione
+
+sudo iptables -t nat -A POSTROUTING -s 10.0.3.0/24 -o enp0s8 -j MASQUERADE
