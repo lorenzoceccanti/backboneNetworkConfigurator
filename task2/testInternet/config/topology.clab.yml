@@ -263,4 +263,4 @@ topology:
   
     - endpoints: ["R1:eth1", "R2:eth2"]
   
-    - endpoints: ["R30:eth2", "gateway1:veth1-peer"]
+    - endpoints: ["R30:eth2", "host:veth1-R30"]
