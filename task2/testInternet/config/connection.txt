@@ -1,2 +1,1 @@
-sudo ovs-vsctl --if-exists del-br gateway1 && sudo dhclient enp0s8 && sudo ovs-vsctl add-br gateway1 && sudo ovs-vsctl add-port gateway1 enp0s8 && sudo ip addr flush dev enp0s8 && sudo dhclient gateway1
-sudo ovs-vsctl add-port gateway1 veth1-R30
+sudo ovs-vsctl --if-exists del-br gateway1 && sudo dhclient enp0s8 && sudo ovs-vsctl add-br gateway1 && sudo ovs-vsctl add-port gateway1 enp0s8 && sudo ip addr flush dev enp0s8 && sudo dhclient gateway1 && sudo ovs-vsctl add-port gateway1 veth1-R30
