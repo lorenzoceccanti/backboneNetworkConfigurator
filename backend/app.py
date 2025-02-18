@@ -422,5 +422,79 @@ def stop_announce():
 
     return jsonify({"message": "Stop announce configuration sent"}), 200
 
+@app.route('/peering', methods=["POST"])
+def peering():
+    """Handler for configuring the rules on the Arista routers having
+    a peering relationship among each other
+    """
+    data = request.get_json()
+    if not data or "routerId" not in data or "asn" not in data or "router_ip" not in data or "mngt_ip" not in data or "peers" not in data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+    
+    routerId = data["routerId"]
+    asn = data["asn"]
+    router_ip = data["router_ip"]
+    father_mngt_ip = data["mngt_ip"]
+    cmd_father_peer = [
+        f"enable",
+        f"configure"
+    ]
+    list_peers = data["peers"]
+
+    # Why a cycle? Because it could happen that an AS has multiple peering
+    # relationship
+    for peer in list_peers:
+        # Checking fields inside list_peers
+        if not peer or "routerId" not in peer or "asn" not in peer or "router_ip" not in peer or "mngt_ip" not in peer:
+            return jsonify({"error": "Invalid JSON format"}), 400
+
+        # Configuring the father peer first
+        # Hypotesis: The rule neighbor <neighbour_ip> remote-as <neigh_as>
+        # has already set with Jinja templating
+        peer_routerId = peer["routerId"]
+        peer_asn = peer["asn"]
+        peer_router_ip = peer["router_ip"]
+        son_man_ip = peer["mngt_ip"]
+        # The extend is like the append, but it doesn't append as a list
+        # but appends each single element as a string, as we want.
+        cmd_father_peer.extend([
+            f"ip as-path access-list AS{peer_asn}-IN permit ^{peer_asn}$ any",
+            f"route-map RM-IN-{peer_asn} permit 10",
+            f"  match as-path AS{peer_asn}-IN",
+            f"exit",
+            f"route-map RM-IN-{peer_asn} deny 99",
+            f"router bgp {asn}",
+            f"  neighbor {peer_router_ip} route-map RM-IN-{peer_asn} in",
+            f"exit"
+        ])
+
+        # Configuring the peer
+        cmd_son_peer = [
+            f"enable",
+            f"configure",
+            f"ip as-path access-list AS{asn}-IN permit ^{asn}$ any",
+            f"route-map RM-IN-{asn} permit 10",
+            f"  match as-path AS{asn}-IN",
+            f"exit",
+            f"route-map RM-IN-{asn} deny 99",
+            f"router bgp {peer_asn}",
+            f"  neighbor {router_ip} route-map RM-IN-{asn} in",
+            f"exit"
+        ]
+
+        # Invoking Arista eAPI
+        response = send_arista_commands(son_man_ip, cmd_son_peer)
+        print(response)
+        # Only for testing purposes
+        #with open(f"config/{peer_routerId}_peering.cfg", "w") as f:
+        #    f.write("\n".join(cmd_son_peer))
+    
+    response = send_arista_commands(father_mngt_ip, cmd_father_peer)
+    print(response)
+    # Only for testing purposes
+    #with open(f"config/{routerId}_peering.cfg", "w") as f:
+    #        f.write("\n".join(cmd_father_peer))
+    return jsonify({"message": "Peering successful"}), 200
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
