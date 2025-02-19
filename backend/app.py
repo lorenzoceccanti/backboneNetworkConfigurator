@@ -4,7 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 import json
 import os
 import sys
-#import crypt
+import crypt
 import ipaddress
 from jsonrpclib import Server
 from dotenv import load_dotenv
@@ -252,8 +252,8 @@ def transit():
                     commands_from.append(f"exit")
 
             mngt_ip_from = transit["from_"]["mngt_ip"]
-            # response = send_arista_commands(mngt_ip_from, commands_from)
-            # print(response)
+            response = send_arista_commands(mngt_ip_from, commands_from)
+            print(response)
             # save on file the from router configuration
             with open(f"config/{from_router}_BGP.cfg", "w") as f:
                 f.write("\n".join(commands_from))
@@ -285,8 +285,8 @@ def transit():
                             commands_to.append(f"exit")
 
                     mngt_ip_to = to["mngt_ip"]
-                    # response = send_arista_commands(mngt_ip_to, commands_to)
-                    # print(response)
+                    response = send_arista_commands(mngt_ip_to, commands_to)
+                    print(response)
                     # save on file the to router configuration
                     with open(f"config/{to_router}_BGP.cfg", "w") as f:
                         f.write("\n".join(commands_to))
@@ -337,8 +337,8 @@ def transit():
                             commands_through.append(f"route-map RM-OUT-{from_asn} deny 99")
             
             mngt_ip_through = transit["through"]["mngt_ip"]
-            # response = send_arista_commands(mngt_ip_through, commands_through)
-            # print(response)
+            response = send_arista_commands(mngt_ip_through, commands_through)
+            print(response)
             with open(f"config/{through_router}_BGP.cfg", "w") as f:
                 f.write("\n".join(commands_through))
 
@@ -367,8 +367,8 @@ def announce():
         to_list = data["to"]
 
         commands = [
-            f"enable",
-            f"configure",
+            # f"enable",
+            # f"configure",
             f"route-map RM-OUT permit 10",
             f"   match ip address prefix-list {router}-NETWORKS",
             f"   exit",
@@ -380,7 +380,8 @@ def announce():
         ]
 
         # we neet to retreve from the router the sequence number of the prefix-list
-        # response = send_arista_commands(mngt_ip, [f"show running-config | section prefix-list {router}-NETWORKS"])
+        response = send_arista_commands(mngt_ip, [f"enable", f"configure", f"show running-config | section prefix-list {router}-NETWORKS"])
+        print(response)
         # the response is like this:
         # ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24
         # ip prefix-list R2-NETWORKS seq 20 permit 192.168.103.0/24
@@ -388,21 +389,21 @@ def announce():
         fake_response = ["ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24",
                          "ip prefix-list R2-NETWORKS seq 20 permit 192.168.103.0/24"]
         # for line in response[0]["output"].split("\n"):
-        seq_number = 0
         # check if the response is empty, in this case we start from 10
-        if not fake_response:
-            seq_number = 10
+        if not response[2] or not response[2]['output']:
+            commands.append(f"ip prefix-list {router}-NETWORKS seq 10 permit {network_to_annouce}")
         else:
             # otherwise we get the last sequence number
-            for line in fake_response:
+            # for line in fake_response:
+            for line in response[2]['output'].split("\n"):
                 # check if we found the same network in the prefix-list
                 if network_to_annouce in line:
                     # raise an error if the network is already in the prefix-list
                     return jsonify({"error": "Network already announced"}), 400
                 # get the sequence number
                 seq_number = line.split(" ")[4]
-        # finally, we add the new network to the prefix-list
-        commands.append(f"ip prefix-list {router}-NETWORKS seq {int(seq_number) + 10} permit {network_to_annouce}")
+            # finally, we add the new network to the prefix-list
+            commands.append(f"ip prefix-list {router}-NETWORKS seq {int(seq_number) + 10} permit {network_to_annouce}")
 
         for to in to_list:
             his_router_ip = to["his_router_ip"]
@@ -410,8 +411,8 @@ def announce():
 
         commands.append(f"   exit")
 
-        # response = send_arista_commands(mngt_ip, commands)
-        # print(response)
+        response = send_arista_commands(mngt_ip, commands)
+        print(response)
         # save on file the router configuration
         with open(f"config/{router}_ANNOUNCE.cfg", "w") as f:
             f.write("\n".join(commands))
@@ -440,20 +441,23 @@ def stop_announce():
         network_to_stop_announce = data["network_to_stop_announce"]
 
         commands = [
-            f"enable",
-            f"configure",
+            # f"enable",
+            # f"configure",
         ]
 
         # we need the sequence number of the prefix-list to remove the network
-        # response = send_arista_commands(mngt_ip, [f"show running-config | section prefix-list {router}-NETWORKS"])
+        response = send_arista_commands(mngt_ip, [f"enable", f"configure", f"show running-config | section prefix-list {router}-NETWORKS"])
+        print(response)
         # the response is like this:
         # ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24
         # ip prefix-list R2-NETWORKS seq 20 permit 192.168.103.0/24
         # so we need to parse the response to get the sequence number
         fake_response = ["ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24",
                          "ip prefix-list R2-NETWORKS seq 20 permit 192.168.103.0/24"]
-        # for line in response[0]["output"].split("\n"):
-        for line in fake_response:
+        if not response[2] or not response[2]['output']:
+            return jsonify({"error": "No networks to stop announce"}), 400
+        # for line in fake_response:
+        for line in response[2]['output'].split("\n"):
             if network_to_stop_announce in line:
                 seq_number = line.split(" ")[4]
                 commands.append(f"no ip prefix-list {router}-NETWORKS seq {seq_number} permit {network_to_stop_announce}")
@@ -461,8 +465,8 @@ def stop_announce():
         else:
             return jsonify({"error": "Network not found"}), 400
 
-        # response = send_arista_commands(mngt_ip, commands)
-        # print(response)
+        response = send_arista_commands(mngt_ip, commands)
+        print(response)
         # save on file the router configuration
         with open(f"config/{router}_STOP_ANNOUNCE.cfg", "w") as f:
             f.write("\n".join(commands))
