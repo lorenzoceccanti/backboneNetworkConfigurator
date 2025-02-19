@@ -677,6 +677,7 @@ def redistribute_bgp():
     print(response)
     # Only for testing purposes
     #with open(f"config/redistribute-bgp.cfg", "w") as f:
+    #with open(f"config/redistribute-bgp.cfg", "w") as f:
     #    f.write("\n".join(commands))
     return jsonify({"message": responseText}), 200
     
