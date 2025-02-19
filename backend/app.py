@@ -546,5 +546,75 @@ def peering():
     #        f.write("\n".join(cmd_father_peer))
     return jsonify({"message": "Peering successful"}), 200
 
+@app.route('/redistospf', methods=["POST"])
+def redistospfHandler():
+    """Handler for the RESTful API which deals with the enabling
+    or disabling the redistribution of routes learned with OSPF
+    via iBGP"""
+    data = request.get_json()
+    if not data or not "mngt_ip" in data or not "asn" in data or not "action" in data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+    
+    # We can stay sure that if we execute multiple time the same action,
+    # the router will not add furher rules!
+    # We don't need any check on the redistribute route to be already there or not
+    mngt_ip = data["mngt_ip"]
+    asn = data["asn"]
+    action = data["action"]
+    commands = [
+        f"enable",
+        f"configure",
+        f"router bgp {asn}"
+    ]
+    if action == "yes":
+        commands.append(f"   redistribute ospf")
+    elif action == "no":
+        commands.append(f"   no redistribute ospf")
+    else:
+        return jsonify({"error": "Invalid JSON format"}), 400
+    
+    commands.append(f"exit")
+    responseText = f"OSPF Redistribution: {action}"
+    
+    response = send_arista_commands(mngt_ip, commands)
+    print(response)
+    # Only for testing purposes
+    #with open(f"config/redistospf.cfg", "w") as f:
+    #    f.write("\n".join(commands))
+    return jsonify({"message": responseText}), 200
+
+@app.route('/redistbgp', methods=["POST"])
+def redistbgpHandler():
+    """Handler for the RESTful API POST /redistbgp which deals with
+    enabling or disabling the redistribution of prefixes learned with BGP
+    via OSPF"""
+    data = request.get_json()
+    if not data or not "mngt_ip" or not "action":
+        return jsonify({"error": "Invalid JSON format"}), 400
+    
+    mngt_ip = data["mngt_ip"]
+    action = data["action"]
+    commands = [
+        f"enable",
+        f"configure",
+        f"router ospf 1"
+    ]
+    if action == "yes":
+        commands.append(f"   redistribute bgp")
+    elif action == "no":
+        commands.append(f"   no redistribute bgp")
+    else:
+        return jsonify({"error": "Invalid JSON format"}), 400
+    
+    commands.append(f"exit")
+    responseText = f"BGP Redistribution: {action}"
+
+    response = send_arista_commands(mngt_ip, commands)
+    print(response)
+    # Only for testing purposes
+    #with open(f"config/redistbgp.cfg", "w") as f:
+    #    f.write("\n".join(commands))
+    return jsonify({"message": responseText}), 200
+    
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
