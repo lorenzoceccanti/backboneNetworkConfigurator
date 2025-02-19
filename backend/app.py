@@ -9,6 +9,9 @@ import ipaddress
 from jsonrpclib import Server
 from dotenv import load_dotenv
 from network_config import NetworkConfig, get_network_address
+from transit import Transit
+from announce import Announce
+from stop_announce import StopAnnounce
 
 app = Flask(__name__, static_folder="out", static_url_path="")
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -58,7 +61,6 @@ def configure():
 def deploy():
     os.system(f"./deploy_network.sh")
     return jsonify({"message": "Network deployed successfully"}), 200
-
 
 def convert_interfaces(routers, hosts):
     """ This function converts the interface's names to the format expected by containerlab 
@@ -122,9 +124,8 @@ def generate_links_from_routers(routers):
 def generate_password_hash():
     """ Generates a password hash for the admin user
         The hash is in the format $6$salt$hash with the sha512 algorithm """
-    password = "admin"
     salt = crypt.mksalt(crypt.METHOD_SHA512)
-    hashed_password = crypt.crypt(password, salt)
+    hashed_password = crypt.crypt(PASSWORD, salt)
     return hashed_password
 
 def generate_containerlab_config(routers, hosts, project_name):
@@ -152,7 +153,6 @@ def generate_containerlab_config(routers, hosts, project_name):
     containerlab_file = os.path.join(CONFIG_DIR, "topology.clab.yml")
     with open(containerlab_file, "w") as f:
         f.write(config_content)
-
 
 def generate_arista_configs(routers):
     """ Generates the Arista configuration files for each router and writes them in the ./config folder """
@@ -198,7 +198,7 @@ def generate_arista_configs(routers):
 def send_arista_commands(mngt_ip, commands):
     """ Sends the commands to the Arista switch using the eAPI """
     if not mngt_ip:
-        return {"error": "Management IP non specificato"}
+        return {"error": "Management IP not specified"}
 
     url = f"http://{USERNAME}:{PASSWORD}@{mngt_ip}/command-api"
 
@@ -215,133 +215,137 @@ def transit():
     This endpoint is used to send the transit configuration to the Arista routers
     """
     data = request.get_json()
-
+    
     if not data or "transit" not in data:
         return jsonify({"error": "Invalid JSON format"}), 400
 
     transits = data["transit"]
-    
-    for transit in transits:
-        from_asn = transit["from"]["asn"]
-        from_router = transit["from"]["router"]
-        from_router_ip = transit["from"]["router_ip"]
+    try:
+        for transit in transits:
+            # this validates the JSON format
+            Transit(**transit)
+            from_asn = transit["from_"]["asn"]
+            from_router = transit["from_"]["router"]
+            from_router_ip = transit["from_"]["router_ip"]
 
-        through_asn = transit["through"]["asn"]
-        through_router = transit["through"]["router"]
-        through_router_ips = transit["through"]["router_ip"]
+            through_asn = transit["through"]["asn"]
+            through_router = transit["through"]["router"]
+            through_router_ips = transit["through"]["router_ip"]
 
-        commands_from = [
-            f"enable",
-            f"configure",
-            f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
-            f"route-map RM-IN-{through_asn} permit 10",
-            f"   match as-path AS{through_asn}-IN",
-            f"exit",
-            f"route-map RM-IN-{through_asn} deny 99",
-            f"router bgp {from_asn}",
-            f"   bgp missing-policy direction in action deny",
-            f"   bgp missing-policy direction out action deny",
-        ]
+            commands_from = [
+                f"enable",
+                f"configure",
+                f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
+                f"route-map RM-IN-{through_asn} permit 10",
+                f"   match as-path AS{through_asn}-IN",
+                f"exit",
+                f"route-map RM-IN-{through_asn} deny 99",
+                f"router bgp {from_asn}",
+                f"   bgp missing-policy direction in action deny",
+                f"   bgp missing-policy direction out action deny",
+            ]
 
-        for through_router_ip in through_router_ips:
-            if through_router_ip["asn"] == from_asn:
-                commands_from.append(f"   neighbor {through_router_ip['my_router_ip']} remote-as {through_asn}")
-                commands_from.append(f"   neighbor {through_router_ip['my_router_ip']} route-map RM-IN-{through_asn} in")
-                commands_from.append(f"exit")
+            for through_router_ip in through_router_ips:
+                if through_router_ip["asn"] == from_asn:
+                    commands_from.append(f"   neighbor {through_router_ip['my_router_ip']} remote-as {through_asn}")
+                    commands_from.append(f"   neighbor {through_router_ip['my_router_ip']} route-map RM-IN-{through_asn} in")
+                    commands_from.append(f"exit")
 
-        mngt_ip_from = transit["from"]["mngt_ip"]
-        response = send_arista_commands(mngt_ip_from, commands_from)
-        print(response)
-        # save on file the from router configuration
-        with open(f"config/{from_router}_BGP.cfg", "w") as f:
-            f.write("\n".join(commands_from))
+            mngt_ip_from = transit["from_"]["mngt_ip"]
+            # response = send_arista_commands(mngt_ip_from, commands_from)
+            # print(response)
+            # save on file the from router configuration
+            with open(f"config/{from_router}_BGP.cfg", "w") as f:
+                f.write("\n".join(commands_from))
 
-        # BGP configuration of the TO routers
-        for to in transit["to"]:
-            if isinstance(to, dict):  # in this way we exclude the "Internet" field
-                to_asn = to["asn"]
-                to_router = to["router"]
-                to_router_ip = to["router_ip"]
+            # BGP configuration of the TO routers
+            for to in transit["to"]:
+                if isinstance(to, dict):  # in this way we exclude the "Internet" field
+                    to_asn = to["asn"]
+                    to_router = to["router"]
+                    to_router_ip = to["router_ip"]
 
-                commands_to = [
-                    f"enable",
-                    f"configure",
-                    f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
-                    f"route-map RM-IN-{through_asn} permit 10",
-                    f"   match as-path AS{through_asn}-IN",
-                    f"exit",
-                    f"route-map RM-IN-{through_asn} deny 99",
-                    f"router bgp {to_asn}",
-                    f"   bgp missing-policy direction in action deny",
-                    f"   bgp missing-policy direction out action deny",
-                ]
+                    commands_to = [
+                        f"enable",
+                        f"configure",
+                        f"ip as-path access-list AS{through_asn}-IN permit ^{through_asn}_ any",
+                        f"route-map RM-IN-{through_asn} permit 10",
+                        f"   match as-path AS{through_asn}-IN",
+                        f"exit",
+                        f"route-map RM-IN-{through_asn} deny 99",
+                        f"router bgp {to_asn}",
+                        f"   bgp missing-policy direction in action deny",
+                        f"   bgp missing-policy direction out action deny",
+                    ]
 
-                for through_router_ip in through_router_ips:
-                    if through_router_ip["asn"] == to_asn:
-                        commands_to.append(f"   neighbor {through_router_ip['my_router_ip']} remote-as {through_asn}")
-                        commands_to.append(f"   neighbor {through_router_ip['my_router_ip']} route-map RM-IN-{through_asn} in")
-                        commands_to.append(f"exit")
+                    for through_router_ip in through_router_ips:
+                        if through_router_ip["asn"] == to_asn:
+                            commands_to.append(f"   neighbor {through_router_ip['my_router_ip']} remote-as {through_asn}")
+                            commands_to.append(f"   neighbor {through_router_ip['my_router_ip']} route-map RM-IN-{through_asn} in")
+                            commands_to.append(f"exit")
 
-                mngt_ip_to = to["mngt_ip"]
-                response = send_arista_commands(mngt_ip_to, commands_to)
-                print(response)
-                # save on file the to router configuration
-                with open(f"config/{to_router}_BGP.cfg", "w") as f:
-                    f.write("\n".join(commands_to))
+                    mngt_ip_to = to["mngt_ip"]
+                    # response = send_arista_commands(mngt_ip_to, commands_to)
+                    # print(response)
+                    # save on file the to router configuration
+                    with open(f"config/{to_router}_BGP.cfg", "w") as f:
+                        f.write("\n".join(commands_to))
 
-        commands_through = [
-            f"enable",
-            f"configure",
-            f"ip as-path access-list AS{from_asn}-IN permit ^{from_asn}$ any",
-            f"ip as-path access-list AS{from_asn}-OUT permit ^{from_asn}$ any",
-            f"route-map RM-IN-{from_asn} permit 10",
-            f"   match as-path AS{from_asn}-IN",
-            f"exit",
-            f"route-map RM-IN-{from_asn} deny 99",
-            f"router bgp {through_asn}",
-            f"   bgp missing-policy direction in action deny",
-            f"   bgp missing-policy direction out action deny",
-            f"   neighbor {from_router_ip} remote-as {from_asn}",
-            f"   neighbor {from_router_ip} route-map RM-IN-{from_asn} in",
-            f"   neighbor {from_router_ip} route-map RM-OUT-{to_asn} out",
-            f"exit",
-        ]
+            commands_through = [
+                f"enable",
+                f"configure",
+                f"ip as-path access-list AS{from_asn}-IN permit ^{from_asn}$ any",
+                f"ip as-path access-list AS{from_asn}-OUT permit ^{from_asn}$ any",
+                f"route-map RM-IN-{from_asn} permit 10",
+                f"   match as-path AS{from_asn}-IN",
+                f"exit",
+                f"route-map RM-IN-{from_asn} deny 99",
+                f"router bgp {through_asn}",
+                f"   bgp missing-policy direction in action deny",
+                f"   bgp missing-policy direction out action deny",
+                f"   neighbor {from_router_ip} remote-as {from_asn}",
+                f"   neighbor {from_router_ip} route-map RM-IN-{from_asn} in",
+                f"   neighbor {from_router_ip} route-map RM-OUT-{to_asn} out",
+                f"exit",
+            ]
 
-        for to in transit["to"]:
-            if isinstance(to, dict):
-                to_asn = to["asn"]
-                to_router_ip = to["router_ip"]
+            for to in transit["to"]:
+                if isinstance(to, dict):
+                    to_asn = to["asn"]
+                    to_router_ip = to["router_ip"]
 
-                commands_through.append(f"ip as-path access-list AS{to_asn}-IN permit ^{to_asn}$ any")
-                commands_through.append(f"ip as-path access-list AS{to_asn}-OUT permit ^{to_asn}$ any")
-                commands_through.append(f"route-map RM-IN-{to_asn} permit 10")
-                commands_through.append(f"   match as-path AS{to_asn}-IN")
-                commands_through.append(f"exit")
-                commands_through.append(f"route-map RM-IN-{to_asn} deny 99")
-                commands_through.append(f"route-map RM-OUT-{to_asn} permit 10")
-                commands_through.append(f"   match as-path AS{to_asn}-OUT")
-                commands_through.append(f"exit")
+                    commands_through.append(f"ip as-path access-list AS{to_asn}-IN permit ^{to_asn}$ any")
+                    commands_through.append(f"ip as-path access-list AS{to_asn}-OUT permit ^{to_asn}$ any")
+                    commands_through.append(f"route-map RM-IN-{to_asn} permit 10")
+                    commands_through.append(f"   match as-path AS{to_asn}-IN")
+                    commands_through.append(f"exit")
+                    commands_through.append(f"route-map RM-IN-{to_asn} deny 99")
+                    commands_through.append(f"route-map RM-OUT-{to_asn} permit 10")
+                    commands_through.append(f"   match as-path AS{to_asn}-OUT")
+                    commands_through.append(f"exit")
 
-                for through_router_ip in through_router_ips:
-                    if through_router_ip["asn"] == to_asn:
-                        commands_through.append(f"router bgp {through_asn}")
-                        commands_through.append(f"   neighbor {to_router_ip} remote-as {to_asn}")
-                        commands_through.append(f"   neighbor {to_router_ip} route-map RM-IN-{to_asn} in")
-                        commands_through.append(f"   neighbor {to_router_ip} route-map RM-OUT-{from_asn} out")
-                        commands_through.append(f"exit")
-                        commands_through.append(f"route-map RM-OUT-{from_asn} permit 10")
-                        commands_through.append(f"   match as-path AS{from_asn}-OUT")
-                        commands_through.append(f"exit")
-                        commands_through.append(f"route-map RM-OUT-{from_asn} deny 99")
-        
-        mngt_ip_through = transit["through"]["mngt_ip"]
-        response = send_arista_commands(mngt_ip_through, commands_through)
-        print(response)
-        with open(f"config/{through_router}_BGP.cfg", "w") as f:
-            f.write("\n".join(commands_through))
+                    for through_router_ip in through_router_ips:
+                        if through_router_ip["asn"] == to_asn:
+                            commands_through.append(f"router bgp {through_asn}")
+                            commands_through.append(f"   neighbor {to_router_ip} remote-as {to_asn}")
+                            commands_through.append(f"   neighbor {to_router_ip} route-map RM-IN-{to_asn} in")
+                            commands_through.append(f"   neighbor {to_router_ip} route-map RM-OUT-{from_asn} out")
+                            commands_through.append(f"exit")
+                            commands_through.append(f"route-map RM-OUT-{from_asn} permit 10")
+                            commands_through.append(f"   match as-path AS{from_asn}-OUT")
+                            commands_through.append(f"exit")
+                            commands_through.append(f"route-map RM-OUT-{from_asn} deny 99")
+            
+            mngt_ip_through = transit["through"]["mngt_ip"]
+            # response = send_arista_commands(mngt_ip_through, commands_through)
+            # print(response)
+            with open(f"config/{through_router}_BGP.cfg", "w") as f:
+                f.write("\n".join(commands_through))
 
-    return jsonify({"message": "Transit configuration initiated"}), 200
-
+        return jsonify({"message": "Transit configuration initiated"}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error ": "Validation error"}), 400
 
 @app.route('/announce', methods=['POST'])
 def announce():
@@ -350,42 +354,72 @@ def announce():
     """
     data = request.get_json()
 
-    if not data or "router" not in data or "asn" not in data or "mngt_ip" not in data or "network_to_announce" not in data or "to" not in data:
+    if not data:
         return jsonify({"error": "Invalid JSON format"}), 400
+    # this validates the JSON format
+    try:
+        Announce(**data)
 
-    router = data["router"]
-    asn = data["asn"]
-    mngt_ip = data["mngt_ip"]
-    network_to_announce = data["network_to_announce"]
-    to_list = data["to"]
+        router = data["router"]
+        asn = data["asn"]
+        mngt_ip = data["mngt_ip"]
+        network_to_annouce = data["network_to_announce"]
+        to_list = data["to"]
 
-    commands = [
-        f"enable",
-        f"configure",
-        f"ip prefix-list {router}-NETWORKS seq 10 permit {network_to_announce}",
-        f"route-map RM-OUT permit 10",
-        f"   match ip address prefix-list {router}-NETWORKS",
-        f"route-map RM-OUT deny 99"
-        f"exit",
-        f"router bgp {asn}",
-        f"   bgp missing-policy direction in action deny",
-        f"   bgp missing-policy direction out action deny",
-        f"   network {network_to_announce}",
-    ]
+        commands = [
+            f"enable",
+            f"configure",
+            f"route-map RM-OUT permit 10",
+            f"   match ip address prefix-list {router}-NETWORKS",
+            f"   exit",
+            f"route-map RM-OUT deny 99",
+            f"router bgp {asn}",
+            f"   bgp missing-policy direction in action deny",
+            f"   bgp missing-policy direction out action deny",
+            f"   exit",
+        ]
 
-    for to in to_list:
-        his_router_ip = to["his_router_ip"]
-        commands.append(f"   neighbor {his_router_ip} route-map RM-OUT out")
+        # we neet to retreve from the router the sequence number of the prefix-list
+        # response = send_arista_commands(mngt_ip, [f"show running-config | section prefix-list {router}-NETWORKS"])
+        # the response is like this:
+        # ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24
+        # ip prefix-list R2-NETWORKS seq 20 permit 192.168.103.0/24
+        # so we need to parse the response to get the last sequence number, in order to add the new network
+        fake_response = ["ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24",
+                         "ip prefix-list R2-NETWORKS seq 20 permit 192.168.103.0/24"]
+        # for line in response[0]["output"].split("\n"):
+        seq_number = 0
+        # check if the response is empty, in this case we start from 10
+        if not fake_response:
+            seq_number = 10
+        else:
+            # otherwise we get the last sequence number
+            for line in fake_response:
+                # check if we found the same network in the prefix-list
+                if network_to_annouce in line:
+                    # raise an error if the network is already in the prefix-list
+                    return jsonify({"error": "Network already announced"}), 400
+                # get the sequence number
+                seq_number = line.split(" ")[4]
+        # finally, we add the new network to the prefix-list
+        commands.append(f"ip prefix-list {router}-NETWORKS seq {int(seq_number) + 10} permit {network_to_annouce}")
 
-    commands.append(f"exit")
+        for to in to_list:
+            his_router_ip = to["his_router_ip"]
+            commands.append(f"   neighbor {his_router_ip} route-map RM-OUT out")
 
-    response = send_arista_commands(mngt_ip, commands)
-    print(response)
-    # save on file the router configuration
-    with open(f"config/{router}_ANNOUNCE.cfg", "w") as f:
-        f.write("\n".join(commands))
+        commands.append(f"   exit")
 
-    return jsonify({"message": "Announce configuration sent"}), 200
+        # response = send_arista_commands(mngt_ip, commands)
+        # print(response)
+        # save on file the router configuration
+        with open(f"config/{router}_ANNOUNCE.cfg", "w") as f:
+            f.write("\n".join(commands))
+
+        return jsonify({"message": "Announce configuration sent"}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error ": "Validation error"}), 400
 
 @app.route('/stop-announce', methods=['POST'])
 def stop_announce():
@@ -394,33 +428,49 @@ def stop_announce():
     """
     data = request.get_json()
 
-    if not data or "router" not in data or "asn" not in data or "mngt_ip" not in data or "to" not in data:
+    if not data:
         return jsonify({"error": "Invalid JSON format"}), 400
 
-    router = data["router"]
-    asn = data["asn"]
-    mngt_ip = data["mngt_ip"]
-    to_list = data["to"]
+    try:
+        # this validates the JSON format
+        StopAnnounce(**data)
+        router = data["router"]
+        asn = data["asn"]
+        mngt_ip = data["mngt_ip"]
+        network_to_stop_announce = data["network_to_stop_announce"]
 
-    commands = [
-        f"enable",
-        f"configure",
-        f"router bgp {asn}",
-    ]
+        commands = [
+            f"enable",
+            f"configure",
+        ]
 
-    for to in to_list:
-        his_router_ip = to["his_router_ip"]
-        commands.append(f"   no neighbor {his_router_ip} route-map RM-OUT out")
+        # we need the sequence number of the prefix-list to remove the network
+        # response = send_arista_commands(mngt_ip, [f"show running-config | section prefix-list {router}-NETWORKS"])
+        # the response is like this:
+        # ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24
+        # ip prefix-list R2-NETWORKS seq 20 permit 192.168.103.0/24
+        # so we need to parse the response to get the sequence number
+        fake_response = ["ip prefix-list R2-NETWORKS seq 10 permit 192.168.102.0/24",
+                         "ip prefix-list R2-NETWORKS seq 20 permit 192.168.103.0/24"]
+        # for line in response[0]["output"].split("\n"):
+        for line in fake_response:
+            if network_to_stop_announce in line:
+                seq_number = line.split(" ")[4]
+                commands.append(f"no ip prefix-list {router}-NETWORKS seq {seq_number} permit {network_to_stop_announce}")
+                break
+        else:
+            return jsonify({"error": "Network not found"}), 400
 
-    commands.append(f"exit")
+        # response = send_arista_commands(mngt_ip, commands)
+        # print(response)
+        # save on file the router configuration
+        with open(f"config/{router}_STOP_ANNOUNCE.cfg", "w") as f:
+            f.write("\n".join(commands))
 
-    response = send_arista_commands(mngt_ip, commands)
-    print(response)
-    # save on file the router configuration
-    with open(f"config/{router}_STOP_ANNOUNCE.cfg", "w") as f:
-        f.write("\n".join(commands))
-
-    return jsonify({"message": "Stop announce configuration sent"}), 200
+        return jsonify({"message": "Stop announce configuration sent"}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error ": "Validation error"}), 400
 
 @app.route('/peering', methods=["POST"])
 def peering():
