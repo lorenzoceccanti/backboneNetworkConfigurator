@@ -565,8 +565,8 @@ def peering():
     #        f.write("\n".join(cmd_father_peer))
     return jsonify({"message": "Peering successful"}), 200
 
-@app.route('/redistospf', methods=["POST"])
-def redistospfHandler():
+@app.route('/redistribute-ospf', methods=["POST"])
+def redistribute_ospf():
     """Handler for the RESTful API which deals with the enabling
     or disabling the redistribution of routes learned with OSPF
     via iBGP"""
@@ -594,16 +594,16 @@ def redistospfHandler():
     
     commands.append(f"exit")
     responseText = f"OSPF Redistribution: {action}"
-    
+
     response = send_arista_commands(mngt_ip, commands)
     print(response)
     # Only for testing purposes
-    #with open(f"config/redistospf.cfg", "w") as f:
+    #with open(f"config/redistribute-ospf.cfg", "w") as f:
     #    f.write("\n".join(commands))
     return jsonify({"message": responseText}), 200
 
-@app.route('/redistbgp', methods=["POST"])
-def redistbgpHandler():
+@app.route('/redistribute-bgp', methods=["POST"])
+def redistribute_bgp():
     """Handler for the RESTful API POST /redistbgp which deals with
     enabling or disabling the redistribution of prefixes learned with BGP
     via OSPF"""
@@ -631,7 +631,7 @@ def redistbgpHandler():
     response = send_arista_commands(mngt_ip, commands)
     print(response)
     # Only for testing purposes
-    #with open(f"config/redistbgp.cfg", "w") as f:
+    #with open(f"config/redistribute-bgp.cfg", "w") as f:
     #    f.write("\n".join(commands))
     return jsonify({"message": responseText}), 200
     
