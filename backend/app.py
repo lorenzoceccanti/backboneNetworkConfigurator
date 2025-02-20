@@ -166,6 +166,7 @@ def generate_arista_configs(routers):
     for i, router in enumerate(routers):
         router["mngt_ipv4"] = f"{str(ipv4_base + i)}/24"
         router["mngt_ipv6"] = f"{str(ipv6_base + i)}/64"
+        router_asn = router["asn"]
         # also generate the network address for each interface that is used in ospf configuration
         for interface in router["interfaces"]:
             # for the ospf settings, we need to know the network address of the interface
@@ -175,10 +176,16 @@ def generate_arista_configs(routers):
                 network_mask = interface["ip"].split("/")[1]
                 neighbor_network = get_network_address(neighbor["ip"] + "/" + network_mask)
                 interface_network = get_network_address(interface["ip"])
+                neighbor_asn = neighbor["asn"]
 
                 if neighbor_network == interface_network:
-                    # if the neighbor is on the same network as the interface, break the loop
-                    break
+                    # This is an additional check in order to see whether it's necessary to add
+                    # a new OSPF rule used in a intra-AS scope between 2 different routers having
+                    # a subnetwork in common
+                    if neighbor_asn != router_asn:
+                        # if the neighbor is on the same network as the interface (and the asn is different) break the loop
+                        # This is for how the for else works: I skip the routers having a different ASN
+                        break
             else:
                 # if none of the neighbors are on the same network as the interface, add the network
                 interface["network"] = interface_network
