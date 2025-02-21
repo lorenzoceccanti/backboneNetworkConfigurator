@@ -565,6 +565,51 @@ def peering():
     #        f.write("\n".join(cmd_father_peer))
     return jsonify({"message": "Peering successful"}), 200
 
+@app.route('/local-preference', methods=['POST'])
+def set_local_preference():
+    """
+    This endpoint set the Local Preference on a Arista router
+    """
+    data = request.get_json()
+    
+    # Check on  JSON file's field
+    if not data or "asn" not in data or "router" not in data or "mngt_ip" not in data or "neighbor_ip" not in data or "local_pref" not in data:
+        return jsonify({"error": "Invalid JSON format"}), 400
+
+    try:
+
+        asn = data["asn"]
+        router = data["router"]
+        mngt_ip = data["mngt_ip"]
+        neighbor_ip = data["neighbor_ip"]
+        local_pref = data["local_pref"]
+
+        # commands to set Local Preference 
+        commands = [
+            "enable",
+            "configure",
+            f"route-map SET-LOCAL-PREF permit 10",
+            f"   set local-preference {local_pref}",
+            "exit",
+            f"router bgp {asn}",
+            f"   neighbor {neighbor_ip} route-map SET-LOCAL-PREF in",
+            "exit"
+        ]
+        
+
+        response = send_arista_commands(mngt_ip, commands)
+        print(response)
+
+        # for testing
+        with open(f"config/{router}_LOCAL_PREF.cfg", "w") as f:
+            f.write("\n".join(commands))
+
+        return jsonify({"message": f"Local Preference set to {local_pref} on {router}"}), 200
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Error configuring Local Preference"}), 500
+
 @app.route('/redistribute-ospf', methods=["POST"])
 def redistribute_ospf():
     """Handler for the RESTful API which deals with the enabling
