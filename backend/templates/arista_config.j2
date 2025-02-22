@@ -1,0 +1,91 @@
+!
+no aaa root
+!
+username admin privilege 15 role network-admin secret sha512 {{ router.admin_password }}
+!
+management api http-commands
+  protocol http
+  no shutdown
+!
+no service interface inactive port-id allocation disabled
+!
+transceiver qsfp default-mode 4x10G
+!
+service routing protocols model multi-agent
+!
+hostname {{ router.name }}
+!
+spanning-tree mode mstp
+!
+system l1
+   unsupported speed action error
+   unsupported error-correction action error
+!
+management api gnmi
+   transport grpc default
+!
+management api netconf
+   transport ssh default
+!
+ip routing
+!
+ip route 0.0.0.0/0 172.20.20.1
+!
+interface Management0
+   ip address {{ router.mngt_ipv4 }}
+   ipv6 address {{ router.mngt_ipv6 }}
+{% for iface in router.interfaces %}
+{% if iface.name == 'Loopback0' %}
+router-id {{ iface.ip.split("/")[0] }}
+{% endif %}
+interface {{ iface.name }}
+  no switchport
+  ip address {{ iface.ip }}
+  {% if router.dhcp and iface.name == router.dhcp.interface %}
+  dhcp server ipv4
+  {% endif %}
+{% endfor %}
+!
+router bgp {{ router.asn }}
+  {% for iface in router.interfaces %}
+  {% if iface.name == 'Loopback0' %}
+  router-id {{ iface.ip.split("/")[0] }}
+  {% endif %}
+  {% endfor %}
+  {% for neighbor in router.neighbors %}
+  {% if neighbor.asn != router.asn %}
+  neighbor {{ neighbor.ip }} remote-as {{ neighbor.asn }}
+  {% endif %}
+  {% endfor %}
+!
+ip routing
+!
+router multicast
+  ipv4
+    software-forwarding kernel
+  !
+  ipv6
+    software-forwarding kernel
+!
+router ospf 1
+{% for iface in router.interfaces %}
+{% if iface.name == 'Loopback0' -%}
+  router-id {{ iface.ip.split("/")[0] }}
+{% elif iface.network %}
+  network {{ iface.network }} area 0.0.0.0
+{%- endif %}
+{% endfor %}
+  max-lsa 12000
+!
+{% if router.dhcp -%}
+dhcp server
+  subnet {{ router.dhcp.subnet }}
+  range {{ router.dhcp.range[0] }} {{ router.dhcp.range[1] }}
+  {% for iface in router.interfaces %}
+  {% if iface.name == router.dhcp.interface -%}
+  default-gateway {{ iface.ip.split("/")[0] }}
+  {%- endif %}
+  {%- endfor %}
+{%- endif %}
+!
+end
