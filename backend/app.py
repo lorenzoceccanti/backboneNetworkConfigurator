@@ -504,7 +504,7 @@ def peering():
     a peering relationship among each other
     """
     data = request.get_json()
-    if not data or "routerId" not in data or "asn" not in data or "router_ip" not in data or "mngt_ip" not in data or "peers" not in data:
+    if not data or "routerId" not in data or "asn" not in data or "router_ip" not in data or "mngt_ip" not in data or "peer" not in data:
         return jsonify({"error": "Invalid JSON format"}), 400
     
     routerId = data["routerId"]
@@ -515,61 +515,51 @@ def peering():
         f"enable",
         f"configure"
     ]
-    list_peers = data["peers"]
+    peer = data["peer"]
 
-    # Why a cycle? Because it could happen that an AS has multiple peering
-    # relationship
-    for peer in list_peers:
-        # Checking fields inside list_peers
-        if not peer or "routerId" not in peer or "asn" not in peer or "router_ip" not in peer or "mngt_ip" not in peer:
-            return jsonify({"error": "Invalid JSON format"}), 400
+    # Checking fields inside peer field
+    if not peer or "routerId" not in peer or "asn" not in peer or "router_ip" not in peer or "mngt_ip" not in peer:
+        return jsonify({"error": "Invalid JSON format"}), 400
 
-        # Configuring the father peer first
-        # Hypotesis: The rule neighbor <neighbour_ip> remote-as <neigh_as>
-        # has already set with Jinja templating
-        peer_routerId = peer["routerId"]
-        peer_asn = peer["asn"]
-        peer_router_ip = peer["router_ip"]
-        son_man_ip = peer["mngt_ip"]
-        # The extend is like the append, but it doesn't append as a list
-        # but appends each single element as a string, as we want.
-        cmd_father_peer.extend([
-            f"ip as-path access-list AS{peer_asn}-IN permit ^{peer_asn}$ any",
-            f"route-map RM-IN-{peer_asn} permit 10",
-            f"  match as-path AS{peer_asn}-IN",
-            f"exit",
-            f"route-map RM-IN-{peer_asn} deny 99",
-            f"router bgp {asn}",
-            f"  neighbor {peer_router_ip} route-map RM-IN-{peer_asn} in",
-            f"exit"
-        ])
+    # Configuring the father peer first
+    # Hypotesis: The rule neighbor <neighbour_ip> remote-as <neigh_as>
+    # has already set with Jinja templating
+    peer_asn = peer["asn"]
+    peer_router_ip = peer["router_ip"]
+    son_man_ip = peer["mngt_ip"]
+    # The extend is like the append, but it doesn't append as a list
+    # but appends each single element as a string, as we want.
+    cmd_father_peer.extend([
+        f"ip as-path access-list AS{peer_asn}-IN permit ^{peer_asn}$ any",
+        f"route-map RM-IN-{peer_asn} permit 10",
+        f"  match as-path AS{peer_asn}-IN",
+        f"exit",
+        f"route-map RM-IN-{peer_asn} deny 99",
+        f"router bgp {asn}",
+        f"  neighbor {peer_router_ip} route-map RM-IN-{peer_asn} in",
+        f"exit"
+    ])
 
-        # Configuring the peer
-        cmd_son_peer = [
-            f"enable",
-            f"configure",
-            f"ip as-path access-list AS{asn}-IN permit ^{asn}$ any",
-            f"route-map RM-IN-{asn} permit 10",
-            f"  match as-path AS{asn}-IN",
-            f"exit",
-            f"route-map RM-IN-{asn} deny 99",
-            f"router bgp {peer_asn}",
-            f"  neighbor {router_ip} route-map RM-IN-{asn} in",
-            f"exit"
-        ]
+    # Configuring the peer
+    cmd_son_peer = [
+        f"enable",
+        f"configure",
+        f"ip as-path access-list AS{asn}-IN permit ^{asn}$ any",
+        f"route-map RM-IN-{asn} permit 10",
+        f"  match as-path AS{asn}-IN",
+        f"exit",
+        f"route-map RM-IN-{asn} deny 99",
+        f"router bgp {peer_asn}",
+        f"  neighbor {router_ip} route-map RM-IN-{asn} in",
+        f"exit"
+    ]
 
-        # Invoking Arista eAPI
-        response = send_arista_commands(son_man_ip, cmd_son_peer)
-        print(response)
-        # Only for testing purposes
-        #with open(f"config/{peer_routerId}_peering.cfg", "w") as f:
-        #    f.write("\n".join(cmd_son_peer))
+    # Invoking Arista eAPI
+    response = send_arista_commands(son_man_ip, cmd_son_peer)
+    print(response)
     
     response = send_arista_commands(father_mngt_ip, cmd_father_peer)
     print(response)
-    # Only for testing purposes
-    #with open(f"config/{routerId}_peering.cfg", "w") as f:
-    #        f.write("\n".join(cmd_father_peer))
     return jsonify({"message": "Peering successful"}), 200
 
 @app.route('/local-preference', methods=['POST'])
@@ -622,8 +612,12 @@ def redistribute_ospf():
     """Handler for the RESTful API which deals with the enabling
     or disabling the redistribution of routes learned with OSPF
     via iBGP"""
-    data = request.get_json()
-    if not data or not "mngt_ip" in data or not "asn" in data or not "action" in data:
+    try:
+        data = request.get_json()
+    except Exception as e:
+        return jsonify({"error": "Invalid JSON format"}), 400
+    
+    if not data or not "mngt_ip" in data or not "asn" in data or not "redistribute" in data:
         return jsonify({"error": "Invalid JSON format"}), 400
     
     # We can stay sure that if we execute multiple time the same action,
@@ -631,27 +625,26 @@ def redistribute_ospf():
     # We don't need any check on the redistribute route to be already there or not
     mngt_ip = data["mngt_ip"]
     asn = data["asn"]
-    action = data["action"]
+    action = data["redistribute"]
+    
+    # Checking if the field is not compliant to JSON boolean format
+    if not isinstance(action, bool):
+       return jsonify({"error": "Invalid JSON format"}), 400
+
     commands = [
         f"enable",
         f"configure",
         f"router bgp {asn}"
     ]
-    if action == "yes":
+    if action == True:
         commands.append(f"   redistribute ospf")
-    elif action == "no":
-        commands.append(f"   no redistribute ospf")
     else:
-        return jsonify({"error": "Invalid JSON format"}), 400
-    
+        commands.append(f"   no redistribute ospf")
     commands.append(f"exit")
     responseText = f"OSPF Redistribution: {action}"
 
     response = send_arista_commands(mngt_ip, commands)
     print(response)
-    # Only for testing purposes
-    #with open(f"config/redistribute-ospf.cfg", "w") as f:
-    #    f.write("\n".join(commands))
     return jsonify({"message": responseText}), 200
 
 @app.route('/redistribute-bgp', methods=["POST"])
@@ -659,32 +652,35 @@ def redistribute_bgp():
     """Handler for the RESTful API POST /redistbgp which deals with
     enabling or disabling the redistribution of prefixes learned with BGP
     via OSPF"""
-    data = request.get_json()
-    if not data or not "mngt_ip" or not "action":
+    try:
+        data = request.get_json()
+    except Exception as e:
+        return jsonify({"error": "Invalid JSON format"}), 400
+    
+    if not data or not "mngt_ip" or not "redistribute":
         return jsonify({"error": "Invalid JSON format"}), 400
     
     mngt_ip = data["mngt_ip"]
-    action = data["action"]
+    action = data["redistribute"]
+
+    # Checking if the field is not compliant to JSON boolean format
+    if not isinstance(action, bool):
+       return jsonify({"error": "Invalid JSON format"}), 400
+
     commands = [
         f"enable",
         f"configure",
         f"router ospf 1"
     ]
-    if action == "yes":
+    if action == True:
         commands.append(f"   redistribute bgp")
-    elif action == "no":
-        commands.append(f"   no redistribute bgp")
     else:
-        return jsonify({"error": "Invalid JSON format"}), 400
-    
+        commands.append(f"   no redistribute bgp")
     commands.append(f"exit")
     responseText = f"BGP Redistribution: {action}"
 
     response = send_arista_commands(mngt_ip, commands)
     print(response)
-    # Only for testing purposes
-    #with open(f"config/redistribute-bgp.cfg", "w") as f:
-    #    f.write("\n".join(commands))
     return jsonify({"message": responseText}), 200
     
 if __name__ == "__main__":
