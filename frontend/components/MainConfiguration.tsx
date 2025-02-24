@@ -1,6 +1,7 @@
 "use client";
 
-import { RouterConfig, HostConfig } from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig } from "@/lib/definitions";
+import { NetworkTopology } from "@/lib/NetworkTopology";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,8 @@ import { z } from "zod";
 import RouterConfiguration from "./RouterConfiguration";
 import HostConfiguration from "./HostConfiguration";
 import { Spinner } from "./Spinner";
+import TransitConfiguration from "./TransitConfiguration";
+import ip from "ip";
 
 const formSchema = z.object({
   number_of_routers: z.preprocess(
@@ -39,13 +42,16 @@ const formSchema = z.object({
   project_name: z.string().nonempty("Project name is required"),
 });
 
-export default function NumberOfRouters() {
+export default function MainConfiguration() {
   const [routerConfigs, setRouterConfigs] = useState<RouterConfig[]>([]);
   const [hostConfigs, setHostConfigs] = useState<HostConfig[]>([]);
+  const [transitConfigs, setTransitConfigs] = useState<TransitConfig>();
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
   const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
   const [isDeploying, setIsDeploying] = useState<boolean>(false);
+  const [networkTopology, setNetworkTopology] = useState<NetworkTopology | null>(null);
+
 
   const { toast } = useToast()
 
@@ -157,8 +163,8 @@ export default function NumberOfRouters() {
     console.log(JSON.stringify(formattedConfig))
 
     try {
-      const config_api = "http://" + serverIp + ":5000/configure"
-      const response = await fetch(config_api, {
+      const configApi = "http://" + serverIp + ":5000/configure"
+      const response = await fetch(configApi, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -175,6 +181,8 @@ export default function NumberOfRouters() {
         setIsConfigGenerated(false);
         throw new Error(`Error on request: ${response.statusText}`);
       }
+      const data: NetworkTopology = await response.json();
+      setNetworkTopology(data); 
   
       toast({
         variant: "default",
@@ -195,13 +203,14 @@ export default function NumberOfRouters() {
   const handleDeployNetwork = async () => {
     setIsDeploying(true);
     try {
-      const deploy_api = "http://" + serverIp + ":5000/deploy"
-      const response = await fetch(deploy_api, {
+      /*const deployApi = "http://" + serverIp + ":5000/deploy"
+      const response = await fetch(deployApi, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-      });
+      });*/
+      const response = { ok: true } // for testing purposes
   
       if (!response.ok) {
         toast({
@@ -225,8 +234,173 @@ export default function NumberOfRouters() {
       })
     } finally {
       setIsDeploying(false);
+      // once the network is deployed, show the transit configuration
+      setTransitConfigs({
+        from: 0,
+        through: 0,
+        to: [0],
+      });
     }
   }
+
+  const getAvailableASOptions = () => {
+    if (!networkTopology) return [];
+
+    // the set is used to remove duplicates
+    return Array.from(new Set(networkTopology.routers.map(router => router.asn)));
+  };
+
+  const handleTransitConfigsChange = (newConfig: TransitConfig) => {
+    setTransitConfigs(newConfig);
+  };
+
+  const handleTransitConfigsSend = async () => {
+    if (!networkTopology || !transitConfigs) return;
+  
+    // find the from and the through routers configurations
+    const fromRouter = networkTopology.routers.find(router => router.asn === transitConfigs.from);
+    const throughRouter = networkTopology.routers.find(router => router.asn === transitConfigs.through);
+    if (!fromRouter || !throughRouter) {
+      console.error("Router not found in network topology.");
+      return;
+    }
+  
+    // utility function to check if two IPs are in the same subnet
+    const isSameSubnet = (ip1: string, ip2: string, cidr: string): boolean => {
+      if (cidr === "32") return false;
+      const subnetMask = ip.cidrSubnet(`${ip1}/${cidr}`).subnetMask;
+      return ip.subnet(ip1, subnetMask).contains(ip2);
+    };
+  
+    // find the connection between the from and the through routers
+    let fromRouterInterface;
+    let throughRouterInterfaceConnectedToFrom;
+    for (const ifaceFrom of fromRouter.interfaces) {
+  
+      for (const ifaceThrough of throughRouter.interfaces) {
+        if (!ifaceFrom.ip || !ifaceThrough.ip) continue;
+  
+        const [fromIp, fromCidr] = ifaceFrom.ip.split("/");
+        const [throughIp, throughCidr] = ifaceThrough.ip.split("/");
+        if (!fromCidr || !throughCidr) continue;
+        // if the IPs are in the same subnet, we found the connection
+        if (isSameSubnet(fromIp, throughIp, fromCidr)) {
+          fromRouterInterface = ifaceFrom;
+          throughRouterInterfaceConnectedToFrom = ifaceThrough;
+          break;
+        }
+      }
+      if (fromRouterInterface && throughRouterInterfaceConnectedToFrom) break;
+    }
+  
+    if (!fromRouterInterface || !throughRouterInterfaceConnectedToFrom) {
+      console.error("No valid connection found between from and through routers.");
+      return;
+    }
+  
+    // find the connections between the through and the to routers
+    const throughRouterIPs = [];
+    const toRoutersData = [];
+  
+    for (const toASN of transitConfigs.to) {
+      // find the to router configuration
+      const toRouter = networkTopology.routers.find(router => router.asn === toASN);
+      if (!toRouter) continue;
+  
+      let toRouterInterfaceConnectedToThrough;
+  
+      for (const ifaceThrough of throughRouter.interfaces) {
+        for (const ifaceTo of toRouter.interfaces) {
+          if (!ifaceThrough.ip || !ifaceTo.ip) continue;
+  
+          const [throughIp, throughCidr] = ifaceThrough.ip.split("/");
+          const [toIp, toCidr] = ifaceTo.ip.split("/");
+          if (!throughCidr || !toCidr) continue;
+  
+          // if the IPs are in the same subnet, we found the connection
+          if (isSameSubnet(throughIp, toIp, throughCidr)) {
+            // add the connection to the through router
+            throughRouterIPs.push({
+              asn: toRouter.asn,
+              my_router_ip: ifaceThrough.ip.split("/")[0],
+            });
+            toRouterInterfaceConnectedToThrough = ifaceTo;
+          }
+        }
+      }
+      // if the to router is not connected to the through router, skip it
+      // otherwise, add the to router data
+      if (toRouterInterfaceConnectedToThrough) {
+        toRoutersData.push({
+          asn: toRouter.asn,
+          router: toRouter.name,
+          router_ip: toRouterInterfaceConnectedToThrough.ip.split("/")[0],
+          mngt_ip: toRouter.mngt_ipv4.split("/")[0],
+        });
+      }
+    }
+  
+    const formattedConfig = {
+      transit: [
+        {
+          from_: {
+            asn: transitConfigs.from,
+            router: fromRouter.name,
+            router_ip: fromRouterInterface.ip.split("/")[0],
+            mngt_ip: fromRouter.mngt_ipv4.split("/")[0],
+          },
+          through: {
+            asn: transitConfigs.through,
+            router: throughRouter.name,
+            mngt_ip: throughRouter.mngt_ipv4.split("/")[0],
+            router_ip: [
+              {
+                asn: fromRouter.asn,
+                my_router_ip: throughRouterInterfaceConnectedToFrom.ip.split("/")[0],
+              },
+              ...throughRouterIPs,
+            ],
+          },
+          to: toRoutersData,
+        },
+      ],
+    };
+  
+    console.log(formattedConfig);
+    try {
+      const transitApi = "http://" + serverIp + ":5000/transit"
+      const response = await fetch(transitApi, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formattedConfig),
+      });
+  
+      if (!response.ok) {
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: "There was a problem with your request: " + response.statusText,
+        })
+        throw new Error(`Error on request: ${response.statusText}`);
+      }
+  
+      toast({
+        variant: "default",
+        title: "Transit configuration sent!",
+        description: "The transit configuration has been sent successfully.",
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request: " + error,
+      })
+    } finally {
+      // setIsDeploying(false);
+    }
+  };
   
   return (
     <>
@@ -350,6 +524,18 @@ export default function NumberOfRouters() {
               </Button>
               <Button disabled={!isConfigGenerated} className="w-fit my-4" onClick={() => handleDeployNetwork()}>
                 Deploy Network {isDeploying ? <Spinner /> : ""}
+              </Button>
+            </div>
+          )}
+          {transitConfigs && (
+            <div>
+              <TransitConfiguration
+                initialValues={transitConfigs}
+                availableASOptions={getAvailableASOptions()}
+                onChange={handleTransitConfigsChange}
+              />
+              <Button className="w-fit" onClick={handleTransitConfigsSend}>
+                Send Transit Configuration
               </Button>
             </div>
           )}

@@ -41,6 +41,12 @@ export type HostConfig = {
   gateway: string;
 };
 
+export type TransitConfig = {
+  from: number;
+  through: number;
+  to: number[];
+};
+
 export const ipWithMaskSchema = z.string().regex(
   /^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\/([0-9]|[12][0-9]|3[0-2])$/,
   "Invalid IP format (must be CIDR e.g., 192.168.1.1/24)"

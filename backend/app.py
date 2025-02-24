@@ -4,7 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 import json
 import os
 import sys
-import crypt
+# import crypt
 import ipaddress
 from jsonrpclib import Server
 from dotenv import load_dotenv
@@ -45,10 +45,20 @@ def configure():
 
         try:
             NetworkConfig(**data)
+            generate_mngt_ip(data["routers"])
             generate_containerlab_config(data["routers"], data["hosts"], data["project_name"])
             generate_arista_configs(data["routers"])
 
-            return jsonify({"message": "Network deployed successfully"}), 200
+            # before returning the data, we need to remove the admin password
+            # since it's a sensitive information
+            for router in data["routers"]:
+                del router["admin_password"]
+
+            # REMOVE, FOR TEST ONLY
+            fake_data = {}
+            with open("our_config.json", "r") as f:
+                fake_data = json.load(f)
+            return jsonify(fake_data), 200
         except Exception as e:
             print(e)
             sys.stdout.flush()
@@ -128,6 +138,14 @@ def generate_password_hash():
     hashed_password = crypt.crypt(PASSWORD, salt)
     return hashed_password
 
+def generate_mngt_ip(routers):
+    """ Generates the management IP address for the routers """
+    # generate the management IP addresses for each router 
+    # also generate the network address for each interface
+    ipv4_base = ipaddress.IPv4Address("172.20.20.2")
+    for i, router in enumerate(routers):
+        router["mngt_ipv4"] = f"{str(ipv4_base + i)}/24"
+
 def generate_containerlab_config(routers, hosts, project_name):
     """ Generates the containerlab configuration file and writes it in the ./config folder """
     # if any of the interfaces of the host has the dhcp enabled, then insert a field
@@ -158,14 +176,8 @@ def generate_arista_configs(routers):
     """ Generates the Arista configuration files for each router and writes them in the ./config folder """
     template = env.get_template("arista_config.j2")
     files = []
-
-    # generate the management IP addresses for each router 
-    # also generate the network address for each interface
-    ipv4_base = ipaddress.IPv4Address("172.20.20.2")
-    ipv6_base = ipaddress.IPv6Address("3fff:172:20:20::2")
-    for i, router in enumerate(routers):
-        router["mngt_ipv4"] = f"{str(ipv4_base + i)}/24"
-        router["mngt_ipv6"] = f"{str(ipv6_base + i)}/64"
+    
+    for router in routers:
         router_asn = router["asn"]
         # also generate the network address for each interface that is used in ospf configuration
         for interface in router["interfaces"]:
@@ -189,10 +201,9 @@ def generate_arista_configs(routers):
             else:
                 # if none of the neighbors are on the same network as the interface, add the network
                 interface["network"] = interface_network
-                print(f"Network: {interface['network']}")
     
         # generate the password hash for the admin user and add it to the json
-        router["admin_password"] = generate_password_hash()
+        router["admin_password"] = "ciao"#generate_password_hash() TODO
 
         config_content = template.render(router=router)
         file_path = os.path.join(CONFIG_DIR, f"{router['name']}.cfg")
@@ -258,9 +269,9 @@ def transit():
                     commands_from.append(f"   neighbor {through_router_ip['my_router_ip']} route-map RM-IN-{through_asn} in")
                     commands_from.append(f"exit")
 
-            mngt_ip_from = transit["from_"]["mngt_ip"]
-            response = send_arista_commands(mngt_ip_from, commands_from)
-            print(response)
+            # mngt_ip_from = transit["from_"]["mngt_ip"]
+            # response = send_arista_commands(mngt_ip_from, commands_from)
+            # print(response)
             # save on file the from router configuration
             with open(f"config/{from_router}_BGP.cfg", "w") as f:
                 f.write("\n".join(commands_from))
@@ -291,9 +302,9 @@ def transit():
                             commands_to.append(f"   neighbor {through_router_ip['my_router_ip']} route-map RM-IN-{through_asn} in")
                             commands_to.append(f"exit")
 
-                    mngt_ip_to = to["mngt_ip"]
-                    response = send_arista_commands(mngt_ip_to, commands_to)
-                    print(response)
+                    # mngt_ip_to = to["mngt_ip"]
+                    # response = send_arista_commands(mngt_ip_to, commands_to)
+                    # print(response)
                     # save on file the to router configuration
                     with open(f"config/{to_router}_BGP.cfg", "w") as f:
                         f.write("\n".join(commands_to))
@@ -343,9 +354,9 @@ def transit():
                             commands_through.append(f"exit")
                             commands_through.append(f"route-map RM-OUT-{from_asn} deny 99")
             
-            mngt_ip_through = transit["through"]["mngt_ip"]
-            response = send_arista_commands(mngt_ip_through, commands_through)
-            print(response)
+            # mngt_ip_through = transit["through"]["mngt_ip"]
+            # response = send_arista_commands(mngt_ip_through, commands_through)
+            # print(response)
             with open(f"config/{through_router}_BGP.cfg", "w") as f:
                 f.write("\n".join(commands_through))
 

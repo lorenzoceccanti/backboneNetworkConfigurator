@@ -1,15 +1,13 @@
 name: {{ project_name }}
 topology:
   nodes:
-  {% set ns_mgmt_ip_counter = namespace(mgmt_ip_counter=2) %}
   {% for router in routers %}
     {{ router.name }}:
       kind: arista_ceos
       image: ceos:4.33.0F
       restart-policy: always
-      mgmt-ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
+      mgmt-ipv4: {{ router.mngt_ipv4.split("/")[0] }}
       startup-config: {{ router.name }}.cfg
-    {% set ns_mgmt_ip_counter.mgmt_ip_counter = ns_mgmt_ip_counter.mgmt_ip_counter + 1 %}
   {% endfor %}
 
   {% for host in hosts %}
@@ -18,7 +16,6 @@ topology:
       image: alpine:latest
       restart-policy: always
       network-mode: none
-      mgmt-ipv4: 172.20.20.{{ ns_mgmt_ip_counter.mgmt_ip_counter }}
       stages:
         create:
           wait-for:
@@ -37,7 +34,6 @@ topology:
         {% if host.dhcp_enabled == false %}
         - ip route add default via {{ host.gateway }}
         {% endif %}
-   {% set ns_mgmt_ip_counter.mgmt_ip_counter = ns_mgmt_ip_counter.mgmt_ip_counter + 1 %}
   {% endfor %}
   links:
 
