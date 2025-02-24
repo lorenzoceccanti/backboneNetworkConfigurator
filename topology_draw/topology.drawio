@@ -1026,7 +1026,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="kMVJMuJy_sMAojEf1NKT" name="Pagina-4">
-    <mxGraphModel dx="1909" dy="1029" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2339" math="0" shadow="0">
+    <mxGraphModel dx="1750" dy="943" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2339" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1129,7 +1129,7 @@
         </mxCell>
         <mxCell id="fruQjP6mqrFbQrBV7plB-3" value="&lt;b&gt;Eth1&lt;/b&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=13;" vertex="1" connectable="0" parent="fruQjP6mqrFbQrBV7plB-2">
           <mxGeometry x="0.7658" y="1" relative="1" as="geometry">
-            <mxPoint x="-10" y="-8" as="offset" />
+            <mxPoint x="-10" y="-15" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="TSgW6gOoyNQ9og5EHRjM-2" value="R20" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;shape=mxgraph.cisco.routers.router;verticalLabelPosition=bottom;verticalAlign=top;fillColor=#036897;strokeColor=#ffffff;fontSize=13.3;fontColor=#333333;spacing=0;strokeOpacity=100;fillOpacity=100;strokeWidth=1.5;lucidId=BmVRaE0Tv0t1;" vertex="1" parent="1">
@@ -1174,17 +1174,21 @@
           <mxGeometry x="1960" y="120" width="110" height="40" as="geometry" />
         </mxCell>
         <mxCell id="I3S9hjimUJr8rDCmkZGC-1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="642.5" y="200" width="467.5" height="350" as="geometry" />
+          <mxGeometry x="640" y="212.5" width="467.5" height="350" as="geometry" />
         </mxCell>
         <mxCell id="rq9aPm01TawosBinUGrs-1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="1330" y="110" width="290" height="430" as="geometry" />
+          <mxGeometry x="1340" y="105" width="290" height="445" as="geometry" />
         </mxCell>
         <mxCell id="rq9aPm01TawosBinUGrs-4" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="1840" y="110" width="330" height="420" as="geometry" />
         </mxCell>
-        <mxCell id="CJ9vggxOfs2OhTSaivZB-4" value="" style="html=1;jettySize=18;whiteSpace=wrap;fontSize=13;strokeColor=#3a414a;strokeOpacity=100;strokeWidth=0.8;rounded=1;arcSize=12;edgeStyle=orthogonalEdgeStyle;startArrow=none;endArrow=none;exitX=1;exitY=0.5;exitPerimeter=0;lucidId=ejVR3KXCib64;entryX=-0.035;entryY=0.591;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="nBu8PcCk18Q9Y9Ke6agY-2" target="CJ9vggxOfs2OhTSaivZB-1">
+        <mxCell id="CJ9vggxOfs2OhTSaivZB-4" value="" style="html=1;jettySize=18;whiteSpace=wrap;fontSize=13;strokeColor=#3a414a;strokeOpacity=100;strokeWidth=0.8;rounded=1;arcSize=12;edgeStyle=orthogonalEdgeStyle;startArrow=none;endArrow=none;exitX=1;exitY=0.5;exitPerimeter=0;lucidId=ejVR3KXCib64;entryX=0.577;entryY=0.997;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="nBu8PcCk18Q9Y9Ke6agY-2" target="CJ9vggxOfs2OhTSaivZB-1">
           <mxGeometry width="100" height="100" relative="1" as="geometry">
-            <Array as="points" />
+            <Array as="points">
+              <mxPoint x="1650" y="474" />
+              <mxPoint x="1650" y="475" />
+              <mxPoint x="1744" y="475" />
+            </Array>
             <mxPoint x="1896" y="474" as="targetPoint" />
             <mxPoint x="1518" y="474" as="sourcePoint" />
           </mxGeometry>
@@ -1196,9 +1200,6 @@
         </mxCell>
         <mxCell id="CJ9vggxOfs2OhTSaivZB-1" value="132.114.28.0/24" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;shape=cylinder3;direction=south;size=10;anchorPointDirection=0;boundedLbl=1;fontSize=16.7;spacing=3.8;verticalAlign=middle;strokeColor=#3a414a;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#ffffff;strokeWidth=1.5;lucidId=GiVRu4kat.sn;" vertex="1" parent="1">
           <mxGeometry x="1649" y="448" width="165" height="45" as="geometry" />
-        </mxCell>
-        <mxCell id="7UkqIkxDNOldo9yXNa6I-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;" vertex="1" parent="1">
-          <mxGeometry x="600" y="50" width="1640" height="570" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
