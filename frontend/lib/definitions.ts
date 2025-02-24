@@ -13,33 +13,44 @@ export type RouterInterface = {
   peer: {
     name: string;
     interface: string;
+    linux_interface?: string;
+    network?: string;
   }
 };
 
 export type Neighbor = {
   ip: string;
-  asNumber: number;
+  asn: number;
 };
 
 export type RouterConfig = {
-  routerName: string;
-  asNumber: number;
+  name: string;
+  asn: number;
   interfaces: RouterInterface[];
   neighbors: Neighbor[];
   dhcp?: DHCPConfig;
+  mngt_ipv4?: string;
 };
 
 export type HostInterface = {
   name: string;
   dhcp: boolean;
   ip?: string;
+  linux_name?: string;
 };
 
 export type HostConfig = {
-  hostName: string;
+  name: string;
   interfaces: HostInterface[];
   gateway: string;
+  dhcp_enabled?: boolean;
 };
+
+export type NetworkTopology = {
+  routers: RouterConfig[];
+  hosts: HostConfig[];
+  project_name: string;
+}
 
 export type TransitConfig = {
   from: number;

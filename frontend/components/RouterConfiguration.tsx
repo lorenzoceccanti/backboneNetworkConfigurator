@@ -176,9 +176,9 @@ export default function RouterConfiguration({
         <label className="block text-sm font-medium">Router Name</label>
         <Input
           type="text"
-          value={config.routerName}
-          className={`border ${config.routerName ? 'border-green-500' : ''}`}
-          onChange={(e) => handleChange("routerName", e.target.value)}
+          value={config.name}
+          className={`border ${config.name ? 'border-green-500' : ''}`}
+          onChange={(e) => handleChange("name", e.target.value)}
         />
       </div>
 
@@ -188,9 +188,9 @@ export default function RouterConfiguration({
           type="number"
           min={1}
           max={65534}
-          value={config.asNumber}
-          className={`border ${config.asNumber ? 'border-green-500' : ''}`}
-          onChange={(e) => handleChange("asNumber", Number(e.target.value))}
+          value={config.asn}
+          className={`border ${config.asn ? 'border-green-500' : ''}`}
+          onChange={(e) => handleChange("asn", Number(e.target.value))}
         />
       </div>
 
@@ -302,11 +302,11 @@ export default function RouterConfiguration({
               type="number"
               min={1}
               max={65534}
-              className={`border ${neighbor.asNumber ? 'border-green-500' : ''}`}
-              value={neighbor.asNumber}
+              className={`border ${neighbor.asn ? 'border-green-500' : ''}`}
+              value={neighbor.asn}
               onChange={(e) => {
                 const updatedNeighbors = [...config.neighbors];
-                updatedNeighbors[i] = { ...neighbor, asNumber: Number(e.target.value) };
+                updatedNeighbors[i] = { ...neighbor, asn: Number(e.target.value) };
                 handleChange("neighbors", updatedNeighbors);
               }}
             />
@@ -330,7 +330,7 @@ export default function RouterConfiguration({
         <Button
           className="md:mt-2 mb-5 md:mb-0"
           onClick={() =>
-            handleChange("neighbors", [...config.neighbors, { ip: "", asNumber: 0 }])
+            handleChange("neighbors", [...config.neighbors, { ip: "", asn: 0 }])
           }
         >
           Add Neighbor

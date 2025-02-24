@@ -104,9 +104,9 @@ export default function HostConfiguration({
         <label className="block text-sm font-medium">Host Name</label>
         <Input
           type="text"
-          value={config.hostName}
-          className={`border ${config.hostName ? 'border-green-500' : ''}`}
-          onChange={(e) => handleChange("hostName", e.target.value)}
+          value={config.name}
+          className={`border ${config.name ? 'border-green-500' : ''}`}
+          onChange={(e) => handleChange("name", e.target.value)}
         />
       </div>
 

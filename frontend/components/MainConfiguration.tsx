@@ -1,11 +1,17 @@
 "use client";
 
-import { RouterConfig, HostConfig, TransitConfig } from "@/lib/definitions";
-import { NetworkTopology } from "@/lib/NetworkTopology";
 import { useState } from "react";
+import { RouterConfig, HostConfig, TransitConfig, NetworkTopology } from "@/lib/definitions";
+import { useNetworkConfig } from "@/hooks/use-network-config";
+import { sendConfiguration, deployNetwork } from "@/lib/api";
+import { mainConfigurationFormSchema } from "@/lib/validations";
+import RouterConfiguration from "@/components/RouterConfiguration";
+import HostConfiguration from "@/components/HostConfiguration";
+import TransitConfiguration from "@/components/TransitConfiguration";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Spinner } from "@/components/Spinner";
 import {
   Form,
   FormControl,
@@ -23,52 +29,32 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import RouterConfiguration from "./RouterConfiguration";
-import HostConfiguration from "./HostConfiguration";
-import { Spinner } from "./Spinner";
-import TransitConfiguration from "./TransitConfiguration";
 import ip from "ip";
 
-const formSchema = z.object({
-  number_of_routers: z.preprocess(
-    (a) => parseInt(z.string().parse(a), 10),
-    z.number().gte(1).lte(10)
-  ),
-  number_of_hosts: z.preprocess(
-    (a) => parseInt(z.string().parse(a), 10),
-    z.number().gte(1).lte(10)
-  ),
-  server_ip: z.string().nonempty("Server IP is required").ip("Invalid IP address"),
-  project_name: z.string().nonempty("Project name is required"),
-});
-
 export default function MainConfiguration() {
-  const [routerConfigs, setRouterConfigs] = useState<RouterConfig[]>([]);
-  const [hostConfigs, setHostConfigs] = useState<HostConfig[]>([]);
-  const [transitConfigs, setTransitConfigs] = useState<TransitConfig>();
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
-  const [serverIp, setServerIp] = useState<string | undefined>(undefined);
-  const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
-  const [isDeploying, setIsDeploying] = useState<boolean>(false);
-  const [networkTopology, setNetworkTopology] = useState<NetworkTopology | null>(null);
-
+  const {
+    routerConfigs, setRouterConfigs, updateRouterConfig,
+    hostConfigs, setHostConfigs, updateHostConfig,
+    networkTopology, setNetworkTopology,
+    transitConfigs, setTransitConfigs,
+    serverIp, setServerIp,
+    isConfigGenerated, setIsConfigGenerated,
+    isDeploying, setIsDeploying,
+  } = useNetworkConfig();
 
   const { toast } = useToast()
 
   const handleRouterConfigChange = (index: number, config: RouterConfig) => {
-    const newRouterConfigs = [...routerConfigs];
-    newRouterConfigs[index] = config;
-    setRouterConfigs(newRouterConfigs);
+    updateRouterConfig(index, config);
   };
 
   const handleHostConfigChange = (index: number, config: HostConfig) => {
-    const newHostConfigs = [...hostConfigs];
-    newHostConfigs[index] = config;
-    setHostConfigs(newHostConfigs);
+    updateHostConfig(index, config);
   }
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof mainConfigurationFormSchema>>({
+    resolver: zodResolver(mainConfigurationFormSchema),
     defaultValues: {
       number_of_routers: 0,
       number_of_hosts: 0,
@@ -77,113 +63,75 @@ export default function MainConfiguration() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof mainConfigurationFormSchema>) {
     setServerIp(values.server_ip);
-    setRouterConfigs(
-      Array(values.number_of_routers).fill({
-        routerName: "r1",
-        asNumber: 10,
-        interfaces: [
-          {
-            name: "Loopback0",
-            ip: "1.1.1.1/32",
-            peer: {
-              name: "",
-              interface: "",
-            },
+    const initialRouterConfig: RouterConfig = {
+      name: "r1",
+      asn: 55001,
+      interfaces: [
+        {
+          name: "Loopback0",
+          ip: "1.1.1.1/32",
+          peer: {
+            name: "",
+            interface: "",
           },
-          {
-            name: "Ethernet1",
-            ip: "192.168.100.1/24",
-            peer: {
-              name: "h1",
-              interface: "Ethernet1",
-            },
+        },
+        {
+          name: "Ethernet1",
+          ip: "192.168.100.1/24",
+          peer: {
+            name: "h1",
+            interface: "Ethernet1",
           },
-        ],
-        neighbors: [
-          {
-            ip: "192.168.200.1",
-            asNumber: 20,
-          }
-        ],
-        dhcp: {
-          enabled: true,
-          subnet: "192.168.100.0/24",
-          interface: "Ethernet1",
-          range: ["192.168.100.10", "192.168.100.99"]
+        },
+      ],
+      neighbors: [
+        {
+          ip: "192.168.200.1",
+          asn: 55002,
         }
-      })
+      ],
+      dhcp: {
+        enabled: true,
+        subnet: "192.168.100.0/24",
+        interface: "Ethernet1",
+        range: ["192.168.100.10", "192.168.100.99"]
+      }
+    }
+    const initialHostConfig: HostConfig = {
+      name: "h1",
+      interfaces: [
+        {
+          name: "Ethernet1",
+          dhcp: true,
+        }
+      ],
+      gateway: "",
+    }
+    setRouterConfigs(
+      Array(values.number_of_routers).fill({ ...initialRouterConfig })
     );
     setHostConfigs(
-      Array(values.number_of_hosts).fill({
-        hostName: "h1",
-        interfaces: [
-          {
-            name: "Ethernet1",
-            dhcp: true,
-          }
-        ],
-        gateway: "",
-      })
+      Array(values.number_of_hosts).fill({ ...initialHostConfig })
     );
   }
 
   const handleGenerateConfiguration = async (routerConfigs: RouterConfig[], hostConfigs: HostConfig[]) => {
-    const formattedConfig = {
+    const body: NetworkTopology = {
       project_name: form.getValues("project_name"),
-      routers: routerConfigs.map((router) => ({
-        name: router.routerName,
-        asn: router.asNumber,
-        interfaces: router.interfaces.map((iface) => ({
-          name: iface.name,
-          ip: iface.ip,
-          peer: {
-            name: iface.peer.name,
-            interface: iface.peer.interface,
-          }
-        })),
-        neighbors: router.neighbors.map((neighbor) => ({
-          ip: neighbor.ip,
-          asn: neighbor.asNumber,
-        })),
-        ...(router.dhcp && { dhcp: router.dhcp }),
-      })),
-      hosts: hostConfigs.map((host) => ({
-        name: host.hostName,
-        interfaces: host.interfaces.map((iface) => ({
-          name: iface.name,
-          dhcp: iface.dhcp,
-          ...(iface.dhcp ? {} : { ip: iface.ip }),
-        })),
-        gateway: host.gateway,
-      })),
+      routers: routerConfigs,
+      hosts: hostConfigs,
     };
 
-    console.log(JSON.stringify(formattedConfig))
+    if (!serverIp) {
+      console.error("Server IP is not set.");
+      return;
+    }
 
     try {
-      const configApi = "http://" + serverIp + ":5000/configure"
-      const response = await fetch(configApi, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formattedConfig),
-      });
-  
-      if (!response.ok) {
-        toast({
-          variant: "destructive",
-          title: "Uh oh! Something went wrong.",
-          description: "There was a problem with your request: " + response.statusText,
-        })
-        setIsConfigGenerated(false);
-        throw new Error(`Error on request: ${response.statusText}`);
-      }
-      const data: NetworkTopology = await response.json();
-      setNetworkTopology(data); 
-  
+      const data = await sendConfiguration(body, serverIp);
+      setNetworkTopology(data);
       toast({
         variant: "default",
         title: "Configuration generated!",
@@ -191,6 +139,7 @@ export default function MainConfiguration() {
       })
       setIsConfigGenerated(true);
     } catch (error) {
+      console.error("Error:", error);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -202,31 +151,21 @@ export default function MainConfiguration() {
 
   const handleDeployNetwork = async () => {
     setIsDeploying(true);
+
+    if (!serverIp) {
+      console.error("Server IP is not set.");
+      return;
+    }
+
     try {
-      /*const deployApi = "http://" + serverIp + ":5000/deploy"
-      const response = await fetch(deployApi, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });*/
-      const response = { ok: true } // for testing purposes
-  
-      if (!response.ok) {
-        toast({
-          variant: "destructive",
-          title: "Uh oh! Something went wrong.",
-          description: "There was a problem with your request: " + response.statusText,
-        })
-        throw new Error(`Error on request: ${response.statusText}`);
-      }
-  
+      await deployNetwork(serverIp);
       toast({
         variant: "default",
         title: "Network deployed!",
         description: "The network has been deployed successfully.",
       })
     } catch (error) {
+      console.error("Error:", error);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -234,7 +173,6 @@ export default function MainConfiguration() {
       })
     } finally {
       setIsDeploying(false);
-      // once the network is deployed, show the transit configuration
       setTransitConfigs({
         from: 0,
         through: 0,
@@ -335,7 +273,7 @@ export default function MainConfiguration() {
           asn: toRouter.asn,
           router: toRouter.name,
           router_ip: toRouterInterfaceConnectedToThrough.ip.split("/")[0],
-          mngt_ip: toRouter.mngt_ipv4.split("/")[0],
+          mngt_ip: toRouter.mngt_ipv4!.split("/")[0],
         });
       }
     }
@@ -347,12 +285,12 @@ export default function MainConfiguration() {
             asn: transitConfigs.from,
             router: fromRouter.name,
             router_ip: fromRouterInterface.ip.split("/")[0],
-            mngt_ip: fromRouter.mngt_ipv4.split("/")[0],
+            mngt_ip: fromRouter.mngt_ipv4!.split("/")[0],
           },
           through: {
             asn: transitConfigs.through,
             router: throughRouter.name,
-            mngt_ip: throughRouter.mngt_ipv4.split("/")[0],
+            mngt_ip: throughRouter.mngt_ipv4!.split("/")[0],
             router_ip: [
               {
                 asn: fromRouter.asn,
@@ -504,15 +442,15 @@ export default function MainConfiguration() {
           {routerConfigs.length > 0 && 
           hostConfigs.length > 0 && 
           routerConfigs.every(config => 
-            config.routerName && 
-            config.asNumber && 
+            config.name && 
+            config.asn && 
             config.interfaces.length > 0 && 
             config.neighbors.length > 0 &&
             config.interfaces.every(iface => iface.name && iface.ip && iface.peer) &&
-            config.neighbors.every(neighbor => neighbor.ip && neighbor.asNumber)
+            config.neighbors.every(neighbor => neighbor.ip && neighbor.asn)
           ) && 
           hostConfigs.every(config =>
-            config.hostName &&
+            config.name &&
             config.interfaces.length > 0 &&
             config.interfaces.every(iface => iface.name && (iface.dhcp || iface.ip)) &&
             // if none of the interfaces have dhcp enabled, then gateway is required

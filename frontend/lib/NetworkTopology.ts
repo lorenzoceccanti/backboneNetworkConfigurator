@@ -1,10 +1,10 @@
-export type RouterInterface = {
+/*export type RouterInterface = {
   name: string;
   ip: string;
   peer: {
     name: string;
     interface: string;
-    linux_interface: string;
+    linux_interface?: string;
     network?: string;
   }
 };
@@ -27,7 +27,7 @@ export type RouterConfig = {
   interfaces: RouterInterface[];
   neighbors: Neighbor[];
   dhcp?: DHCPConfig;
-  mngt_ipv4: string;
+  mngt_ipv4?: string;
 };
 
 export type HostConfig = {
@@ -36,7 +36,7 @@ export type HostConfig = {
     name: string;
     dhcp: boolean;
     ip?: string;
-    linux_name: string;
+    linux_name?: string;
   }[];
   gateway: string;
   dhcp_enabled: boolean;
@@ -46,4 +46,4 @@ export type NetworkTopology = {
   routers: RouterConfig[];
   hosts: HostConfig[];
   project_name: string;
-};
+};*/
