@@ -1,5 +1,12 @@
 import { RouterConfig, HostConfig } from "@/lib/definitions";
 
+export const initialMainConfig = {
+  number_of_routers: 0,
+  number_of_hosts: 0,
+  server_ip: "127.0.0.1",
+  project_name: "test01"
+}
+
 export const initialRouterConfig: RouterConfig = {
   name: "r1",
   asn: 55001,

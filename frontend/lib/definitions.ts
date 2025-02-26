@@ -1,5 +1,3 @@
-// import { z } from "zod";
-
 export type DHCPConfig = {
   enabled: boolean;
   subnet: string;
