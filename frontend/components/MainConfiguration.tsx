@@ -5,6 +5,10 @@ import { RouterConfig, HostConfig, TransitConfig, NetworkTopology } from "@/lib/
 import { useNetworkConfig } from "@/hooks/use-network-config";
 import { sendConfiguration, deployNetwork } from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
+import { initialRouterConfig, initialHostConfig } from "@/lib/default_values";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import RouterConfiguration from "@/components/RouterConfiguration";
 import HostConfiguration from "@/components/HostConfiguration";
 import TransitConfiguration from "@/components/TransitConfiguration";
@@ -26,9 +30,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import ip from "ip";
 
 export default function MainConfiguration() {
@@ -45,14 +46,6 @@ export default function MainConfiguration() {
 
   const { toast } = useToast()
 
-  const handleRouterConfigChange = (index: number, config: RouterConfig) => {
-    updateRouterConfig(index, config);
-  };
-
-  const handleHostConfigChange = (index: number, config: HostConfig) => {
-    updateHostConfig(index, config);
-  }
-
   const form = useForm<z.infer<typeof mainConfigurationFormSchema>>({
     resolver: zodResolver(mainConfigurationFormSchema),
     defaultValues: {
@@ -65,50 +58,6 @@ export default function MainConfiguration() {
 
   function onSubmit(values: z.infer<typeof mainConfigurationFormSchema>) {
     setServerIp(values.server_ip);
-    const initialRouterConfig: RouterConfig = {
-      name: "r1",
-      asn: 55001,
-      interfaces: [
-        {
-          name: "Loopback0",
-          ip: "1.1.1.1/32",
-          peer: {
-            name: "",
-            interface: "",
-          },
-        },
-        {
-          name: "Ethernet1",
-          ip: "192.168.100.1/24",
-          peer: {
-            name: "h1",
-            interface: "Ethernet1",
-          },
-        },
-      ],
-      neighbors: [
-        {
-          ip: "192.168.200.1",
-          asn: 55002,
-        }
-      ],
-      dhcp: {
-        enabled: true,
-        subnet: "192.168.100.0/24",
-        interface: "Ethernet1",
-        range: ["192.168.100.10", "192.168.100.99"]
-      }
-    }
-    const initialHostConfig: HostConfig = {
-      name: "h1",
-      interfaces: [
-        {
-          name: "Ethernet1",
-          dhcp: true,
-        }
-      ],
-      gateway: "",
-    }
     setRouterConfigs(
       Array(values.number_of_routers).fill({ ...initialRouterConfig })
     );
@@ -419,7 +368,7 @@ export default function MainConfiguration() {
                 <RouterConfiguration
                   initialValues={config}
                   onChange={(updatedConfig) =>
-                    handleRouterConfigChange(index, updatedConfig)
+                    updateRouterConfig(index, updatedConfig)
                   }
                 />
               </AccordionContent>
@@ -432,7 +381,7 @@ export default function MainConfiguration() {
                   <HostConfiguration
                     initialValues={config}
                     onChange={(updatedConfig) =>
-                      handleHostConfigChange(index, updatedConfig)
+                      updateHostConfig(index, updatedConfig)
                     }
                   />
                 </AccordionContent>
