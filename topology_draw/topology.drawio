@@ -1397,6 +1397,9 @@
         <mxCell id="zJBSR0lnWTx-fiTImBUl-1" value="&lt;b&gt;Eth1&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="1835" y="1094" width="60" height="30" as="geometry" />
         </mxCell>
+        <mxCell id="7M8b7qGBCM_aKZOWBe7y-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="610" y="680" width="1490" height="800" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
