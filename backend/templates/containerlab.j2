@@ -38,6 +38,6 @@ topology:
   links:
 
   {% for link in links %}
-    - endpoints: ["{{link.endpoints[0]}}", "{{link.endpoints[1]}}"]
+    - endpoints: ["{{link[0]}}", "{{link[1]}}"]
   {% endfor %}
 
