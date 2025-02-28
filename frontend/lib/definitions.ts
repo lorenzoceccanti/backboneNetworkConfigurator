@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 export type DHCPConfig = {
   enabled: boolean;
   subnet: string;
@@ -13,40 +11,47 @@ export type RouterInterface = {
   peer: {
     name: string;
     interface: string;
+    linux_interface?: string;
+    network?: string;
   }
 };
 
 export type Neighbor = {
   ip: string;
-  asNumber: number;
+  asn: number;
 };
 
 export type RouterConfig = {
-  routerName: string;
-  asNumber: number;
+  name: string;
+  asn: number;
   interfaces: RouterInterface[];
   neighbors: Neighbor[];
   dhcp?: DHCPConfig;
+  mngt_ipv4?: string;
 };
 
 export type HostInterface = {
   name: string;
   dhcp: boolean;
   ip?: string;
+  linux_name?: string;
 };
 
 export type HostConfig = {
-  hostName: string;
+  name: string;
   interfaces: HostInterface[];
   gateway: string;
+  dhcp_enabled?: boolean;
 };
 
-export const ipWithMaskSchema = z.string().regex(
-  /^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\/([0-9]|[12][0-9]|3[0-2])$/,
-  "Invalid IP format (must be CIDR e.g., 192.168.1.1/24)"
-);
+export type NetworkTopology = {
+  routers: RouterConfig[];
+  hosts: HostConfig[];
+  project_name: string;
+}
 
-export const ipSchema = z.string().regex(
-  /^(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$/,
-  "Invalid IP format (e.g., 192.168.1.1)"
-);
+export type TransitConfig = {
+  from: number;
+  through: number;
+  to: number[];
+};
