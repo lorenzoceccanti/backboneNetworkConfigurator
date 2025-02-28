@@ -1,11 +1,21 @@
 import { useState, useEffect } from "react";
 import { HostConfig } from "@/lib/definitions";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { hostConfigurationFormSchema } from "@/lib/validations";
 
 export function useHostConfig(initialValues: HostConfig, onChange: (config: HostConfig) => void) {
   const [config, setConfig] = useState<HostConfig>(initialValues);
   const [selectedInterfaces, setSelectedInterfaces] = useState<string[]>([]);
 
   const availableInterfaces = ["Ethernet1", "Ethernet2", "Ethernet3", "Ethernet4"];
+
+  const form = useForm<z.infer<typeof hostConfigurationFormSchema>>({
+    resolver: zodResolver(hostConfigurationFormSchema),
+    mode: "onBlur",
+    defaultValues: initialValues,
+  });
 
   useEffect(() => {
     setConfig(initialValues);
@@ -46,5 +56,6 @@ export function useHostConfig(initialValues: HostConfig, onChange: (config: Host
     handleInterfaceSelection,
     getAvailableInterfaces,
     removeInterface,
+    form
   };
 }

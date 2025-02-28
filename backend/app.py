@@ -4,7 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 import json
 import os
 import sys
-# import crypt
+import crypt
 import ipaddress
 from jsonrpclib import Server
 from dotenv import load_dotenv
@@ -69,7 +69,7 @@ def configure():
 
 @app.route("/deploy", methods=["POST"])
 def deploy():
-    os.system(f"./deploy_network.sh")
+    # os.system(f"./deploy_network.sh") TODO REMOVE
     return jsonify({"message": "Network deployed successfully"}), 200
 
 def convert_interfaces(routers, hosts):
@@ -203,7 +203,7 @@ def generate_arista_configs(routers):
                 interface["network"] = interface_network
     
         # generate the password hash for the admin user and add it to the json
-        router["admin_password"] = "ciao"#generate_password_hash() TODO
+        router["admin_password"] = generate_password_hash()
 
         config_content = template.render(router=router)
         file_path = os.path.join(CONFIG_DIR, f"{router['name']}.cfg")

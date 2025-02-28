@@ -3,7 +3,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RouterConfig, HostConfig, TransitConfig, NetworkTopology } from "@/lib/definitions";
-import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default_values";
+import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
 import { sendConfiguration, deployNetwork } from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";

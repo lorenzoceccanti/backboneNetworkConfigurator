@@ -60,3 +60,9 @@ export const hostConfigurationFormSchema = z.object({
   ),
   gateway: ipSchema.optional(),
 });
+
+export const transitConfigurationFormSchema = z.object({
+  from: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
+  through: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
+  to: z.array(z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534")),
+});

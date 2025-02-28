@@ -1,9 +1,5 @@
 import { HostConfig } from "@/lib/definitions";
 import { useHostConfig } from "@/hooks/use-host-config";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { hostConfigurationFormSchema } from "@/lib/validations";
 import {
   Select,
   SelectContent,
@@ -33,13 +29,8 @@ export default function HostConfiguration({
     handleInterfaceSelection,
     getAvailableInterfaces,
     removeInterface,
+    form
   } = useHostConfig(initialValues, onChange);
-
-  const form = useForm<z.infer<typeof hostConfigurationFormSchema>>({
-    resolver: zodResolver(hostConfigurationFormSchema),
-    mode: "onBlur",
-    defaultValues: initialValues,
-  });
 
   return (
     <div className="space-y-4 p-4 border rounded-lg">
@@ -52,6 +43,7 @@ export default function HostConfiguration({
           className={`border ${form.formState.errors.name ? 'border-red-500' : 'border-green-500'}`}
           onChange={(e) => handleChange("name", e.target.value)}
         />
+        {form.formState.errors.name && <p className="text-red-500 text-sm">{form.formState.errors.name.message}</p>}
       </div>
 
       <div>
@@ -75,7 +67,7 @@ export default function HostConfiguration({
             </Select>
             {form.formState.errors.interfaces?.[i]?.name && <p className="text-red-500 text-sm">{form.formState.errors.interfaces[i].name.message}</p>}
             {!config.interfaces[i].dhcp && (
-              <div>
+              <div className="w-full">
                 <Input
                     {...form.register(`interfaces.${i}.ip`)}
                     className={`border ${iface.ip ? (form.formState.errors.interfaces?.[i]?.ip ? 'border-red-500' : 'border-green-500') : ''}`}

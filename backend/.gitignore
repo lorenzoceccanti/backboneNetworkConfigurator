@@ -2,5 +2,5 @@ config/*
 !config/.gitkeep
 .DS_Store
 __pycache__/*
-my_backend/*
+.venv/*
 clab-test01/*

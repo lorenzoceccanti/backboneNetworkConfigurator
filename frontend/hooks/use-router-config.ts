@@ -1,11 +1,21 @@
 import { useState, useEffect } from "react";
 import { RouterConfig } from "@/lib/definitions";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { routerConfigurationFormSchema } from "@/lib/validations";
 
 export function useRouterConfig(initialValues: RouterConfig, onChange: (config: RouterConfig) => void) {
   const [config, setConfig] = useState<RouterConfig>(initialValues);
   const [selectedInterfaces, setSelectedInterfaces] = useState<string[]>([]);
 
   const availableInterfaces = ["Ethernet1", "Ethernet2", "Ethernet3", "Ethernet4"];
+
+  const form = useForm<z.infer<typeof routerConfigurationFormSchema>>({
+    resolver: zodResolver(routerConfigurationFormSchema),
+    mode: "onBlur",
+    defaultValues: initialValues,
+  });
 
   useEffect(() => {
     setConfig(initialValues);
@@ -64,6 +74,7 @@ export function useRouterConfig(initialValues: RouterConfig, onChange: (config: 
     removeInterface,
     removeNeighbor,
     availableDhcpOptions,
+    form
   }
 
 }

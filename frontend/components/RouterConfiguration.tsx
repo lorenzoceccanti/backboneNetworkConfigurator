@@ -1,9 +1,5 @@
 import { useRouterConfig } from "@/hooks/use-router-config";
 import { RouterConfig } from "@/lib/definitions";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { routerConfigurationFormSchema } from "@/lib/validations";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch"
@@ -37,13 +33,8 @@ export default function RouterConfiguration({
     removeInterface,
     removeNeighbor,
     availableDhcpOptions,
+    form
   } = useRouterConfig(initialValues, onChange);
-
-  const form = useForm<z.infer<typeof routerConfigurationFormSchema>>({
-    resolver: zodResolver(routerConfigurationFormSchema),
-    mode: "onBlur",
-    defaultValues: initialValues,
-  });
 
   return (
     <div className="space-y-4 p-4 border rounded-lg">

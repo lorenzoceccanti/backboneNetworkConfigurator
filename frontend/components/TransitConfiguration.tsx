@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { TransitConfig } from "@/lib/definitions";
+import { useTransitConfig } from "@/hooks/use-transit-config";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -9,13 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TransitConfig } from '../lib/definitions';
-
-/*export type TransitConfig = {
-  from: number | null;
-  through: number | null;
-  to: number[];
-};*/
+import { X } from "lucide-react";
 
 type TransitConfigurationProps = {
   initialValues: TransitConfig;
@@ -23,94 +18,20 @@ type TransitConfigurationProps = {
   onChange: (config: TransitConfig) => void;
 };
 
-function getAvailableOptionsForField(
-  config: TransitConfig,
-  availableAS: number[],
-  field: "from" | "through" | "to",
-  toIndex?: number
-): number[] {
-  // build a list of AS numbers that are already in use
-  const used: number[] = [];
-
-  if (field !== "from" && config.from !== null) {
-    used.push(config.from);
-  }
-  if (field !== "through" && config.through !== null) {
-    used.push(config.through);
-  }
-  config.to.forEach((val, i) => {
-    if (field !== "to" || i !== toIndex) {
-      used.push(val);
-    }
-  });
-
-  // filter out the AS numbers that are already in use
-  const filtered = availableAS.filter((opt) => !used.includes(opt));
-
-  // calculate the current value for the field
-  let currentValue: number | null = null;
-  if (field === "from") {
-    currentValue = config.from;
-  } else if (field === "through") {
-    currentValue = config.through;
-  } else {
-    // field === "to"
-    currentValue = config.to[toIndex!];
-  }
-
-  // add the current value if it's not null and not already in the list
-  if (currentValue !== null && !filtered.includes(currentValue)) {
-    filtered.push(currentValue);
-  }
-
-  // optional: sort the list
-  filtered.sort((a, b) => a - b);
-  return filtered;
-}
-
 export default function TransitConfiguration({
   initialValues,
   availableASOptions,
   onChange,
 }: TransitConfigurationProps) {
-  const [config, setConfig] = useState<TransitConfig>(initialValues);
-
-  // useEffect is used to update the local state 
-  // when the parent component changes it
-  useEffect(() => {
-    setConfig(initialValues);
-  }, [initialValues]);
-
-  // handleChange is a generic function that updates a single field 
-  // and notifies the parent component of the change
-  const handleChange = <K extends keyof TransitConfig>(field: K, value: TransitConfig[K]) => {
-    const updatedConfig = { ...config, [field]: value };
-    setConfig(updatedConfig);
-    onChange(updatedConfig);
-  };
-
-  // handleToChange is a specific function that updates a single "to" field
-  const handleToChange = (index: number, value: number) => {
-    const updatedTo = [...config.to];
-    updatedTo[index] = value;
-    handleChange("to", updatedTo);
-  };
-
-  // addToField is a specific function that adds a new "to" field
-  const addToField = () => {
-    // get the AS numbers that are already in use
-    // and find the first available one
-    const used = new Set<number>([
-      config.from ?? undefined,
-      config.through ?? undefined,
-      ...config.to,
-    ].filter((x): x is number => x !== null));
-
-    const newOption = availableASOptions.find((opt) => !used.has(opt));
-    if (newOption !== undefined) {
-      handleChange("to", [...config.to, newOption]);
-    }
-  };
+  const {
+    config,
+    form,
+    handleChange,
+    handleToChange,
+    addToField,
+    getAvailableASOptions,
+    removeToAS,
+  } = useTransitConfig(initialValues, availableASOptions, onChange);
 
   return (
     <div>
@@ -138,7 +59,7 @@ export default function TransitConfiguration({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>AS Number</SelectLabel>
-                {getAvailableOptionsForField(config, availableASOptions, "from").map((option) => (
+                {getAvailableASOptions(config, availableASOptions, "from").map((option: number) => (
                   <SelectItem key={option} value={String(option)}>
                     {option}
                   </SelectItem>
@@ -146,6 +67,7 @@ export default function TransitConfiguration({
               </SelectGroup>
             </SelectContent>
           </Select>
+          {form.formState.errors.from && <p className="text-red-500 text-sm">{form.formState.errors.from.message}</p>}
         </div>
 
         {/* Through */}
@@ -163,7 +85,7 @@ export default function TransitConfiguration({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>AS Number</SelectLabel>
-                {getAvailableOptionsForField(config, availableASOptions, "through").map((option) => (
+                {getAvailableASOptions(config, availableASOptions, "through").map((option: number) => (
                   <SelectItem key={option} value={String(option)}>
                     {option}
                   </SelectItem>
@@ -171,16 +93,17 @@ export default function TransitConfiguration({
               </SelectGroup>
             </SelectContent>
           </Select>
+          {form.formState.errors.through && <p className="text-red-500 text-sm">{form.formState.errors.through.message}</p>}
         </div>
 
         {/* To */}
         <div>
           <label className="block font-semibold mb-1">To AS</label>
-          {config.to.map((value, index) => (
-            <div key={index} className="mb-2">
+          {config.to.map((value: number, i: number) => (
+            <div key={i} className="flex space-x-4 mb-2">
               <Select
                 value={String(value)}
-                onValueChange={(val) => handleToChange(index, Number(val))}
+                onValueChange={(val) => handleToChange(i, Number(val))}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select an AS">
@@ -190,8 +113,8 @@ export default function TransitConfiguration({
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>AS Number</SelectLabel>
-                    {getAvailableOptionsForField(config, availableASOptions, "to", index).map(
-                      (option) => (
+                    {getAvailableASOptions(config, availableASOptions, "to", i).map(
+                      (option: number) => (
                         <SelectItem key={option} value={String(option)}>
                           {option}
                         </SelectItem>
@@ -200,6 +123,26 @@ export default function TransitConfiguration({
                   </SelectGroup>
                 </SelectContent>
               </Select>
+              {form.formState.errors.to?.[i] && (
+                <p className="text-red-500 text-sm">
+                  {form.formState.errors.to[i].message}
+                </p>
+              )}
+              <button
+                disabled={i === 0}
+                onClick={() => removeToAS(i)}
+                className="text-red-500 hover:text-red-700 md:border-none md:bg-transparent md:p-0 border border-red-500 rounded-md px-2 py-1 flex items-center md:hidden"
+              >
+                <span className="mr-1">Delete Interface</span>
+                <X size={20} />
+              </button>
+              <button
+                disabled={i === 0}
+                onClick={() => removeToAS(i)}
+                className="text-red-500 hover:text-red-700 hidden sm:block"
+              >
+                <X size={20} />
+              </button>
             </div>
           ))}
           <Button onClick={addToField}>
