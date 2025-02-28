@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, jsonify
+from services.deploy import DeployNetwork
 
 deploy_bp = Blueprint("deploy", __name__)
 
@@ -8,5 +9,5 @@ def deploy() -> Response:
   Deploys the network configuration.
   :return: Response object with a message and status code.
   """
-  # os.system(f"./deploy_network.sh") TODO REMOVE
+  # DeployNetwork.deploy_network()
   return jsonify({"message": "Network deployed successfully"}), 200
