@@ -30,10 +30,8 @@ def configure() -> Response:
           "interfaces": [{"name": interface.linux_name, "ip": interface.ip} for interface in router.interfaces],
         })
       response: dict = {
-        "topology": {
-          "routers": routers,
-          "links": links
-        }
+        "routers": routers,
+        "links": links
       }
       return jsonify(response), 200
     else:

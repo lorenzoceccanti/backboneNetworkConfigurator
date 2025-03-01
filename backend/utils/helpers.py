@@ -1,4 +1,6 @@
 import ipaddress
+from jsonrpclib import Server
+from config import Config
 
 class Helper:
   @staticmethod
@@ -30,3 +32,24 @@ class Helper:
     :return: network address
     """
     return str(ipaddress.ip_network(ip, strict=False))
+  
+
+  @staticmethod
+  def send_arista_commands(mngt_ip: str, commands: list[str]) -> dict:
+    """
+    Sends the commands to the Arista switch using the eAPI
+    :param mngt_ip: Management IP of the Arista switch
+    :param commands: List of commands to be executed on the switch
+    :return: Response from the switch
+    """
+    if not mngt_ip:
+        return {"error": "Management IP not specified"}
+
+    url = f"http://{Config.USERNAME}:{Config.PASSWORD}@{mngt_ip}/command-api"
+
+    try:
+        switch = Server(url)
+        response = switch.runCmds(1, commands)
+        return response
+    except Exception as e:
+        return {"error": str(e)}
