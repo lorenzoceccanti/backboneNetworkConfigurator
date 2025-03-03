@@ -55,3 +55,20 @@ export type TransitConfig = {
   through: number;
   to: number[];
 };
+
+export type RouterInterfaceResponse = {
+  ip: string,
+  name: string,
+}
+
+export type RouterResponse = {
+  name: string;
+  asn: number;
+  interfaces: RouterInterfaceResponse[];
+  mngt_ipv4?: string;
+}
+
+export type NetworkTopologyResponse = {
+  links: [string, string][];
+  routers: RouterResponse[];
+}

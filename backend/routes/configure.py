@@ -1,6 +1,7 @@
 from flask import Blueprint, Response, request, jsonify
 from models.network_topology import NetworkTopology
 from services.configure import ConfigureNetwork
+import json
 
 configure_bp = Blueprint("configure", __name__)
 
@@ -33,6 +34,11 @@ def configure() -> Response:
         "routers": routers,
         "links": links
       }
+      #### REMOVE THIS LINES BEFORE DEPLOYING ####
+      # for testing purposes we respond with the generated configurations
+      with open("our_config.json", "r") as f:
+        response = json.load(f)
+      #### REMOVE THIS LINES BEFORE DEPLOYING ####
       return jsonify(response), 200
     else:
       return jsonify({"error": "Request must be in JSON format"}), 400

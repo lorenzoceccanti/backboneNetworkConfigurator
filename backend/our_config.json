@@ -1,451 +1,184 @@
 {
-  "hosts": [
-      {
-          "dhcp_enabled": true,
-          "gateway": "",
-          "interfaces": [
-              {
-                  "dhcp": true,
-                  "linux_name": "eth1",
-                  "name": "Ethernet1"
-              }
-          ],
-          "name": "H1"
-      },
-      {
-          "dhcp_enabled": true,
-          "gateway": "",
-          "interfaces": [
-              {
-                  "dhcp": true,
-                  "linux_name": "eth1",
-                  "name": "Ethernet1"
-              }
-          ],
-          "name": "H2"
-      },
-      {
-          "dhcp_enabled": true,
-          "gateway": "",
-          "interfaces": [
-              {
-                  "dhcp": true,
-                  "linux_name": "eth1",
-                  "name": "Ethernet1"
-              }
-          ],
-          "name": "H3"
-      },
-      {
-          "dhcp_enabled": true,
-          "gateway": "",
-          "interfaces": [
-              {
-                  "dhcp": true,
-                  "linux_name": "eth1",
-                  "name": "Ethernet1"
-              }
-          ],
-          "name": "H4"
-      },
-      {
-          "dhcp_enabled": true,
-          "gateway": "",
-          "interfaces": [
-              {
-                  "dhcp": true,
-                  "linux_name": "eth1",
-                  "name": "Ethernet1"
-              }
-          ],
-          "name": "H5"
-      }
-  ],
-  "project_name": "test02",
-  "routers": [
-      {
-          "asn": 55002,
-          "dhcp": {
-              "enabled": true,
-              "interface": "Ethernet1",
-              "range": [
-                  "192.168.102.10",
-                  "192.168.102.99"
-              ],
-              "subnet": "192.168.102.0/24"
-          },
-          "interfaces": [
-              {
-                  "ip": "1.1.1.2/32",
-                  "linux_name": "lo0",
-                  "name": "Loopback0",
-                  "network": "1.1.1.2/32",
-                  "peer": {
-                      "interface": "",
-                      "name": ""
-                  }
-              },
-              {
-                  "ip": "192.168.102.1/24",
-                  "linux_name": "eth1",
-                  "name": "Ethernet1",
-                  "network": "192.168.102.0/24",
-                  "peer": {
-                      "interface": "Ethernet1",
-                      "linux_interface": "eth1",
-                      "name": "H1"
-                  }
-              },
-              {
-                  "ip": "131.114.28.2/24",
-                  "linux_name": "eth2",
-                  "name": "Ethernet2",
-                  "peer": {
-                      "interface": "Ethernet1",
-                      "linux_interface": "eth1",
-                      "name": "R1"
-                  }
-              },
-              {
-                  "ip": "134.114.28.1/24",
-                  "linux_name": "eth3",
-                  "name": "Ethernet3",
-                  "peer": {
-                      "interface": "Ethernet2",
-                      "linux_interface": "eth2",
-                      "name": "R10"
-                  }
-              }
-          ],
-          "mngt_ipv4": "172.20.20.2/24",
-          "name": "R2",
-          "neighbors": [
-              {
-                  "asn": 55001,
-                  "ip": "131.114.28.1"
-              },
-              {
-                  "asn": 55010,
-                  "ip": "134.114.28.2"
-              }
-          ]
-      },
-      {
-          "asn": 55001,
-          "dhcp": {
-              "enabled": true,
-              "interface": "Ethernet3",
-              "range": [
-                  "192.168.101.10",
-                  "192.168.101.99"
-              ],
-              "subnet": "192.168.101.0/24"
-          },
-          "interfaces": [
-              {
-                  "ip": "1.1.1.1/32",
-                  "linux_name": "lo0",
-                  "name": "Loopback0",
-                  "network": "1.1.1.1/32",
-                  "peer": {
-                      "interface": "",
-                      "name": ""
-                  }
-              },
-              {
-                  "ip": "131.114.28.1/24",
-                  "linux_name": "eth1",
-                  "name": "Ethernet1",
-                  "peer": {
-                      "interface": "Ethernet2",
-                      "linux_interface": "eth2",
-                      "name": "R2"
-                  }
-              },
-              {
-                  "ip": "132.114.28.2/24",
-                  "linux_name": "eth2",
-                  "name": "Ethernet2",
-                  "peer": {
-                      "interface": "Ethernet1",
-                      "linux_interface": "eth1",
-                      "name": "R20"
-                  }
-              },
-              {
-                  "ip": "192.168.101.1/24",
-                  "linux_name": "eth3",
-                  "name": "Ethernet3",
-                  "network": "192.168.101.0/24",
-                  "peer": {
-                      "interface": "Ethernet1",
-                      "linux_interface": "eth1",
-                      "name": "H2"
-                  }
-              }
-          ],
-          "mngt_ipv4": "172.20.20.3/24",
-          "name": "R1",
-          "neighbors": [
-              {
-                  "asn": 55002,
-                  "ip": "131.114.28.2"
-              },
-              {
-                  "asn": 54020,
-                  "ip": "132.114.28.1"
-              }
-          ]
-      },
-      {
-          "asn": 54020,
-          "dhcp": {
-              "enabled": true,
-              "interface": "Ethernet3",
-              "range": [
-                  "192.168.120.10",
-                  "192.168.120.99"
-              ],
-              "subnet": "192.168.120.0/24"
-          },
-          "interfaces": [
-              {
-                  "ip": "1.1.1.20/32",
-                  "linux_name": "lo0",
-                  "name": "Loopback0",
-                  "network": "1.1.1.20/32",
-                  "peer": {
-                      "interface": "",
-                      "name": ""
-                  }
-              },
-              {
-                  "ip": "132.114.28.1/24",
-                  "linux_name": "eth1",
-                  "name": "Ethernet1",
-                  "peer": {
-                      "interface": "Ethernet2",
-                      "linux_interface": "eth2",
-                      "name": "R1"
-                  }
-              },
-              {
-                  "ip": "133.114.28.2/24",
-                  "linux_name": "eth2",
-                  "name": "Ethernet2",
-                  "peer": {
-                      "interface": "Ethernet1",
-                      "linux_interface": "eth1",
-                      "name": "R10"
-                  }
-              },
-              {
-                  "ip": "192.168.120.1/24",
-                  "linux_name": "eth3",
-                  "name": "Ethernet3",
-                  "network": "192.168.120.0/24",
-                  "peer": {
-                      "interface": "Ethernet1",
-                      "linux_interface": "eth1",
-                      "name": "H3"
-                  }
-              }
-          ],
-          "mngt_ipv4": "172.20.20.4/24",
-          "name": "R20",
-          "neighbors": [
-              {
-                  "asn": 55001,
-                  "ip": "132.114.28.2"
-              },
-              {
-                  "asn": 55010,
-                  "ip": "133.114.28.1"
-              }
-          ]
-      },
-      {
-          "asn": 55010,
-          "interfaces": [
-              {
-                  "ip": "1.1.1.10/32",
-                  "linux_name": "lo0",
-                  "name": "Loopback0",
-                  "network": "1.1.1.10/32",
-                  "peer": {
-                      "interface": "",
-                      "name": ""
-                  }
-              },
-              {
-                  "ip": "133.114.28.1/24",
-                  "linux_name": "eth1",
-                  "name": "Ethernet1",
-                  "peer": {
-                      "interface": "Ethernet2",
-                      "linux_interface": "eth2",
-                      "name": "R20"
-                  }
-              },
-              {
-                  "ip": "134.114.28.2/24",
-                  "linux_name": "eth2",
-                  "name": "Ethernet2",
-                  "peer": {
-                      "interface": "Ethernet3",
-                      "linux_interface": "eth3",
-                      "name": "R2"
-                  }
-              },
-              {
-                  "ip": "192.168.1.2/24",
-                  "linux_name": "eth3",
-                  "name": "Ethernet3",
-                  "network": "192.168.1.0/24",
-                  "peer": {
-                      "interface": "Ethernet2",
-                      "linux_interface": "eth2",
-                      "name": "R11"
-                  }
-              }
-          ],
-          "mngt_ipv4": "172.20.20.5/24",
-          "name": "R10",
-          "neighbors": [
-              {
-                  "asn": 54020,
-                  "ip": "133.114.28.2"
-              },
-              {
-                  "asn": 55002,
-                  "ip": "134.114.28.1"
-              },
-              {
-                  "asn": 55010,
-                  "ip": "192.168.1.1"
-              }
-          ]
-      },
-      {
-          "asn": 55010,
-          "dhcp": {
-              "enabled": true,
-              "interface": "Ethernet1",
-              "range": [
-                  "192.168.110.10",
-                  "192.168.110.99"
-              ],
-              "subnet": "192.168.110.0/24"
-          },
-          "interfaces": [
-              {
-                  "ip": "1.1.1.11/32",
-                  "linux_name": "lo0",
-                  "name": "Loopback0",
-                  "network": "1.1.1.11/32",
-                  "peer": {
-                      "interface": "",
-                      "name": ""
-                  }
-              },
-              {
-                  "ip": "192.168.110.1/24",
-                  "linux_name": "eth1",
-                  "name": "Ethernet1",
-                  "network": "192.168.110.0/24",
-                  "peer": {
-                      "interface": "Ethernet1",
-                      "linux_interface": "eth1",
-                      "name": "H4"
-                  }
-              },
-              {
-                  "ip": "192.168.1.1/24",
-                  "linux_name": "eth2",
-                  "name": "Ethernet2",
-                  "network": "192.168.1.0/24",
-                  "peer": {
-                      "interface": "Ethernet3",
-                      "linux_interface": "eth3",
-                      "name": "R10"
-                  }
-              },
-              {
-                  "ip": "135.114.28.1/24",
-                  "linux_name": "eth3",
-                  "name": "Ethernet3",
-                  "peer": {
-                      "interface": "Ethernet1",
-                      "linux_interface": "eth1",
-                      "name": "R30"
-                  }
-              }
-          ],
-          "mngt_ipv4": "172.20.20.6/24",
-          "name": "R11",
-          "neighbors": [
-              {
-                  "asn": 54030,
-                  "ip": "135.114.28.2"
-              },
-              {
-                  "asn": 55010,
-                  "ip": "192.168.1.2"
-              }
-          ]
-      },
-      {
-          "asn": 54030,
-          "dhcp": {
-              "enabled": true,
-              "interface": "Ethernet3",
-              "range": [
-                  "192.168.130.10",
-                  "192.168.130.99"
-              ],
-              "subnet": "192.168.130.0/24"
-          },
-          "interfaces": [
-              {
-                  "ip": "1.1.1.30/32",
-                  "linux_name": "lo0",
-                  "name": "Loopback0",
-                  "network": "1.1.1.30/32",
-                  "peer": {
-                      "interface": "",
-                      "name": ""
-                  }
-              },
-              {
-                  "ip": "135.114.28.2/24",
-                  "linux_name": "eth1",
-                  "name": "Ethernet1",
-                  "peer": {
-                      "interface": "Ethernet3",
-                      "linux_interface": "eth3",
-                      "name": "R11"
-                  }
-              },
-              {
-                  "ip": "192.168.130.1/24",
-                  "linux_name": "eth3",
-                  "name": "Ethernet3",
-                  "network": "192.168.130.0/24",
-                  "peer": {
-                      "interface": "Ethernet1",
-                      "linux_interface": "eth1",
-                      "name": "H5"
-                  }
-              }
-          ],
-          "mngt_ipv4": "172.20.20.7/24",
-          "name": "R30",
-          "neighbors": [
-              {
-                  "asn": 55010,
-                  "ip": "135.114.28.1"
-              }
-          ]
-      }
-  ]
+    "links": [
+        [
+            "R10:eth2",
+            "R2:eth3"
+        ],
+        [
+            "H4:eth1",
+            "R11:eth1"
+        ],
+        [
+            "H3:eth1",
+            "R20:eth3"
+        ],
+        [
+            "H1:eth1",
+            "R2:eth1"
+        ],
+        [
+            "R1:eth2",
+            "R20:eth1"
+        ],
+        [
+            "H2:eth1",
+            "R1:eth3"
+        ],
+        [
+            "R11:eth3",
+            "R30:eth1"
+        ],
+        [
+            "R10:eth1",
+            "R20:eth2"
+        ],
+        [
+            "R10:eth3",
+            "R11:eth2"
+        ],
+        [
+            "R1:eth1",
+            "R2:eth2"
+        ],
+        [
+            "H5:eth1",
+            "R30:eth3"
+        ]
+    ],
+    "routers": [
+        {
+            "asn": 55002,
+            "interfaces": [
+                {
+                    "ip": "1.1.1.2/32",
+                    "name": "lo0"
+                },
+                {
+                    "ip": "192.168.102.1/24",
+                    "name": "eth1"
+                },
+                {
+                    "ip": "131.114.28.2/24",
+                    "name": "eth2"
+                },
+                {
+                    "ip": "134.114.28.1/24",
+                    "name": "eth3"
+                }
+            ],
+            "mngt_ipv4": "172.20.20.2/24",
+            "name": "R2"
+        },
+        {
+            "asn": 55001,
+            "interfaces": [
+                {
+                    "ip": "1.1.1.1/32",
+                    "name": "lo0"
+                },
+                {
+                    "ip": "131.114.28.1/24",
+                    "name": "eth1"
+                },
+                {
+                    "ip": "132.114.28.2/24",
+                    "name": "eth2"
+                },
+                {
+                    "ip": "192.168.101.1/24",
+                    "name": "eth3"
+                }
+            ],
+            "mngt_ipv4": "172.20.20.3/24",
+            "name": "R1"
+        },
+        {
+            "asn": 54020,
+            "interfaces": [
+                {
+                    "ip": "1.1.1.20/32",
+                    "name": "lo0"
+                },
+                {
+                    "ip": "132.114.28.1/24",
+                    "name": "eth1"
+                },
+                {
+                    "ip": "133.114.28.2/24",
+                    "name": "eth2"
+                },
+                {
+                    "ip": "192.168.120.1/24",
+                    "name": "eth3"
+                }
+            ],
+            "mngt_ipv4": "172.20.20.4/24",
+            "name": "R20"
+        },
+        {
+            "asn": 55010,
+            "interfaces": [
+                {
+                    "ip": "1.1.1.10/32",
+                    "name": "lo0"
+                },
+                {
+                    "ip": "133.114.28.1/24",
+                    "name": "eth1"
+                },
+                {
+                    "ip": "134.114.28.2/24",
+                    "name": "eth2"
+                },
+                {
+                    "ip": "192.168.1.2/24",
+                    "name": "eth3"
+                }
+            ],
+            "mngt_ipv4": "172.20.20.5/24",
+            "name": "R10"
+        },
+        {
+            "asn": 55010,
+            "interfaces": [
+                {
+                    "ip": "1.1.1.11/32",
+                    "name": "lo0"
+                },
+                {
+                    "ip": "192.168.110.1/24",
+                    "name": "eth1"
+                },
+                {
+                    "ip": "192.168.1.1/24",
+                    "name": "eth2"
+                },
+                {
+                    "ip": "135.114.28.1/24",
+                    "name": "eth3"
+                }
+            ],
+            "mngt_ipv4": "172.20.20.6/24",
+            "name": "R11"
+        },
+        {
+            "asn": 54030,
+            "interfaces": [
+                {
+                    "ip": "1.1.1.30/32",
+                    "name": "lo0"
+                },
+                {
+                    "ip": "135.114.28.2/24",
+                    "name": "eth1"
+                },
+                {
+                    "ip": "192.168.130.1/24",
+                    "name": "eth3"
+                }
+            ],
+            "mngt_ipv4": "172.20.20.7/24",
+            "name": "R30"
+        }
+    ]
 }
