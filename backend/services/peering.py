@@ -74,8 +74,8 @@ class PeeringNetwork:
     """
     print(f"[INFO] Generating peering policy")
 
-    # Helper.send_arista_commands(self._peers.mngt_ip, self._father_commands)
-    # Helper.send_arista_commands(self._peers.peer.mngt_ip, self._son_commands)
+    Helper.send_arista_commands(self._peers.mngt_ip, self._father_commands)
+    Helper.send_arista_commands(self._peers.peer.mngt_ip, self._son_commands)
 
     self._generate_debug_file()
     print(f"[INFO] Peering policy has been generated")

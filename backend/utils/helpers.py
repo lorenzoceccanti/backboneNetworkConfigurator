@@ -1,4 +1,5 @@
 import ipaddress
+import time
 from jsonrpclib import Server
 from config import Config
 
@@ -53,3 +54,7 @@ class Helper:
         return response
     except Exception as e:
         return {"error": str(e)}
+
+  @staticmethod
+  def generate_timestamp() -> int:
+    return int(time.time())

@@ -41,6 +41,6 @@ class LocalPreferenceNetwork:
     :return: None
     """
     print("[INFO] Generating local preference")
-    # Helper.send_arista_commands(self._local_preference.mngt_ip, self._commands)
+    Helper.send_arista_commands(self._local_preference.mngt_ip, self._commands)
     self._generate_debug_file()
     print("[INFO] Local preference generated successfully")

@@ -35,6 +35,6 @@ class RedistributeBGPNetwork:
       self._commands.append(f"   no redistribute bgp")
     self._commands.append(f"exit")
 
-    # Helper.send_arista_commands(self._redistribute_bgp.mngt_ip, self._commands)
+    Helper.send_arista_commands(self._redistribute_bgp.mngt_ip, self._commands)
     self._generate_debug_file()
     print("[INFO] BGP network redistributed successfully")

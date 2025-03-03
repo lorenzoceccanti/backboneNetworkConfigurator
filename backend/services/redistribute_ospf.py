@@ -35,6 +35,6 @@ class RedistributeOSPFNetwork:
         self._commands.append(f"   no redistribute ospf")
     self._commands.append(f"exit")
 
-    # Helper.send_arista_commands(self._redistribute_ospf.mngt_ip, self._commands)
+    Helper.send_arista_commands(self._redistribute_ospf.mngt_ip, self._commands)
     self._generate_debug_file()
     print("[INFO] OSPF network redistributed successfully")
