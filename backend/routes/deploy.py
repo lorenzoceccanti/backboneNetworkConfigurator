@@ -10,4 +10,4 @@ def deploy() -> Response:
   :return: Response object with a message and status code.
   """
   # DeployNetwork.deploy_network()
-  return jsonify({"message": "Network deployed successfully"}), 200
+  return jsonify({}), 204

@@ -1,12 +1,12 @@
 {    
-    "routerId": "R2",
-    "asn": "55002",
+    "router": "R2",
+    "asn": 55002,
     "router_ip": "134.114.28.1",
     "mngt_ip": "172.20.20.2",
     "peer": 
         {
-            "routerId": "R10",
-            "asn": "55010",
+            "router": "R10",
+            "asn": 55010,
             "router_ip": "134.114.28.2",
             "mngt_ip": "172.20.20.5"
         }      

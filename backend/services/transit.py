@@ -36,7 +36,7 @@ class TransitPolicy:
         self._from_commands.append(f"   neighbor {through_router_ip.my_router_ip} remote-as {through_asn}")
         self._from_commands.append(f"   neighbor {through_router_ip.my_router_ip} route-map RM-IN-{through_asn} in")
         self. _from_commands.append(f"exit")
-    pass
+
 
   def _generate_through_commands(self) -> None:
     from_asn = self._transit_policy.from_.asn
@@ -47,7 +47,6 @@ class TransitPolicy:
       f"enable",
       f"configure",
       f"ip as-path access-list AS{from_asn}-IN permit ^{from_asn}$ any",
-      f"ip as-path access-list AS{from_asn}-OUT permit ^{from_asn}$ any",
       f"route-map RM-IN-{from_asn} permit 10",
       f"   match as-path AS{from_asn}-IN",
       f"exit",
@@ -61,17 +60,20 @@ class TransitPolicy:
 
     for to in self._transit_policy.to:
       if isinstance(to, TransitTo):
-        self._through_commands.append(f"   neighbor {from_router_ip} route-map RM-OUT-{to.asn} out")
+        self._through_commands.append(f"   neighbor {from_router_ip} route-map RM-OUT-{from_asn} out")
         self._through_commands.append(f"exit")
 
+        self._through_commands.append(f"ip as-path access-list AS{to.asn}-OUT permit ^{from_asn}$ any")
         self._through_commands.append(f"ip as-path access-list AS{to.asn}-IN permit ^{to.asn}$ any")
-        self._through_commands.append(f"ip as-path access-list AS{to.asn}-OUT permit ^{to.asn}$ any")
+        self._through_commands.append(f"ip as-path access-list AS{from_asn}-OUT permit ^{to.asn}$ any")
         self._through_commands.append(f"route-map RM-IN-{to.asn} permit 10")
         self._through_commands.append(f"   match as-path AS{to.asn}-IN")
         self._through_commands.append(f"exit")
         self._through_commands.append(f"route-map RM-IN-{to.asn} deny 99")
-        self._through_commands.append(f"route-map RM-OUT-{to.asn} permit 10")
-        self._through_commands.append(f"   match as-path AS{to.asn}-OUT")
+        self._through_commands.append(f"route-map RM-OUT-{from_asn} permit 10")
+        self._through_commands.append(f"   match as-path AS{from_asn}-OUT")
+        self._through_commands.append(f"exit")
+        self._through_commands.append(f"route-map RM-OUT-{from_asn} deny 99")
         self._through_commands.append(f"exit")
 
         for through_router_ip in self._transit_policy.through.router_ip:
@@ -79,12 +81,12 @@ class TransitPolicy:
             self._through_commands.append(f"router bgp {through_asn}")
             self._through_commands.append(f"   neighbor {to.router_ip} remote-as {to.asn}")
             self._through_commands.append(f"   neighbor {to.router_ip} route-map RM-IN-{to.asn} in")
-            self._through_commands.append(f"   neighbor {to.router_ip} route-map RM-OUT-{from_asn} out")
+            self._through_commands.append(f"   neighbor {to.router_ip} route-map RM-OUT-{to.asn} out")
             self._through_commands.append(f"exit")
-            self._through_commands.append(f"route-map RM-OUT-{from_asn} permit 10")
-            self._through_commands.append(f"   match as-path AS{from_asn}-OUT")
+            self._through_commands.append(f"route-map RM-OUT-{to.asn} permit 10")
+            self._through_commands.append(f"   match as-path AS{to.asn}-OUT")
             self._through_commands.append(f"exit")
-            self._through_commands.append(f"route-map RM-OUT-{from_asn} deny 99")
+            self._through_commands.append(f"route-map RM-OUT-{to.asn} deny 99")
 
   def _generate_to_commands(self) -> None:
     for index, to in enumerate(self._transit_policy.to):
@@ -130,5 +132,4 @@ class TransitPolicy:
       if isinstance(to, TransitTo):
         self._generate_debug_file(to.router, self._to_commands[index])
     self._generate_debug_file(self._transit_policy.through.router, self._through_commands)
-    print(self._transit_policy)
     print("[INFO] Transit policy generated successfully")
