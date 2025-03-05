@@ -454,7 +454,8 @@ def transit():
             # print(response)
             with open(f"config/{through_router}_BGP.cfg", "w") as f:
                 f.write("\n".join(commands_through))
-
+                
+        check_alternative_paths(from_router, to_router, through_router)
         return jsonify({"message": "Transit configuration initiated"}), 200
     except Exception as e:
         print(e)
