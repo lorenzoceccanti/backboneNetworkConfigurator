@@ -1,4 +1,4 @@
-import { NetworkTopology } from "@/lib/definitions";
+import { NetworkTopology, TransitConfigBody } from "@/lib/definitions";
 
 export async function sendConfiguration(config: NetworkTopology, serverIp: string) {
   const configApi = `http://${serverIp}:5000/configure`;
@@ -21,7 +21,7 @@ export async function deployNetwork(serverIp: string) {
   if (!response.ok) throw new Error(response.statusText);
 }
 
-export async function sendTransitConfiguration(config: any, serverIp: string) {
+export async function sendTransitConfiguration(config: TransitConfigBody, serverIp: string) {
   const transitApi = `http://${serverIp}:5000/transit`;
   const response = await fetch(transitApi, {
     method: "POST",

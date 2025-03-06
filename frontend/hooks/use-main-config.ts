@@ -2,7 +2,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RouterConfig, HostConfig, TransitConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse } from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody } from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
 import { sendConfiguration, deployNetwork, sendTransitConfiguration } from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
@@ -137,13 +137,16 @@ export function useMainConfig() {
     );
   };
 
-  const findConnectedRouter = (routers: RouterResponse[], links: [string, string][]): RouterResponse | undefined => {
-    return routers.find(router => links.some(([link1, link2]) =>
-        link1.split(":")[0] === router.name || link2.split(":")[0] === router.name)
+  const findConnectedRouter = (routers: RouterResponse[], links: [string, string][]): RouterResponse => {
+    const connections = routers.find(router => links.some(([link1, link2]) =>
+      link1.split(":")[0] === router.name || link2.split(":")[0] === router.name)
     );
+    if (connections) return connections;
+    console.error("Router not found.");
+    return routers[0]; // TODO fix this
   };
 
-  const findThroughToLinks = (networkTopologyResponse: NetworkTopologyResponse, throughRouters: RouterResponse[], toRouters: RouterResponse[]): ([string, string] | undefined)[] => {
+  const findThroughToLinks = (networkTopologyResponse: NetworkTopologyResponse, throughRouters: RouterResponse[], toRouters: RouterResponse[]): ([string, string])[] => {
     return toRouters.map(toRouter => {
       const link = networkTopologyResponse.links.find(([link1, link2]) =>
         throughRouters.some(throughRouter =>
@@ -153,7 +156,7 @@ export function useMainConfig() {
       );
       if (!link) {
         console.error("Through-To link not found.");
-        return undefined;
+        return ["", ""];
       }
       return link;
     });
@@ -168,11 +171,11 @@ export function useMainConfig() {
 
   const buildThroughRouterIps = (
     throughRouter: RouterResponse,
-    throughToLinks: ([string, string] | undefined)[],
+    throughToLinks: ([string, string])[],
     toRouters: RouterResponse[],
     fromRouter: RouterResponse,
     throughInterfaceConnectedToFrom: string | null
-  ): { asn: number; my_router_ip?: string }[] => {
+  ): { asn: number; my_router_ip: string }[] => {
     const ips = throughToLinks.map(link => {
       if (!link) return console.error("Link not found.");
       const [link1, link2] = link;
@@ -183,17 +186,17 @@ export function useMainConfig() {
         asn: toRouter.asn,
         my_router_ip: throughRouter.interfaces.find(int => int.name === throughRouterInterfaceConnectedToTo)?.ip.split("/")[0]
       };
-    }).filter(Boolean) as { asn: number; my_router_ip?: string }[];
+    }).filter(Boolean) as { asn: number; my_router_ip: string }[];
 
     ips.unshift({
       asn: fromRouter.asn,
-      my_router_ip: throughRouter.interfaces.find(int => int.name === throughInterfaceConnectedToFrom)?.ip.split("/")[0]
+      my_router_ip: throughRouter.interfaces.find(int => int.name === throughInterfaceConnectedToFrom)?.ip.split("/")[0] || ""
     });
 
     return ips;
   };
 
-  const buildToArray = (throughRouter: RouterResponse, throughToLinks: ([string, string] | undefined)[], toRouters: RouterResponse[]): { asn: number; router: string; router_ip?: string; mngt_ip?: string }[] => {
+  const buildToArray = (throughRouter: RouterResponse, throughToLinks: ([string, string])[], toRouters: RouterResponse[]): { asn: number; router: string; router_ip: string; mngt_ip: string }[] => {
     return toRouters.map(toRouter => {
       const link = throughToLinks.find(link => {
         if (!link) return false;
@@ -212,30 +215,53 @@ export function useMainConfig() {
         router_ip: toRouter.interfaces.find(int => int.name === toInterfaceConnectedToThrough)?.ip.split("/")[0],
         mngt_ip: toRouter.mngt_ipv4?.split("/")[0]
       };
-    }).filter((item): item is { asn: number; router: string; router_ip: string | undefined; mngt_ip: string | undefined } => item !== null);
+    }).filter((item): item is { asn: number; router: string; router_ip: string; mngt_ip: string } => item !== null);
   };
 
   const buildRequestBody = (
     fromRouter: RouterResponse,
     throughRouter: RouterResponse,
-    throughRouterIps: { asn: number; my_router_ip?: string }[],
-    to: { asn: number; router: string; router_ip?: string; mngt_ip?: string }[],
+    throughRouterIps: { asn: number; my_router_ip: string }[],
+    to: { asn: number; router: string; router_ip: string; mngt_ip: string }[],
     fromInterfaceConnectedToThrough: string | null
-  ) => ({
-    from_: {
-      asn: fromRouter.asn,
-      router: fromRouter.name,
-      router_ip: fromRouter.interfaces.find(int => int.name === fromInterfaceConnectedToThrough)?.ip.split("/")[0],
-      mngt_ip: fromRouter.mngt_ipv4?.split("/")[0]
-    },
-    through: {
-      asn: throughRouter.asn,
-      router: throughRouter.name,
-      mngt_ip: throughRouter.mngt_ipv4?.split("/")[0],
-      router_ip: throughRouterIps
-    },
-    to
-});
+  ): TransitConfigBody => {
+    const from_ip = fromRouter.interfaces.find(int => int.name === fromInterfaceConnectedToThrough)?.ip.split("/")[0] ?? "";
+    const from_mngt = fromRouter.mngt_ipv4?.split("/")[0] ?? "";
+    const through_mngt = throughRouter.mngt_ipv4?.split("/")[0] ?? "";
+  
+    const cleanedThroughRouterIps = throughRouterIps.map(ip => ({
+      asn: ip.asn,
+      my_router_ip: ip.my_router_ip ?? ""
+    }));
+  
+    const toObj = to.length > 0 ? {
+      asn: to[0].asn,
+      router: to[0].router,
+      router_ip: to[0].router_ip ?? "",
+      mngt_ip: to[0].mngt_ip ?? ""
+    } : {
+      asn: 0,
+      router: "",
+      router_ip: "",
+      mngt_ip: ""
+    };
+  
+    return {
+      from_: {
+        asn: fromRouter.asn,
+        router: fromRouter.name,
+        router_ip: from_ip,
+        mngt_ip: from_mngt,
+      },
+      through: {
+        asn: throughRouter.asn,
+        router: throughRouter.name,
+        mngt_ip: through_mngt,
+        router_ip: cleanedThroughRouterIps,
+      },
+      to: toObj
+    };
+  };
 
   const handleTransitConfigsSend = async () => {
     if (!networkTopologyResponse || !transitConfigs) return;
@@ -267,15 +293,15 @@ export function useMainConfig() {
 
     const to = buildToArray(throughRouter, throughToLinks, toRouters);
 
-    const body = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough);
-
+    const body: TransitConfigBody = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough);
+    console.log(body);
     if (!serverIp) {
       console.error("Server IP is not set.");
       return;
     }
 
     try {
-      await sendTransitConfiguration(body, serverIp);
+      // await sendTransitConfiguration(body, serverIp);
       toast({
         variant: "default",
         title: "Transit configuration generated!",
