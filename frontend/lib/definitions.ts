@@ -56,6 +56,30 @@ export type TransitConfig = {
   to: number[];
 };
 
+export type TransitConfigBody = {
+  from_: {
+    asn: number;
+    router: string;
+    router_ip: string;
+    mngt_ip: string;
+  },
+  through: {
+    asn: number;
+    router: string;
+    mngt_ip: string;
+    router_ip: {
+        asn: number;
+        my_router_ip: string;
+    }[];
+  },
+  to: {
+    asn: number;
+    router: string;
+    router_ip: string;
+    mngt_ip: string;
+  }
+}
+
 export type RouterInterfaceResponse = {
   ip: string,
   name: string,
