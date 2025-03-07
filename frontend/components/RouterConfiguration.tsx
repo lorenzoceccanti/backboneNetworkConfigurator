@@ -67,12 +67,14 @@ export default function RouterConfiguration({
         {config.interfaces.map((iface, i) => (
           <div key={i} className="md:flex md:space-x-2 my-2 space-y-3 md:space-y-0 mb-10 md:mb-0">
             {i == 0 && (
-              <Input
-                {...form.register(`interfaces.${i}.name`)}
-                placeholder="Interface Name"
-                value={iface.name}
-                disabled
-              /> 
+              <div className="w-full">
+                <Input
+                  {...form.register(`interfaces.${i}.name`)}
+                  placeholder="Interface Name"
+                  value={iface.name}
+                  disabled
+                /> 
+              </div>
             )}
             { i != 0 && (
               <div className="w-full">

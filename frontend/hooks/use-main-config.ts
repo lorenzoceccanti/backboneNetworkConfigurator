@@ -113,6 +113,8 @@ export function useMainConfig() {
     }
   };
 
+  const getNetworkTopologyResponse = () => networkTopologyResponse;
+
   const getAvailableASOptions = () => {
     if (!networkTopologyResponse) return [];
 
@@ -327,6 +329,7 @@ export function useMainConfig() {
     transitConfigs, 
     isConfigGenerated,
     isDeploying,
+    getNetworkTopologyResponse,
     handleGenerateConfiguration,
     handleDeployNetwork,
     handleTransitConfigsChange,

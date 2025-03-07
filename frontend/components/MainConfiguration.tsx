@@ -5,6 +5,7 @@ import { useMainConfig } from "@/hooks/use-main-config";
 import RouterConfiguration from "@/components/RouterConfiguration";
 import HostConfiguration from "@/components/HostConfiguration";
 import TransitConfiguration from "@/components/TransitConfiguration";
+import NetworkVisualization from "@/components/NetworkVisualization";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/Spinner";
@@ -35,6 +36,7 @@ export default function MainConfiguration() {
     transitConfigs, 
     isConfigGenerated,
     isDeploying,
+    getNetworkTopologyResponse,
     handleGenerateConfiguration,
     handleDeployNetwork,
     handleTransitConfigsChange,
@@ -166,6 +168,9 @@ export default function MainConfiguration() {
                 Deploy Network {isDeploying ? <Spinner /> : ""}
               </Button>
             </div>
+          )}
+          {isConfigGenerated && getNetworkTopologyResponse() && (
+            <NetworkVisualization config={getNetworkTopologyResponse()!}/>
           )}
           {transitConfigs && (
             <div>

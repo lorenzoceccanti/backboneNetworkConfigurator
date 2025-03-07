@@ -96,3 +96,16 @@ export type NetworkTopologyResponse = {
   links: [string, string][];
   routers: RouterResponse[];
 }
+
+export type NodeData = {
+  id: number;
+  label: string;
+  shape: string;
+  image?: string;
+}
+
+export type EdgeData = {
+  id?: string | number;
+  from: number;
+  to: number;
+}
