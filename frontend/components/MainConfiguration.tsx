@@ -5,6 +5,7 @@ import { useMainConfig } from "@/hooks/use-main-config";
 import RouterConfiguration from "@/components/RouterConfiguration";
 import HostConfiguration from "@/components/HostConfiguration";
 import TransitConfiguration from "@/components/TransitConfiguration";
+import PeeringConfiguration from "./PeeringConfiguration";
 import NetworkVisualization from "@/components/NetworkVisualization";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,15 +34,18 @@ export default function MainConfiguration() {
     updateRouterConfig,
     hostConfigs, 
     updateHostConfig,
-    transitConfigs, 
+    transitConfigs,
+    peeringConfigs,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
     handleGenerateConfiguration,
     handleDeployNetwork,
     handleTransitConfigsChange,
+    handlePeeringConfigsChange,
     getAvailableASOptions,
     handleTransitConfigsSend,
+    handlePeeringConfigsSend,
   } = useMainConfig();
   
   return (
@@ -181,6 +185,18 @@ export default function MainConfiguration() {
               />
               <Button className="w-fit" onClick={handleTransitConfigsSend}>
                 Send Transit Configuration
+              </Button>
+            </div>
+          )}
+          {peeringConfigs && (
+            <div>
+              <PeeringConfiguration
+                initialValues={peeringConfigs}
+                availableASOptions={getAvailableASOptions()}
+                onChange={handlePeeringConfigsChange}
+              />
+              <Button className="w-fit" onClick={handlePeeringConfigsSend}>
+                Send Peering Configuration
               </Button>
             </div>
           )}
