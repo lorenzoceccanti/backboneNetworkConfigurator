@@ -56,6 +56,11 @@ export type TransitConfig = {
   to: number[];
 };
 
+export type PeeringConfig = {
+  fromAS: number;
+  toAS: number
+}
+
 export type TransitConfigBody = {
   from_: {
     asn: number;
@@ -77,6 +82,17 @@ export type TransitConfigBody = {
     router: string;
     router_ip: string;
     mngt_ip: string;
+  }
+}
+
+export type PeeringConfigBody = {
+  asn: number;
+  router_ip: string;
+  mngt_ip: string;
+  peer: {
+      asn: number;
+      router_ip: string;
+      mngt_ip: string
   }
 }
 

@@ -2,9 +2,9 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RouterConfig, HostConfig, TransitConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody } from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody } from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
-import { sendConfiguration, deployNetwork, sendTransitConfiguration } from "@/lib/api";
+import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration} from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +12,7 @@ export function useMainConfig() {
   const [routerConfigs, setRouterConfigs] = useState<RouterConfig[]>([]);
   const [hostConfigs, setHostConfigs] = useState<HostConfig[]>([]);
   const [transitConfigs, setTransitConfigs] = useState<TransitConfig>();
+  const [peeringConfigs, setPeeringConfigs] = useState<PeeringConfig>();
   const [networkTopologyResponse, setNetworkTopologyResponse] = useState<NetworkTopologyResponse | null>(null);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
   const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
@@ -101,6 +102,10 @@ export function useMainConfig() {
         through: 0,
         to: [0],
       });
+      setPeeringConfigs({
+        fromAS: 0,
+        toAS: 0
+      });
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -124,6 +129,10 @@ export function useMainConfig() {
 
   const handleTransitConfigsChange = (newConfig: TransitConfig) => {
     setTransitConfigs(newConfig);
+  };
+
+  const handlePeeringConfigsChange =  (newConfig: PeeringConfig) => {
+    setPeeringConfigs(newConfig);
   };
 
   const getRoutersByASN = (networkTopologyResponse: NetworkTopologyResponse, asn: number): RouterResponse[] =>
@@ -319,6 +328,69 @@ export function useMainConfig() {
     }
   };
 
+  const buildPeerRequestBody = (
+    router: RouterResponse,
+    peer: RouterResponse,
+    fatherInterfaceConnectedToSon: string | null,
+    sonInterfaceConnectedToFather: string | null,
+  ): PeeringConfigBody => {
+    return {
+      asn: router.asn,
+      router_ip: router.interfaces.find(int => int.name === fatherInterfaceConnectedToSon)?.ip.split("/")[0] ?? "",
+      mngt_ip: router.mngt_ipv4?.split("/")[0] ?? "",
+      peer: {
+        asn: peer.asn,
+        router_ip: peer.interfaces.find(int => int.name === sonInterfaceConnectedToFather)?.ip.split("/")[0] ?? "",
+        mngt_ip: peer.mngt_ipv4?.split("/")[0] ?? "",
+      },
+    };
+  };
+
+  const handlePeeringConfigsSend = async() => {
+    if(!networkTopologyResponse || !peeringConfigs) return;
+
+    const fatherASRouters = getRoutersByASN(networkTopologyResponse, peeringConfigs.fromAS);
+    if(!fatherASRouters.length) return console.error("Father peer router not found");
+
+    const sonASRouters = getRoutersByASN(networkTopologyResponse, peeringConfigs.toAS);
+    if(!sonASRouters.length) return console.error("Son peer router not found");
+
+    const fatherSonLinks = findLinksBetweenRouters(networkTopologyResponse, fatherASRouters, sonASRouters);
+    if(!fatherSonLinks.length) return console.error("Peering link not found")
+
+    const fatherRouter = findConnectedRouter(fatherASRouters, fatherSonLinks);
+    if (!fatherRouter) return console.error("Father peer router not found");
+
+    const sonRouter = findConnectedRouter(sonASRouters, fatherSonLinks);
+    if (!sonRouter) return console.error("Son peer router not found");
+
+    const fatherInterfaceConnectedToSon = getConnectedInterface(fatherRouter, fatherSonLinks);
+    const sonInterfaceConnectedToFather = getConnectedInterface(sonRouter, fatherSonLinks);
+
+    const body : PeeringConfigBody = buildPeerRequestBody(fatherRouter, sonRouter, fatherInterfaceConnectedToSon, sonInterfaceConnectedToFather);
+    console.log(body);
+    if (!serverIp) {
+      console.error("Server IP is not set.");
+      return;
+    }
+
+    try {
+      await sendPeeringConfiguration(body, serverIp);
+      toast({
+        variant: "default",
+        title: "Peering configuration generated!",
+        description: "The configuration has been generated successfully.",
+      })
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request: " + error,
+      })
+    }
+  };
+
   return {
     form, 
     onSubmit,
@@ -326,14 +398,17 @@ export function useMainConfig() {
     updateRouterConfig,
     hostConfigs, 
     updateHostConfig,
-    transitConfigs, 
+    transitConfigs,
+    peeringConfigs,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
     handleGenerateConfiguration,
     handleDeployNetwork,
     handleTransitConfigsChange,
+    handlePeeringConfigsChange,
     getAvailableASOptions,
     handleTransitConfigsSend,
+    handlePeeringConfigsSend,
   };
 }
