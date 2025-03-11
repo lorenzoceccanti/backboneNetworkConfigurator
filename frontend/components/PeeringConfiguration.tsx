@@ -1,6 +1,5 @@
 import { PeeringConfig } from "@/lib/definitions";
 import { usePeeringConfig } from "@/hooks/use-peering-config";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -34,7 +33,7 @@ export default function PeeringConfiguration({
     <div>
       <h1 className="font-bold text-base">Peering Configuration</h1>
       <p className="text-sm">
-        Peering allows direct traffic exchange between "From" AS and "To" AS
+        Peering allows direct traffic exchange between &quot;From&quot; AS and &quot;To&quot; AS
         without an intermediary.
       </p>
 
@@ -64,6 +63,7 @@ export default function PeeringConfiguration({
               </SelectGroup>
             </SelectContent>
           </Select>
+          {form.formState.errors.fromAS && <p className="text-red-500 text-sm">{form.formState.errors.fromAS.message}</p>}
         </div>
 
         {/* To AS */}
@@ -91,6 +91,7 @@ export default function PeeringConfiguration({
               </SelectGroup>
             </SelectContent>
           </Select>
+          {form.formState.errors.toAS && <p className="text-red-500 text-sm">{form.formState.errors.toAS.message}</p>}
         </div>
       </div>
     </div>
