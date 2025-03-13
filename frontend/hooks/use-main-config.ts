@@ -2,9 +2,9 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RouterConfig, HostConfig, TransitConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse } from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody } from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
-import { sendConfiguration, deployNetwork, sendTransitConfiguration } from "@/lib/api";
+import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration} from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +12,7 @@ export function useMainConfig() {
   const [routerConfigs, setRouterConfigs] = useState<RouterConfig[]>([]);
   const [hostConfigs, setHostConfigs] = useState<HostConfig[]>([]);
   const [transitConfigs, setTransitConfigs] = useState<TransitConfig>();
+  const [peeringConfigs, setPeeringConfigs] = useState<PeeringConfig>();
   const [networkTopologyResponse, setNetworkTopologyResponse] = useState<NetworkTopologyResponse | null>(null);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
   const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
@@ -101,6 +102,10 @@ export function useMainConfig() {
         through: 0,
         to: [0],
       });
+      setPeeringConfigs({
+        fromAS: 0,
+        toAS: 0
+      });
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -113,6 +118,8 @@ export function useMainConfig() {
     }
   };
 
+  const getNetworkTopologyResponse = () => networkTopologyResponse;
+
   const getAvailableASOptions = () => {
     if (!networkTopologyResponse) return [];
 
@@ -122,6 +129,10 @@ export function useMainConfig() {
 
   const handleTransitConfigsChange = (newConfig: TransitConfig) => {
     setTransitConfigs(newConfig);
+  };
+
+  const handlePeeringConfigsChange =  (newConfig: PeeringConfig) => {
+    setPeeringConfigs(newConfig);
   };
 
   const getRoutersByASN = (networkTopologyResponse: NetworkTopologyResponse, asn: number): RouterResponse[] =>
@@ -137,13 +148,16 @@ export function useMainConfig() {
     );
   };
 
-  const findConnectedRouter = (routers: RouterResponse[], links: [string, string][]): RouterResponse | undefined => {
-    return routers.find(router => links.some(([link1, link2]) =>
-        link1.split(":")[0] === router.name || link2.split(":")[0] === router.name)
+  const findConnectedRouter = (routers: RouterResponse[], links: [string, string][]): RouterResponse => {
+    const connections = routers.find(router => links.some(([link1, link2]) =>
+      link1.split(":")[0] === router.name || link2.split(":")[0] === router.name)
     );
+    if (connections) return connections;
+    console.error("Router not found.");
+    return routers[0]; // TODO fix this
   };
 
-  const findThroughToLinks = (networkTopologyResponse: NetworkTopologyResponse, throughRouters: RouterResponse[], toRouters: RouterResponse[]): ([string, string] | undefined)[] => {
+  const findThroughToLinks = (networkTopologyResponse: NetworkTopologyResponse, throughRouters: RouterResponse[], toRouters: RouterResponse[]): ([string, string])[] => {
     return toRouters.map(toRouter => {
       const link = networkTopologyResponse.links.find(([link1, link2]) =>
         throughRouters.some(throughRouter =>
@@ -153,7 +167,7 @@ export function useMainConfig() {
       );
       if (!link) {
         console.error("Through-To link not found.");
-        return undefined;
+        return ["", ""];
       }
       return link;
     });
@@ -168,11 +182,11 @@ export function useMainConfig() {
 
   const buildThroughRouterIps = (
     throughRouter: RouterResponse,
-    throughToLinks: ([string, string] | undefined)[],
+    throughToLinks: ([string, string])[],
     toRouters: RouterResponse[],
     fromRouter: RouterResponse,
     throughInterfaceConnectedToFrom: string | null
-  ): { asn: number; my_router_ip?: string }[] => {
+  ): { asn: number; my_router_ip: string }[] => {
     const ips = throughToLinks.map(link => {
       if (!link) return console.error("Link not found.");
       const [link1, link2] = link;
@@ -183,17 +197,17 @@ export function useMainConfig() {
         asn: toRouter.asn,
         my_router_ip: throughRouter.interfaces.find(int => int.name === throughRouterInterfaceConnectedToTo)?.ip.split("/")[0]
       };
-    }).filter(Boolean) as { asn: number; my_router_ip?: string }[];
+    }).filter(Boolean) as { asn: number; my_router_ip: string }[];
 
     ips.unshift({
       asn: fromRouter.asn,
-      my_router_ip: throughRouter.interfaces.find(int => int.name === throughInterfaceConnectedToFrom)?.ip.split("/")[0]
+      my_router_ip: throughRouter.interfaces.find(int => int.name === throughInterfaceConnectedToFrom)?.ip.split("/")[0] || ""
     });
 
     return ips;
   };
 
-  const buildToArray = (throughRouter: RouterResponse, throughToLinks: ([string, string] | undefined)[], toRouters: RouterResponse[]): { asn: number; router: string; router_ip?: string; mngt_ip?: string }[] => {
+  const buildToArray = (throughRouter: RouterResponse, throughToLinks: ([string, string])[], toRouters: RouterResponse[]): { asn: number; router: string; router_ip: string; mngt_ip: string }[] => {
     return toRouters.map(toRouter => {
       const link = throughToLinks.find(link => {
         if (!link) return false;
@@ -212,30 +226,53 @@ export function useMainConfig() {
         router_ip: toRouter.interfaces.find(int => int.name === toInterfaceConnectedToThrough)?.ip.split("/")[0],
         mngt_ip: toRouter.mngt_ipv4?.split("/")[0]
       };
-    }).filter((item): item is { asn: number; router: string; router_ip: string | undefined; mngt_ip: string | undefined } => item !== null);
+    }).filter((item): item is { asn: number; router: string; router_ip: string; mngt_ip: string } => item !== null);
   };
 
   const buildRequestBody = (
     fromRouter: RouterResponse,
     throughRouter: RouterResponse,
-    throughRouterIps: { asn: number; my_router_ip?: string }[],
-    to: { asn: number; router: string; router_ip?: string; mngt_ip?: string }[],
+    throughRouterIps: { asn: number; my_router_ip: string }[],
+    to: { asn: number; router: string; router_ip: string; mngt_ip: string }[],
     fromInterfaceConnectedToThrough: string | null
-  ) => ({
-    from_: {
-      asn: fromRouter.asn,
-      router: fromRouter.name,
-      router_ip: fromRouter.interfaces.find(int => int.name === fromInterfaceConnectedToThrough)?.ip.split("/")[0],
-      mngt_ip: fromRouter.mngt_ipv4?.split("/")[0]
-    },
-    through: {
-      asn: throughRouter.asn,
-      router: throughRouter.name,
-      mngt_ip: throughRouter.mngt_ipv4?.split("/")[0],
-      router_ip: throughRouterIps
-    },
-    to
-});
+  ): TransitConfigBody => {
+    const from_ip = fromRouter.interfaces.find(int => int.name === fromInterfaceConnectedToThrough)?.ip.split("/")[0] ?? "";
+    const from_mngt = fromRouter.mngt_ipv4?.split("/")[0] ?? "";
+    const through_mngt = throughRouter.mngt_ipv4?.split("/")[0] ?? "";
+  
+    const cleanedThroughRouterIps = throughRouterIps.map(ip => ({
+      asn: ip.asn,
+      my_router_ip: ip.my_router_ip ?? ""
+    }));
+  
+    const toObj = to.length > 0 ? {
+      asn: to[0].asn,
+      router: to[0].router,
+      router_ip: to[0].router_ip ?? "",
+      mngt_ip: to[0].mngt_ip ?? ""
+    } : {
+      asn: 0,
+      router: "",
+      router_ip: "",
+      mngt_ip: ""
+    };
+  
+    return {
+      from_: {
+        asn: fromRouter.asn,
+        router: fromRouter.name,
+        router_ip: from_ip,
+        mngt_ip: from_mngt,
+      },
+      through: {
+        asn: throughRouter.asn,
+        router: throughRouter.name,
+        mngt_ip: through_mngt,
+        router_ip: cleanedThroughRouterIps,
+      },
+      to: toObj
+    };
+  };
 
   const handleTransitConfigsSend = async () => {
     if (!networkTopologyResponse || !transitConfigs) return;
@@ -267,18 +304,81 @@ export function useMainConfig() {
 
     const to = buildToArray(throughRouter, throughToLinks, toRouters);
 
-    const body = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough);
-
+    const body: TransitConfigBody = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough);
+    console.log(body);
     if (!serverIp) {
       console.error("Server IP is not set.");
       return;
     }
 
     try {
-      await sendTransitConfiguration(body, serverIp);
+      // await sendTransitConfiguration(body, serverIp);
       toast({
         variant: "default",
         title: "Transit configuration generated!",
+        description: "The configuration has been generated successfully.",
+      })
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request: " + error,
+      })
+    }
+  };
+
+  const buildPeerRequestBody = (
+    router: RouterResponse,
+    peer: RouterResponse,
+    fatherInterfaceConnectedToSon: string | null,
+    sonInterfaceConnectedToFather: string | null,
+  ): PeeringConfigBody => {
+    return {
+      asn: router.asn,
+      router_ip: router.interfaces.find(int => int.name === fatherInterfaceConnectedToSon)?.ip.split("/")[0] ?? "",
+      mngt_ip: router.mngt_ipv4?.split("/")[0] ?? "",
+      peer: {
+        asn: peer.asn,
+        router_ip: peer.interfaces.find(int => int.name === sonInterfaceConnectedToFather)?.ip.split("/")[0] ?? "",
+        mngt_ip: peer.mngt_ipv4?.split("/")[0] ?? "",
+      },
+    };
+  };
+
+  const handlePeeringConfigsSend = async() => {
+    if(!networkTopologyResponse || !peeringConfigs) return;
+
+    const fatherASRouters = getRoutersByASN(networkTopologyResponse, peeringConfigs.fromAS);
+    if(!fatherASRouters.length) return console.error("Father peer router not found");
+
+    const sonASRouters = getRoutersByASN(networkTopologyResponse, peeringConfigs.toAS);
+    if(!sonASRouters.length) return console.error("Son peer router not found");
+
+    const fatherSonLinks = findLinksBetweenRouters(networkTopologyResponse, fatherASRouters, sonASRouters);
+    if(!fatherSonLinks.length) return console.error("Peering link not found")
+
+    const fatherRouter = findConnectedRouter(fatherASRouters, fatherSonLinks);
+    if (!fatherRouter) return console.error("Father peer router not found");
+
+    const sonRouter = findConnectedRouter(sonASRouters, fatherSonLinks);
+    if (!sonRouter) return console.error("Son peer router not found");
+
+    const fatherInterfaceConnectedToSon = getConnectedInterface(fatherRouter, fatherSonLinks);
+    const sonInterfaceConnectedToFather = getConnectedInterface(sonRouter, fatherSonLinks);
+
+    const body : PeeringConfigBody = buildPeerRequestBody(fatherRouter, sonRouter, fatherInterfaceConnectedToSon, sonInterfaceConnectedToFather);
+    console.log(body);
+    if (!serverIp) {
+      console.error("Server IP is not set.");
+      return;
+    }
+
+    try {
+      await sendPeeringConfiguration(body, serverIp);
+      toast({
+        variant: "default",
+        title: "Peering configuration generated!",
         description: "The configuration has been generated successfully.",
       })
     } catch (error) {
@@ -298,13 +398,17 @@ export function useMainConfig() {
     updateRouterConfig,
     hostConfigs, 
     updateHostConfig,
-    transitConfigs, 
+    transitConfigs,
+    peeringConfigs,
     isConfigGenerated,
     isDeploying,
+    getNetworkTopologyResponse,
     handleGenerateConfiguration,
     handleDeployNetwork,
     handleTransitConfigsChange,
+    handlePeeringConfigsChange,
     getAvailableASOptions,
     handleTransitConfigsSend,
+    handlePeeringConfigsSend,
   };
 }

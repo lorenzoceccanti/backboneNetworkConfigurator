@@ -56,6 +56,46 @@ export type TransitConfig = {
   to: number[];
 };
 
+export type PeeringConfig = {
+  fromAS: number;
+  toAS: number
+}
+
+export type TransitConfigBody = {
+  from_: {
+    asn: number;
+    router: string;
+    router_ip: string;
+    mngt_ip: string;
+  },
+  through: {
+    asn: number;
+    router: string;
+    mngt_ip: string;
+    router_ip: {
+        asn: number;
+        my_router_ip: string;
+    }[];
+  },
+  to: {
+    asn: number;
+    router: string;
+    router_ip: string;
+    mngt_ip: string;
+  }
+}
+
+export type PeeringConfigBody = {
+  asn: number;
+  router_ip: string;
+  mngt_ip: string;
+  peer: {
+      asn: number;
+      router_ip: string;
+      mngt_ip: string
+  }
+}
+
 export type RouterInterfaceResponse = {
   ip: string,
   name: string,
@@ -71,4 +111,17 @@ export type RouterResponse = {
 export type NetworkTopologyResponse = {
   links: [string, string][];
   routers: RouterResponse[];
+}
+
+export type NodeData = {
+  id: number;
+  label: string;
+  shape: string;
+  image?: string;
+}
+
+export type EdgeData = {
+  id?: string | number;
+  from: number;
+  to: number;
 }
