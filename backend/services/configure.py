@@ -20,9 +20,7 @@ class ConfigureNetwork:
     internet_host = Host(name="Internet_host", interfaces=[HostInterface(name="Ethernet1", dhcp =False, ip ="192.168.140.10/24")], gateway ="192.168.140.1")
     self._network_topology.hosts.append(internet_host)
     self._links = self._generate_links()
-    internet_links = self._generate_internet_links(router_internet)
-    for link in internet_links: 
-      self._links.append(link)
+    self._generate_internet_interfaces(router_internet)
     self._generate_mngt_ip()
     self._enable_dhcp_on_hosts()
     self._generate_admin_password_hash()
@@ -76,11 +74,10 @@ class ConfigureNetwork:
     return links_list
 
   
-  def _generate_internet_links(self, router_internet) -> list[list[str, str]]:
+  def _generate_internet_interfaces(self, router_internet) -> list[list[str, str]]:
     """
-    if a router is configurate to access the internet, create the link between router and internet_router
+    if a router is configurate to access the internet, create a new interface in internet router
     """
-    links_set: set[tuple[str, str]] = set()
     for router in self._network_topology.routers:
       if router.internet:
         parts = router.internet_iface.ip.split(".")
@@ -89,22 +86,12 @@ class ConfigureNetwork:
         #create a new interfaces to collegate to internet
         new_interface = RouterInterface(name =f"Ethernet{str(self.internet_count)}", ip = f"{internet_ip}/24", peer={"name":f"{router.name}", "interface":f"{router.internet_iface.name}"})
         router_internet.interfaces.append(new_interface)
-
-        endpoint1: str = f"{router.name}:{router.internet_iface.linux_name}"
-        endpoint2: str = f"Internet_router:eth{str(self.internet_count)}"
-        sorted_endpoints: tuple[str, str] = tuple(sorted([endpoint1, endpoint2]))
-        links_set.add(sorted_endpoints)
+        
         self.internet_count = self.internet_count + 1
        
         # add internet router as neighbor for the router
         internet_neighbor = Neighbor(ip=internet_ip, asn=54000)
         router.neighbors.append(internet_neighbor)
-
-    # convert the set to a list of dictionaries
-    links_list: list[list[str, str]] = []
-    for link_tuple in links_set:
-      links_list.append(list(link_tuple))
-    return links_list 
 
   def _generate_mngt_ip(self) -> None:
     """ 
