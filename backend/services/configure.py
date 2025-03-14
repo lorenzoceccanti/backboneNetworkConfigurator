@@ -3,23 +3,38 @@ import os
 import ipaddress
 import crypt
 from config import Config
-from models.network_topology import NetworkTopology
+from models.network_topology import NetworkTopology, Router, RouterInterface, Host, HostInterface, Neighbor
 from utils.helpers import Helper
 
 class ConfigureNetwork:
 
   _network_topology: NetworkTopology
   _links: list[list[str, str]]
+  internet_count = 2
 
 
   def __init__(self, _network_topology: NetworkTopology):
     self._network_topology = _network_topology
+    router_internet = Router(name = "Internet_router", asn = 54000, interfaces=[RouterInterface(name="Ethernet1", ip="192.168.140.1/24", peer={"name": "Internet_host", "interface":"Ethernet1"})], neighbors = self._get_internet_neighbor())
+    self._network_topology.routers.append(router_internet)
+    internet_host = Host(name="Internet_host", interfaces=[HostInterface(name="Ethernet1", dhcp =False, ip ="192.168.140.10/24")], gateway ="192.168.140.1")
+    self._network_topology.hosts.append(internet_host)
     self._links = self._generate_links()
+    internet_links = self._generate_internet_links(router_internet)
+    for link in internet_links: 
+      self._links.append(link)
     self._generate_mngt_ip()
     self._enable_dhcp_on_hosts()
     self._generate_admin_password_hash()
     self._generate_networks_for_routers()
 
+  def _get_internet_neighbor(self) -> list[Neighbor]:
+    list_neighbor: List[Neighbor] = []
+    for router in self._network_topology.routers:
+      if router.internet and router.internet_iface and router != self:
+        new_neighbor = Neighbor(ip=f"{router.internet_iface.ip}", asn=router.asn)
+        list_neighbor.append(new_neighbor)
+    return list_neighbor
 
   def get_links(self) -> list[list[str, str]]:
     return self._links
@@ -59,6 +74,35 @@ class ConfigureNetwork:
 
     return links_list
 
+  
+  def _generate_internet_links(self, router_internet) -> list[list[str, str]]:
+    """
+    if a router is configurate to access the internet, create the link between router and internet_router
+    """
+    links_set: set[tuple[str, str]] = set()
+    for router in self._network_topology.routers:
+      if router.internet:
+        parts = router.internet_iface.ip.split(".")
+        last = int(parts[3]) + 1
+        internet_ip = f"{parts[0]}.{parts[1]}.{parts[2]}.{str(last)}"
+        #create a new interfaces to collegate to internet
+        new_interface = RouterInterface(name =f"Ethernet{str(self.internet_count)}", ip = f"{internet_ip}/24", peer={"name":f"{router.name}", "interface":f"{router.internet_iface.name}"})
+        router_internet.interfaces.append(new_interface)
+        endpoint1: str = f"{router.name}:{router.internet_iface.linux_name}"
+        endpoint2: str = f"Internet_router:eth{str(self.internet_count)}"
+        sorted_endpoints: tuple[str, str] = tuple(sorted([endpoint1, endpoint2]))
+        links_set.add(sorted_endpoints)
+        self.internet_count = self.internet_count + 1
+       
+        # add internet router as neighbor for the router
+        internet_neighbor = Neighbor(ip=internet_ip, asn=54000)
+        router.neighbors.append(internet_neighbor)
+
+    # convert the set to a list of dictionaries
+    links_list: list[list[str, str]] = []
+    for link_tuple in links_set:
+      links_list.append(list(link_tuple))
+    return links_list 
 
   def _generate_mngt_ip(self) -> None:
     """ 
@@ -153,4 +197,3 @@ class ConfigureNetwork:
 
       files.append(file_path)
     print(f"[INFO] Arista configuration files written successfully to {Config.CONFIG_DIR}")
-
