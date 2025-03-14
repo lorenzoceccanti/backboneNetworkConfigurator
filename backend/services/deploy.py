@@ -6,24 +6,26 @@ class DeployNetwork:
   @staticmethod
   def deploy_network():
     os.system(f"./deploy_network.sh")
-    self._internet_router_configuration()
 
-  def _internet_router_configuration(self) -> None:
-    commands: list[str] = []
-    commands = [
-      f"enable",
-      f"configure",
-    ]
-    commands.append("ip prefix-list DEFAULT_ROUTE seq 10 permit 0.0.0.0/0")
-    commands.append("route-map RM-OUT-INTERNET permit 10")
-    commands.append("   match ip address prefix-list DEFAULT_ROUTE")
-    commands.append("exit")
-    commands.append("no ip route 0.0.0.0/0 172.20.20.1")
-    commands.append("ip route 0.0.0.0/0 192.168.140.10")
+  @staticmethod
+  def internet_router_configuration() -> None:
+    commands: list[str] = [
+            "enable",
+            "configure",
+            "ip prefix-list DEFAULT_ROUTE seq 10 permit 0.0.0.0/0",
+            "route-map RM-OUT-INTERNET permit 10",
+            "   match ip address prefix-list DEFAULT_ROUTE",
+            "exit",
+            "no ip route 0.0.0.0/0 172.20.20.1",
+            "ip route 0.0.0.0/0 192.168.140.10"
+        ]
     current_dir = os.path.dirname(os.path.abspath(__file__))  # Trova la directory di 'configure.py'
     config_dir = os.path.join(current_dir, "..", "config")  # Aggiunge la cartella 'config'
-    file_path = os.path.join(config_dir, "router.cfg")  # Aggiungi il nome del file
+    file_path = os.path.join(config_dir, "Internet_router.cfg")  # Aggiungi il nome del file
 
+    if not os.path.exists(file_path):
+      raise FileNotFoundError(f"Error: file {file_path} doesn't exist.")
+    
     # Variabile per memorizzare le righe che iniziano con 'neighbor'
     neighbor_lines = []
     management = False
@@ -36,18 +38,20 @@ class DeployNetwork:
         if line.startswith("neighbor"):  # Verifica se la riga inizia con 'neighbor'
             neighbor_lines.append(line)  # Aggiungi la riga alla lista
         if line == "interface Management0":
-          managment = True
-        if management:
+          management = True
+        if management and "ip address" in line:
          management_ip = line
          management = False
-     
-    for neigbor in neighbor_lines:
-        parts = line.split(" ")
+
+    if management_ip is None:
+            raise ValueError("Errore: Nessun IP di management trovato nel file di configurazione.")
+    for neighbor in neighbor_lines:
+        parts = neighbor.split(" ")
         neighbor_ip = parts[1]
         neighbor_asn = parts[3]
         commands.append(f"ip as-path access-list AS{neighbor_asn}-IN permit ^{neighbor_asn}_ any")
         commands.append(f"route-map RM-IN-{neighbor_asn} permit 10")
-        commands.append(f"   match as-path AS{neighbor.asn}-IN")
+        commands.append(f"   match as-path AS{neighbor_asn}-IN")
         commands.append(f"exit")
         commands.append(f"router bgp 54000")
         commands.append(f"   neighbor {neighbor_ip} route-map RM-IN-{neighbor_asn} in")
