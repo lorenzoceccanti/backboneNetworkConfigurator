@@ -19,24 +19,25 @@ class DeployNetwork:
             "no ip route 0.0.0.0/0 172.20.20.1",
             "ip route 0.0.0.0/0 192.168.140.10"
         ]
-    current_dir = os.path.dirname(os.path.abspath(__file__))  # Trova la directory di 'configure.py'
-    config_dir = os.path.join(current_dir, "..", "config")  # Aggiunge la cartella 'config'
-    file_path = os.path.join(config_dir, "Internet_router.cfg")  # Aggiungi il nome del file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_dir = os.path.join(current_dir, "..", "config") 
+    file_path = os.path.join(config_dir, "Internet_router.cfg")
 
     if not os.path.exists(file_path):
       raise FileNotFoundError(f"Error: file {file_path} doesn't exist.")
     
-    # Variabile per memorizzare le righe che iniziano con 'neighbor'
+    # Variable to store the lines that start with 'neighbor'
     neighbor_lines = []
     management = False
     management_ip = None
 
-    # Apre il file per la lettura
     with open(file_path, "r") as file:
       for line in file:
-        line = line.strip()  # Rimuove eventuali spazi o caratteri di nuova riga
-        if line.startswith("neighbor"):  # Verifica se la riga inizia con 'neighbor'
-            neighbor_lines.append(line)  # Aggiungi la riga alla lista
+        # Remove space  or new line characters 
+        line = line.strip() 
+        if line.startswith("neighbor"):
+            # Add line to list 
+            neighbor_lines.append(line) 
         if line == "interface Management0":
           management = True
         if management and "ip address" in line:
@@ -67,5 +68,4 @@ class DeployNetwork:
     ip = parts[2].split("/")
     router_mngt_ip = ip[0] 
     Helper.send_arista_commands(router_mngt_ip, commands)
-    print("[DEBUG] router internet configurato")
 
