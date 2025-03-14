@@ -34,6 +34,7 @@ class ConfigureNetwork:
       if router.internet and router.internet_iface and router != self:
         new_neighbor = Neighbor(ip=f"{router.internet_iface.ip}", asn=router.asn)
         list_neighbor.append(new_neighbor)
+
     return list_neighbor
 
   def get_links(self) -> list[list[str, str]]:
@@ -88,6 +89,7 @@ class ConfigureNetwork:
         #create a new interfaces to collegate to internet
         new_interface = RouterInterface(name =f"Ethernet{str(self.internet_count)}", ip = f"{internet_ip}/24", peer={"name":f"{router.name}", "interface":f"{router.internet_iface.name}"})
         router_internet.interfaces.append(new_interface)
+
         endpoint1: str = f"{router.name}:{router.internet_iface.linux_name}"
         endpoint2: str = f"Internet_router:eth{str(self.internet_count)}"
         sorted_endpoints: tuple[str, str] = tuple(sorted([endpoint1, endpoint2]))
