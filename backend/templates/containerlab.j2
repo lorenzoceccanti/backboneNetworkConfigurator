@@ -40,4 +40,13 @@ topology:
   {% for link in links %}
     - endpoints: ["{{link[0]}}", "{{link[1]}}"]
   {% endfor %}
+  {% for router in routers %}
+  {% if router.name == 'Internet_router' %}
+  {% for iface in router.interfaces %}
+  {% if iface.name != 'Ethernet1' %}
+   - endpoints: ["{{iface.peer.name}}:{{iface.peer.linux_name}}", "Internet_router:{{iface.linux_name}}"]
+  {%endif%}
+  {% endfor %}
+  {% endif %}
+  {% endfor %}
 
