@@ -10,19 +10,11 @@ class ConfigureNetwork:
 
   _network_topology: NetworkTopology
   _links: list[list[str, str]]
-  internet_count = 2 # NOTA: perché è un campo del metodo se lo usi solo in una funzione?
 
 
   def __init__(self, _network_topology: NetworkTopology):
     self._network_topology = _network_topology
-    # NOTA: qui creerei una funzione apposta per 
-    # lasciare il costruttore il più pulito possibile
-    # NOTA: tutta questa roba hardcodata (il nome del router, l'asn, ecc..) 
-    # non mi piace, la inserirein in Config 
-    router_internet = Router(name = "Internet_router", asn = 54000, interfaces=[RouterInterface(name="Ethernet1", ip="192.168.140.1/24", peer={"name": "Internet_host", "interface":"Ethernet1"})], neighbors = self._get_internet_neighbor())
-    self._network_topology.routers.append(router_internet)
-    internet_host = Host(name="Internet_host", interfaces=[HostInterface(name="Ethernet1", dhcp =False, ip ="192.168.140.10/24")], gateway ="192.168.140.1")
-    self._network_topology.hosts.append(internet_host)
+    router_internet = self.create_internet_network()
     self._links = self._generate_links()
     self._generate_internet_interfaces(router_internet)
     self._generate_mngt_ip()
@@ -30,10 +22,27 @@ class ConfigureNetwork:
     self._generate_admin_password_hash()
     self._generate_networks_for_routers()
 
+  def create_internet_network(self) -> Router:
+    """
+    Create internet router and internet host
+    :return router internet
+    """
+    router_internet = Router(name = Config.INTERNET_ROUTER_NAME, asn = Config.INTERNET_ASN, interfaces=[RouterInterface(name= Config.INTERNET_IFACE_ROUTER, ip=f"{Config.INTERNET_ROUTER_IP}/24", peer={"name": Config.INTERNET_HOST_NAME, "interface": Config.INTERNET_IFACE_HOST})], neighbors = self._get_internet_neighbor()) 
+    self._network_topology.routers.append(router_internet)
+    internet_host = Host(name= Config.INTERNET_HOST_NAME, interfaces=[HostInterface(name= Config.INTERNET_IFACE_HOST, dhcp =False, ip = f"{Config.INTERNET_HOST_IP}/24")], gateway = Config.INTERNET_ROUTER_IP)
+    self._network_topology.hosts.append(internet_host)
+  
+    # return internet router that will be used in another function
+    return router_internet
+
+
   def _get_internet_neighbor(self) -> list[Neighbor]:
-    # NOTA: manca l'importazione di List, usa list minuscolo
-    # NOTA: manca la descrizione della funzione
-    list_neighbor: List[Neighbor] = []
+    """
+    Generate list of neighbor for internet router
+    :return list og neighbor
+    """
+
+    list_neighbor: list[Neighbor] = []
     for router in self._network_topology.routers:
       if router.internet and router.internet_iface and router != self:
         new_neighbor = Neighbor(ip=f"{router.internet_iface.ip}", asn=router.asn)
@@ -81,11 +90,12 @@ class ConfigureNetwork:
     return links_list
 
   
-  def _generate_internet_interfaces(self, router_internet) -> list[list[str, str]]:
+  def _generate_internet_interfaces(self, router_internet) -> None:
     """
     if a router is configurate to access the internet, create a new interface in internet router
-    # NOTA: mancano i parametri e cosa ritorna la funzione
+    :param router_internet: internet router on which to add the interfaces
     """
+    internet_count = 2
     for router in self._network_topology.routers:
       if router.internet:
         # NOTA: non è obbligatorio che sia /24 la maschera di rete
@@ -94,10 +104,10 @@ class ConfigureNetwork:
         last = int(parts[3]) + 1
         internet_ip = f"{parts[0]}.{parts[1]}.{parts[2]}.{str(last)}"
         # create a new interfaces to collegate to internet
-        new_interface = RouterInterface(name =f"Ethernet{str(self.internet_count)}", ip = f"{internet_ip}/24", peer={"name":f"{router.name}", "interface":f"{router.internet_iface.name}"})
+        new_interface = RouterInterface(name =f"Ethernet{str(internet_count)}", ip = f"{internet_ip}/24", peer={"name":f"{router.name}", "interface":f"{router.internet_iface.name}"})
         router_internet.interfaces.append(new_interface)
         
-        self.internet_count = self.internet_count + 1
+        internet_count = internet_count + 1
        
         # add internet router as neighbor for the router
         internet_neighbor = Neighbor(ip=internet_ip, asn=54000)
@@ -170,7 +180,7 @@ class ConfigureNetwork:
 
     env = Environment(loader=FileSystemLoader(Config.TEMPLATE_DIR))
     template = env.get_template("containerlab.j2")
-    config_content = template.render(project_name=self._network_topology.project_name, routers=self._network_topology.routers, hosts=self._network_topology.hosts, links=self._links)
+    config_content = template.render(project_name=self._network_topology.project_name, routers=self._network_topology.routers, hosts=self._network_topology.hosts, links=self._links, router_internet= Config.INTERNET_ROUTER_NAME, internet_iface = Config.INTERNET_IFACE_ROUTER)
 
     containerlab_file = os.path.join(Config.CONFIG_DIR, "topology.clab.yml")
     with open(containerlab_file, "w") as f:
@@ -188,7 +198,7 @@ class ConfigureNetwork:
     files = []
 
     for router in self._network_topology.routers:
-      config_content = template.render(router=router)
+      config_content = template.render(router=router, router_internet = Config.INTERNET_ROUTER_NAME)
       file_path = os.path.join(Config.CONFIG_DIR, f"{router.name}.cfg")
 
       with open(file_path, "w") as f:
