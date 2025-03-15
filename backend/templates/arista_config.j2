@@ -29,7 +29,7 @@ management api netconf
 !
 ip routing
 !
-{% if router.name == 'Internet_router' %}
+{% if router.name == 'Internet_router' %} # NOTA: questo nome hardcodato sarebbe meglio prenderlo dal Config in modo che se si cambia una volta lo prende anche qui
 ip route 0.0.0.0/0 192.168.140.2
 {% else %}
 ip route 0.0.0.0/0 172.20.20.1
@@ -49,7 +49,7 @@ interface {{ iface.name }}
   {% endif %}
 {% endfor %}
 !
-{% if router.name == 'Internet_router' %}
+{% if router.name == 'Internet_router' %} # NOTA: stessa cosa qui
 ip prefix-list DEFAULT_ROUTE seq 10 permit 0.0.0.0/0
 
 {% for neighbor in router.neighbors %}
@@ -78,14 +78,14 @@ router bgp {{ router.asn }}
   {% for neighbor in router.neighbors %}
   {% if neighbor.asn != router.asn %}
   neighbor {{ neighbor.ip }} remote-as {{ neighbor.asn }}
-  {% if router.name == 'Internet_router' %}
+  {% if router.name == 'Internet_router' %} # NOTA: stessa cosa qui
   neighbor {{ neighbor.ip }} route-map RM-IN-{{neighbor.asn}} in
   neighbor {{ neighbor.ip }} route-map RM-OUT-INTERNET out
   {% endif %}
   {% endif %}
   {% endfor %}
 
-  {% if router.name == 'Internet_router' %}
+  {% if router.name == 'Internet_router' %} # NOTA: stessa cosa qui
   network 0.0.0.0/0
   {% endif %}
 !

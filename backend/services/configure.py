@@ -10,11 +10,15 @@ class ConfigureNetwork:
 
   _network_topology: NetworkTopology
   _links: list[list[str, str]]
-  internet_count = 2
+  internet_count = 2 # NOTA: perché è un campo del metodo se lo usi solo in una funzione?
 
 
   def __init__(self, _network_topology: NetworkTopology):
     self._network_topology = _network_topology
+    # NOTA: qui creerei una funzione apposta per 
+    # lasciare il costruttore il più pulito possibile
+    # NOTA: tutta questa roba hardcodata (il nome del router, l'asn, ecc..) 
+    # non mi piace, la inserirein in Config 
     router_internet = Router(name = "Internet_router", asn = 54000, interfaces=[RouterInterface(name="Ethernet1", ip="192.168.140.1/24", peer={"name": "Internet_host", "interface":"Ethernet1"})], neighbors = self._get_internet_neighbor())
     self._network_topology.routers.append(router_internet)
     internet_host = Host(name="Internet_host", interfaces=[HostInterface(name="Ethernet1", dhcp =False, ip ="192.168.140.10/24")], gateway ="192.168.140.1")
@@ -27,6 +31,8 @@ class ConfigureNetwork:
     self._generate_networks_for_routers()
 
   def _get_internet_neighbor(self) -> list[Neighbor]:
+    # NOTA: manca l'importazione di List, usa list minuscolo
+    # NOTA: manca la descrizione della funzione
     list_neighbor: List[Neighbor] = []
     for router in self._network_topology.routers:
       if router.internet and router.internet_iface and router != self:
@@ -36,6 +42,7 @@ class ConfigureNetwork:
     return list_neighbor
 
   def get_links(self) -> list[list[str, str]]:
+    # TODO: aggiungere la descrizione della funzione
     return self._links
 
 
@@ -77,13 +84,16 @@ class ConfigureNetwork:
   def _generate_internet_interfaces(self, router_internet) -> list[list[str, str]]:
     """
     if a router is configurate to access the internet, create a new interface in internet router
+    # NOTA: mancano i parametri e cosa ritorna la funzione
     """
     for router in self._network_topology.routers:
       if router.internet:
+        # NOTA: non è obbligatorio che sia /24 la maschera di rete
+        # e se un amministratore specifica per quell'interfaccia una maschera non /24 questo non va
         parts = router.internet_iface.ip.split(".")
         last = int(parts[3]) + 1
         internet_ip = f"{parts[0]}.{parts[1]}.{parts[2]}.{str(last)}"
-        #create a new interfaces to collegate to internet
+        # create a new interfaces to collegate to internet
         new_interface = RouterInterface(name =f"Ethernet{str(self.internet_count)}", ip = f"{internet_ip}/24", peer={"name":f"{router.name}", "interface":f"{router.internet_iface.name}"})
         router_internet.interfaces.append(new_interface)
         

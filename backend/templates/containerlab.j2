@@ -41,7 +41,7 @@ topology:
     - endpoints: ["{{link[0]}}", "{{link[1]}}"]
   {% endfor %}
   {% for router in routers %}
-  {% if router.name == 'Internet_router' %}
+  {% if router.name == 'Internet_router' %} # NOTA: mettere il nome nel Config per evitare cose hardcodate
   {% for iface in router.interfaces %}
   {% if iface.name != 'Ethernet1' %}
     - endpoints: ["{{iface.peer.name}}:{{iface.peer.linux_name}}", "Internet_router:{{iface.linux_name}}"]
