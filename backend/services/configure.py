@@ -45,7 +45,9 @@ class ConfigureNetwork:
     list_neighbor: list[Neighbor] = []
     for router in self._network_topology.routers:
       if router.internet and router.internet_iface and router != self:
-        new_neighbor = Neighbor(ip=f"{router.internet_iface.ip}", asn=router.asn)
+        neighbor_ip = router.internet_iface.ip.split("/")[0]
+        print(f"[DEBUG] ip: {neighbor_ip}")
+        new_neighbor = Neighbor(ip= neighbor_ip , asn=router.asn)
         list_neighbor.append(new_neighbor)
 
     return list_neighbor
@@ -98,19 +100,30 @@ class ConfigureNetwork:
     internet_count = 2
     for router in self._network_topology.routers:
       if router.internet:
-        # NOTA: non è obbligatorio che sia /24 la maschera di rete
-        # e se un amministratore specifica per quell'interfaccia una maschera non /24 questo non va
-        parts = router.internet_iface.ip.split(".")
-        last = int(parts[3]) + 1
-        internet_ip = f"{parts[0]}.{parts[1]}.{parts[2]}.{str(last)}"
+
+        # Converte l'indirizzo IP in un oggetto IPv4Network per calcolare correttamente l'IP successivo
+        network = ipaddress.IPv4Network(router.internet_iface.ip, strict=False)
+        host_ip = ipaddress.IPv4Address(router.internet_iface.ip.split("/")[0])
+        print(f"[DEBUG] network: {network}")
+        print(f"[DEBUG] ip: {host_ip}")
+
+        # Trova il primo IP disponibile dopo l'IP del router (senza superare i limiti della subnet)
+        next_ip = host_ip + 1 if host_ip + 1 in network else None
+
+        if next_ip is None:
+          raise ValueError(f"Nessun IP disponibile nella rete {network}")
+
+        internet_ip = f"{next_ip}/{network.prefixlen}"
+
         # create a new interfaces to collegate to internet
-        new_interface = RouterInterface(name =f"Ethernet{str(internet_count)}", ip = f"{internet_ip}/24", peer={"name":f"{router.name}", "interface":f"{router.internet_iface.name}"})
+        new_interface = RouterInterface(name =f"Ethernet{str(internet_count)}", ip = f"{internet_ip}", peer={"name":f"{router.name}", "interface":f"{router.internet_iface.name}"})
         router_internet.interfaces.append(new_interface)
         
         internet_count = internet_count + 1
        
         # add internet router as neighbor for the router
-        internet_neighbor = Neighbor(ip=internet_ip, asn=54000)
+        neighbor_ip = internet_ip.split("/")[0]
+        internet_neighbor = Neighbor(ip=neighbor_ip, asn=Config.INTERNET_ASN)
         router.neighbors.append(internet_neighbor)
 
   def _generate_mngt_ip(self) -> None:

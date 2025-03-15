@@ -28,6 +28,8 @@ export type RouterConfig = {
   neighbors: Neighbor[];
   dhcp?: DHCPConfig;
   mngt_ipv4?: string;
+  internet?: boolean;
+  internet_interface?: RouterInterface;
 };
 
 export type HostInterface = {
