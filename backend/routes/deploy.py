@@ -10,5 +10,4 @@ def deploy() -> Response:
   :return: Response object with a message and status code.
   """
   DeployNetwork.deploy_network()
-  DeployNetwork.internet_router_configuration()
   return jsonify({}), 204
