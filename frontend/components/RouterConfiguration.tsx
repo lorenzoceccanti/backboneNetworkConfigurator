@@ -34,6 +34,7 @@ export default function RouterConfiguration({
     removeNeighbor,
     availableDhcpOptions,
     availableInternetOptions,
+    handleInternetInterfaceSelect,
     form
   } = useRouterConfig(initialValues, onChange);
 
@@ -322,7 +323,7 @@ export default function RouterConfiguration({
                           value={config.internet_iface.name} 
                           onValueChange={(value) => { 
                             form.setValue(`internet_iface.name`, value, { shouldValidate: true }); 
-                            handleChange("internet_iface", { ...config.internet_iface!, name: value })
+                            handleInternetInterfaceSelect(value)
                           }} 
                       >
                           <SelectTrigger className="w-full">
