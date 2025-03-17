@@ -44,7 +44,7 @@ class ConfigureNetwork:
 
     list_neighbor: list[Neighbor] = []
     for router in self._network_topology.routers:
-      if router.internet and router.internet_iface and router != self:
+      if router.internet_iface and router.internet_iface.enabled and router != self:
         neighbor_ip = router.internet_iface.ip.split("/")[0]
         print(f"[DEBUG] ip: {neighbor_ip}")
         new_neighbor = Neighbor(ip= neighbor_ip , asn=router.asn)
@@ -99,7 +99,7 @@ class ConfigureNetwork:
     """
     internet_count = 2
     for router in self._network_topology.routers:
-      if router.internet:
+      if router.internet_iface and router.internet_iface.enabled:
 
         # Converte l'indirizzo IP in un oggetto IPv4Network per calcolare correttamente l'IP successivo
         network = ipaddress.IPv4Network(router.internet_iface.ip, strict=False)

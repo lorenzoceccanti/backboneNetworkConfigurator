@@ -29,6 +29,7 @@ export function useRouterConfig(initialValues: RouterConfig, onChange: (config: 
     onChange(updatedConfig);
   };
 
+
   const handlePeerInterfaceSelect = (index: number, value: string) => {
     const updatedInterfaces = [...config.interfaces];
     updatedInterfaces[index] = { ...updatedInterfaces[index], peer: { ...updatedInterfaces[index].peer, interface: value } };
@@ -54,6 +55,11 @@ export function useRouterConfig(initialValues: RouterConfig, onChange: (config: 
     return selectedInterfaces.filter((iface) => iface !== "");
   };
 
+  const availableInternetOptions = () => {
+    return availableInterfaces.filter((iface) => !selectedInterfaces.includes(iface));
+  };
+  
+
   const removeInterface = (index: number) => {
     const updatedInterfaces = config.interfaces.filter((_, i) => i !== index);
     handleChange("interfaces", updatedInterfaces);
@@ -74,6 +80,7 @@ export function useRouterConfig(initialValues: RouterConfig, onChange: (config: 
     removeInterface,
     removeNeighbor,
     availableDhcpOptions,
+    availableInternetOptions,
     form
   }
 

@@ -39,7 +39,8 @@ export const initialRouterConfig: RouterConfig = {
     subnet: "192.168.100.0/24",
     interface: "Ethernet1",
     range: ["192.168.100.10", "192.168.100.99"]
-  }
+  },
+  internet_iface: undefined,
 };
 
 export const initialHostConfig: HostConfig = {

@@ -33,6 +33,7 @@ export default function RouterConfiguration({
     removeInterface,
     removeNeighbor,
     availableDhcpOptions,
+    availableInternetOptions,
     form
   } = useRouterConfig(initialValues, onChange);
 
@@ -299,6 +300,62 @@ export default function RouterConfiguration({
             </div>
           </div>
         )}
+      </div>
+      <div className="border-t pt-4">
+        <div className="flex space-x-4">
+          <label className="block text-sm font-medium">Enable Internet</label>
+          <Switch
+            checked= {config.internet_iface?.enabled ?? false}
+            onCheckedChange={(checked) =>
+              handleChange("internet_iface",  checked ? { enabled: true, name: "", ip : ""} : undefined) 
+            }
+          />
+         </div>
+         
+         {config.internet_iface?.enabled && (
+          
+          <div className="mt-4 space-y-2">
+              <label className="block text-sm font-medium">Internet Interface</label>  
+               <div className="md:flex md:space-x-2 my-2 space-y-3 md:space-y-0 mb-10 md:mb-0">  
+                  <div className="w-full">
+                      <Select 
+                          value={config.internet_iface.name} 
+                          onValueChange={(value) => { 
+                            form.setValue(`internet_iface.name`, value, { shouldValidate: true }); 
+                            handleChange("internet_iface", { ...config.internet_iface!, name: value })
+                          }} 
+                      >
+                          <SelectTrigger className="w-full">
+                              <SelectValue placeholder = "Select interface"/>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>Interfaces</SelectLabel>
+                                {availableInternetOptions().map((option) => (
+                                  <SelectItem key={option} value={option}>
+                                    {option}
+                                  </SelectItem>
+                                ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                  </div>
+          
+              < div className="w-full">
+                <Input
+                  {...form.register("internet_iface.ip")}
+                  className={`border ${config.internet_iface?.ip ? (form.formState.errors.internet_iface?.ip ? 'border-red-500' : 'border-green-500') : ''}`}
+                  placeholder="IP Address (eg. 192.168.10.1/24)"
+                  value={config.internet_iface.ip}
+                  onChange={(e) => {
+                    const updatedInterface = { ...config.internet_iface!,  ip: e.target.value};
+                    handleChange("internet_iface", updatedInterface);
+                  }}
+                />
+                {form.formState.errors.internet_iface?.ip && <p className="text-red-500 text-sm">{form.formState.errors.internet_iface.ip.message}</p>}
+             </div>
+            </div>
+          </div>)}
       </div>
     </div>
   );

@@ -14,8 +14,11 @@ def configure() -> Response:
   """
   print("[INFO] Received request to configure network")
   try:
+    print(f"[DEBUG]:{request.is_json}")
     if request.is_json:
+      print("[DEBUG] qui ok")
       network_topology: NetworkTopology = NetworkTopology(**request.get_json())
+      print("[DEBUG] qui ok2")
       configure_network = ConfigureNetwork(network_topology)
       configure_network.generate_containerlab_config()
       configure_network.generate_arista_configs()

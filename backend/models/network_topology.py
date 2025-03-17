@@ -67,6 +67,19 @@ class RouterInterface:
     self.peer = Peer(**self.peer) if isinstance(self.peer, dict) else self.peer
     self.linux_name = Helper.convert_interface_name_in_linux(self.name)
 
+@dataclass
+class InternetInterface:
+  enabled: bool
+  name: str
+  ip: str
+
+  def __post_init__(self):
+    try:
+      ip_obj = ipaddress.IPv4Network(self.ip, strict=False)
+    except ValueError:
+      raise ValueError(f"Invalid IP address format: {self.ip}")
+
+
 
 @dataclass
 class Router:
@@ -77,14 +90,13 @@ class Router:
   admin_password: Optional[str] = None
   dhcp: Optional[DHCP] = None
   mngt_ipv4: Optional[str] = None
-  internet: Optional[bool] = False
-  internet_iface: Optional[RouterInterface] = None
+  internet_iface: Optional[InternetInterface] = None
 
   def __post_init__(self):
     if self.asn < 1 or self.asn > 65534:
       raise ValueError("ASN must be between 1 and 65534")
     self.interfaces = [RouterInterface(**interface) if isinstance(interface, dict) else interface for interface in self.interfaces]
-    self.internet_iface = RouterInterface(**self.internet_iface) if self.internet_iface is not None and isinstance(self.internet_iface, dict) else self.internet_iface
+    self.internet_iface = InternetInterface(**self.internet_iface) if self.internet_iface is not None and isinstance(self.internet_iface, dict) else self.internet_iface
     self.neighbors = [Neighbor(**neighbor) if isinstance(neighbor, dict) else neighbor for neighbor in self.neighbors]
     self.dhcp = DHCP(**self.dhcp) if self.dhcp is not None and isinstance(self.dhcp, dict) else self.dhcp
 

@@ -63,6 +63,8 @@ export function useMainConfig() {
     }
 
     try {
+      console.log("Sending Configuration:", JSON.stringify(body, null, 2));
+      console.log("Server IP:", serverIp);
       const data = await sendConfiguration(body, serverIp);
       setNetworkTopologyResponse(data);
       toast({
@@ -73,6 +75,7 @@ export function useMainConfig() {
       setIsConfigGenerated(true);
     } catch (error) {
       console.error("Error:", error);
+
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",

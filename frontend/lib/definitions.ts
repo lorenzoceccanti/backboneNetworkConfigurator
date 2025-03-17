@@ -16,6 +16,12 @@ export type RouterInterface = {
   }
 };
 
+export type InternetInterface = {
+  enabled: boolean;
+  name: string;
+  ip: string;
+}
+
 export type Neighbor = {
   ip: string;
   asn: number;
@@ -28,8 +34,7 @@ export type RouterConfig = {
   neighbors: Neighbor[];
   dhcp?: DHCPConfig;
   mngt_ipv4?: string;
-  internet?: boolean;
-  internet_interface?: RouterInterface;
+  internet_iface?: InternetInterface;
 };
 
 export type HostInterface = {

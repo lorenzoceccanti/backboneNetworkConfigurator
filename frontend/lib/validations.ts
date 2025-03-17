@@ -47,14 +47,10 @@ export const routerConfigurationFormSchema = z.object({
     interface: z.string().nonempty("Interface name is required"),
     range: z.tuple([ipSchema, ipSchema]),
   }).optional(),
-  internet: z.boolean().optional(),
-  internet_interface: z.object({
+
+  internet_iface: z.object({
     name: z.string().nonempty("Interface name is required"),
-      ip: ipWithMaskSchema,
-      peer: z.object({
-        name: z.string().nonempty("Peer name is required"),
-        interface: z.string().nonempty("Peer interface is required"),
-      })
+    ip: ipWithMaskSchema,
   }).optional(),
 });
 
