@@ -103,6 +103,13 @@ export type PeeringConfigBody = {
   }
 }
 
+export type LocalPreferenceConfigBody = {
+  asn: number;
+  mngt_ip: string;
+  neighbor_ip: string;
+  local_preference: number;
+}
+
 export type RouterInterfaceResponse = {
   ip: string,
   name: string,

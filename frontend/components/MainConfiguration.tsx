@@ -24,6 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import LocalPreferenceConfiguration from "./LocalPreferenceConfiguration";
 
 export default function MainConfiguration() {
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
@@ -36,6 +37,7 @@ export default function MainConfiguration() {
     updateHostConfig,
     transitConfigs,
     peeringConfigs,
+    localPreferenceConfigs,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
@@ -43,6 +45,7 @@ export default function MainConfiguration() {
     handleDeployNetwork,
     handleTransitConfigsChange,
     handlePeeringConfigsChange,
+    handleLocalPreferenceConfigsChange,
     getAvailableASOptions,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
@@ -200,6 +203,17 @@ export default function MainConfiguration() {
               </Button>
             </div>
           )}
+          {/*
+          {localPreferenceConfigs && (
+            <div>
+              <LocalPreferenceConfiguration
+                initialValues={localPreferenceConfigs}
+                availableASOptions={getAvailableASOptions()}
+                onChange={handleLocalPreferenceConfigsChange}
+              />
+            </div>
+          )}*/}
+
         </div>
     </>
   );
