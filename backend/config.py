@@ -9,7 +9,7 @@ class Config:
   USERNAME = os.getenv("USERNAME")
   PASSWORD = os.getenv("PASSWORD")
   INTERNET_ROUTER_NAME = os.getenv("INTERNET_ROUTER_NAME")
-  INTERNET_ASN = os.getenv("INTERNET_ASN")
+  INTERNET_ASN = int(os.getenv("INTERNET_ASN"))
   INTERNET_HOST_NAME = os.getenv("INTERNET_HOST_NAME")
   INTERNET_HOST_IP = os.getenv("INTERNET_HOST_IP")
   INTERNET_ROUTER_IP = os.getenv("INTERNET_ROUTER_IP")

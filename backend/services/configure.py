@@ -21,6 +21,7 @@ class ConfigureNetwork:
     self._enable_dhcp_on_hosts()
     self._generate_admin_password_hash()
     self._generate_networks_for_routers()
+    print("[DEBUG] finito")
 
 
   def _create_internet_network(self) -> Router:
@@ -28,10 +29,14 @@ class ConfigureNetwork:
     Create internet router and internet host.
     :return router internet
     """
+    print("[DEBUG] entrato")
     router_internet = Router(name = Config.INTERNET_ROUTER_NAME, asn = Config.INTERNET_ASN, interfaces = [RouterInterface(name = Config.INTERNET_IFACE_ROUTER, ip = Config.INTERNET_ROUTER_IP, peer = {"name": Config.INTERNET_HOST_NAME, "interface": Config.INTERNET_IFACE_HOST})], neighbors = self._get_internet_neighbor()) 
+    print("[DEBUG] apposto")
     self._network_topology.routers.append(router_internet)
-    internet_host = Host(name = Config.INTERNET_HOST_NAME, interfaces = [HostInterface(name = Config.INTERNET_IFACE_HOST, dhcp = False, ip = Config.INTERNET_HOST_IP)], gateway = Config.INTERNET_ROUTER_IP)
+    internet_host = Host(name = Config.INTERNET_HOST_NAME, interfaces = [HostInterface(name = Config.INTERNET_IFACE_HOST, dhcp = False, ip = Config.INTERNET_HOST_IP)], gateway = Config.INTERNET_ROUTER_IP.split("/")[0])
+    print("[DEBUG] apposto")
     self._network_topology.hosts.append(internet_host)
+
   
     return router_internet
 
@@ -47,7 +52,6 @@ class ConfigureNetwork:
         neighbor_ip = router.internet_iface.ip.split("/")[0]
         new_neighbor = Neighbor(ip= neighbor_ip , asn=router.asn)
         list_neighbor.append(new_neighbor)
-
     return list_neighbor
 
 

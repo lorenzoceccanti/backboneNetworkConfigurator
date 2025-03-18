@@ -44,7 +44,7 @@ topology:
   {% if router.name == router_internet %}
   {% for iface in router.interfaces %}
   {% if iface.name != internet_iface %}
-    - endpoints: ["{{iface.peer.name}}:{{iface.peer.linux_name}}", "router_internet:{{iface.linux_name}}"]
+    - endpoints: ["{{iface.peer.name}}:{{iface.peer.linux_name}}", "{{router_internet}}:{{iface.linux_name}}"]
   {%endif%}
   {% endfor %}
   {% endif %}

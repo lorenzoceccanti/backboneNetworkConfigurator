@@ -68,6 +68,14 @@ export type PeeringConfig = {
   toAS: number
 }
 
+
+export type LocalPreferenceConfig = {
+  asn: number;
+  neighbor_ip: string;
+  local_preference: number;
+}
+
+
 export type TransitConfigBody = {
   from_: {
     asn: number;
@@ -110,15 +118,22 @@ export type LocalPreferenceConfigBody = {
   local_preference: number;
 }
 
+
 export type RouterInterfaceResponse = {
   ip: string,
   name: string,
+}
+
+export type RouterNeighborResponse = {
+  asn: number,
+  ip: string,
 }
 
 export type RouterResponse = {
   name: string;
   asn: number;
   interfaces: RouterInterfaceResponse[];
+  neighbors: RouterNeighborResponse[];
   mngt_ipv4?: string;
 }
 

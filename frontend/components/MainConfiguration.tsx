@@ -49,6 +49,7 @@ export default function MainConfiguration() {
     getAvailableASOptions,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
+    handleLocalPreferenceConfigsSend,
   } = useMainConfig();
   
   return (
@@ -203,7 +204,6 @@ export default function MainConfiguration() {
               </Button>
             </div>
           )}
-          {/*
           {localPreferenceConfigs && (
             <div>
               <LocalPreferenceConfiguration
@@ -211,8 +211,12 @@ export default function MainConfiguration() {
                 availableASOptions={getAvailableASOptions()}
                 onChange={handleLocalPreferenceConfigsChange}
               />
+              <br />
+              <Button className="w-fit" onClick={handleLocalPreferenceConfigsSend}>
+                Send Local Preference Configuration
+              </Button>
             </div>
-          )}*/}
+          )}
 
         </div>
     </>

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { localPreferenceConfigurationFormSchema } from "@/lib/validations";
 
-export function useLocalPrefereceConfig(
+export function useLocalPreferenceConfig(
   initialValues: LocalPreferenceConfig,
   availableASOptions: number[],
   onChange: (config: LocalPreferenceConfig) => void
@@ -50,3 +50,4 @@ export function useLocalPrefereceConfig(
     getAvailableASOptions,
   };
 }
+  
