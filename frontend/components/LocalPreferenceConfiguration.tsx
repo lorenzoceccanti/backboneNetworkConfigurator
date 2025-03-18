@@ -75,12 +75,12 @@ export default function LocalPreferenceConfiguration({
                     handleChange("neighbor_ip", updatedInterface);
                   }}
                 />
+                {form.formState.errors.neighbor_ip && <p className="text-red-500 text-sm">{form.formState.errors.neighbor_ip.message}</p>}
             </div>
             <div className = "w-full">
                 <label className="block font-semibold mb-1">Local Preference</label>
                 <Input
                   {...form.register("local_preference")}
-                  className={`border ${config.local_preference ? (form.formState.errors.local_preference ? 'border-red-500' : 'border-green-500') : ''}`}
                   placeholder="Local Preference"
                   value={config.local_preference}
                   onChange={(e) => {
