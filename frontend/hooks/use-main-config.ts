@@ -74,11 +74,6 @@ export function useMainConfig() {
         description: "The configuration has been generated successfully.",
       })
       setIsConfigGenerated(true);
-      setlocalPreferenceConfigs({
-        asn: 0,
-        neighbor_ip: "",
-        local_preference: 0,
-      });
     } catch (error) {
       console.error("Error:", error);
 
