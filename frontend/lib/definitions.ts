@@ -1,3 +1,5 @@
+export const ASN_INTERNET = 54000;
+
 export type DHCPConfig = {
   enabled: boolean;
   subnet: string;

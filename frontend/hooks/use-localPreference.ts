@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LocalPreferenceConfig } from "@/lib/definitions";
+import { LocalPreferenceConfig, ASN_INTERNET } from "@/lib/definitions";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,7 +31,7 @@ export function useLocalPreferenceConfig(
     onChange(updatedConfig);
   };
 
-  const getAvailableASOptions = (
+  const getAvailableLPASOptions = (
     config: LocalPreferenceConfig,
     availableAS: number[],
     field: "asn"
@@ -40,14 +40,14 @@ export function useLocalPreferenceConfig(
     if (config.asn !== null && field !== "asn") {
       used.push(config.asn);
     }
-    return availableAS.filter((opt) => !used.includes(opt));
+    return availableAS.filter((opt) => !used.includes(opt) && opt !== ASN_INTERNET);
   };
 
   return {
     config,
     form,
     handleChange,
-    getAvailableASOptions,
+    getAvailableLPASOptions,
   };
 }
   

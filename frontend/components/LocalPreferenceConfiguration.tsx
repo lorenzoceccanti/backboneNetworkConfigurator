@@ -27,7 +27,7 @@ export default function LocalPreferenceConfiguration({
     config,
     form,
     handleChange,
-    getAvailableASOptions,
+    getAvailableLPASOptions,
   } = useLocalPreferenceConfig(initialValues, availableASOptions, onChange);
 
   return (
@@ -51,7 +51,7 @@ export default function LocalPreferenceConfiguration({
                     <SelectContent>
                         <SelectGroup>
                             <SelectLabel>AS Number</SelectLabel>
-                                {getAvailableASOptions(config, availableASOptions, "asn").map(
+                                {getAvailableLPASOptions(config, availableASOptions, "asn").map(
                                     (option: number) => (
                                         <SelectItem key={option} value={String(option)}>
                                             {option}

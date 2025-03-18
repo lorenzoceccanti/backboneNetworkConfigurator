@@ -409,7 +409,7 @@ export function useMainConfig() {
 const findTargetrouter = (routers:RouterResponse[], ip:string): RouterResponse | undefined => {
    const target = routers.find(router => router.neighbors.some(n => n.ip === ip));
    if(target) return target;
-   console.error("router non trovato")
+   
 };
 
   const buildLocalPreferenceRequestBody = (
