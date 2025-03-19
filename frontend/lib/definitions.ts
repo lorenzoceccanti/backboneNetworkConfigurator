@@ -1,5 +1,3 @@
-
-
 export type DHCPConfig = {
   enabled: boolean;
   subnet: string;
