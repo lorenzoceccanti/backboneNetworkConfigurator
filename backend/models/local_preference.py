@@ -6,11 +6,14 @@ class LocalPreference:
   asn: int
   mngt_ip: str
   neighbor_ip: str
+  neighbor_asn: int
   local_preference: int
 
   def __post_init__(self):
     if self.asn < 0 or self.asn > 65535:
       raise ValueError('Invalid ASN')
+    if self.neighbor_asn < 0 or self.neighbor_asn > 65535:
+      raise ValueError('Invalid neighbor ASN')
     try:
       ipaddress.IPv4Address(self.mngt_ip)
     except ValueError:

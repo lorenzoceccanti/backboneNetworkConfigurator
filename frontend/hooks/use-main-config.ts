@@ -257,7 +257,8 @@ export function useMainConfig() {
     throughRouter: RouterResponse,
     throughRouterIps: { asn: number; my_router_ip: string }[],
     to: { asn: number; router: string; router_ip: string; mngt_ip: string }[],
-    fromInterfaceConnectedToThrough: string | null
+    fromInterfaceConnectedToThrough: string | null,
+    //links: [string, string][]
   ): TransitConfigBody => {
     const from_ip = fromRouter.interfaces.find(int => int.name === fromInterfaceConnectedToThrough)?.ip.split("/")[0] ?? "";
     const from_mngt = fromRouter.mngt_ipv4?.split("/")[0] ?? "";
@@ -293,7 +294,8 @@ export function useMainConfig() {
         mngt_ip: through_mngt,
         router_ip: cleanedThroughRouterIps,
       },
-      to: toObj
+      to: toObj,
+      //links: links
     };
   };
 
@@ -327,7 +329,7 @@ export function useMainConfig() {
 
     const to = buildToArray(throughRouter, throughToLinks, toRouters);
 
-    const body: TransitConfigBody = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough);
+    const body: TransitConfigBody = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough /*, networkTopologyResponse.links*/);
     console.log(body);
     if (!serverIp) {
       console.error("Server IP is not set.");
@@ -444,12 +446,14 @@ export function useMainConfig() {
 
   const buildLocalPreferenceRequestBody = (
     router: RouterResponse,
-    neighbor: string,
+    neighbor_ip: string,
+    neighbor_asn: number,
     lpf: number
   ): LocalPreferenceConfigBody => {
     return {
       asn: router.asn,
-      neighbor_ip: neighbor,
+      neighbor_ip: neighbor_ip,
+      neighbor_asn: neighbor_asn, 
       mngt_ip: router.mngt_ipv4?.split("/")[0] ?? "",
       local_preference: lpf, 
     };
@@ -469,7 +473,7 @@ export function useMainConfig() {
 
 
 
-    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Target.router, Target.matchedIp, localPreferenceConfigs.local_preference);
+    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Target.router, Target.matchedIp, NeighborRouter[0].asn, localPreferenceConfigs.local_preference);
     console.log(body);
     if (!serverIp) {
       console.error("Server IP is not set.");

@@ -156,16 +156,9 @@ class TransitPolicy:
     with open(f"config/{file_name}_TRANSIT.cfg", "w") as f:
       f.write("\n".join(commands))
 
-  def parse_topology(self, network_topology):
-    """
-    Read YAML file and create the  map of connection between nodes.
-    """
-    with open(f"config/topology.clab.yml", "r") as file:
-        topology = yaml.safe_load(file)
-
-    # Extract nodes and links from topology
-    nodes = topology.get("topology", {}).get("nodes", {})
-    links = topology.get("topology", {}).get("links", [])
+  def parse_topology(self):
+    
+    links = self._transit_policy.links
 
     # Create a map of connections
     node_connections = {}
@@ -180,7 +173,6 @@ class TransitPolicy:
         # Add the connection between the nodes into the map
         node_connections.setdefault(node1, []).append(node2)
         node_connections.setdefault(node2, []).append(node1)
-
     return node_connections
     
   def find_alternative_paths(self, node_connections, current_node, target_node, visited):
@@ -241,12 +233,12 @@ class TransitPolicy:
                 valid_paths.append(path)
 
         if valid_paths:
-            return {
+            return jsonify({
                 "message": "Alternative transit paths found",
                 "valid_transit_paths": valid_paths
-            }
+            }), 202
         else:
-            return {"message": "No valid transit paths"}
+            return return jsonify({"message": "No valid transit paths"}), 500
     except Exception as e:
         print(e)
         return jsonify({"error": "Check error"}), 400
