@@ -98,12 +98,15 @@ router multicast
 !
 router ospf 1
 {% for iface in router.interfaces %}
-{% if iface.name == 'Loopback0' -%}
+{% if iface.name == 'Loopback0' %}
   router-id {{ iface.ip.split("/")[0] }}
 {% elif iface.network %}
   network {{ iface.network }} area 0.0.0.0
-{%- endif %}
+{% endif %}
 {% endfor %}
+{% if router.redistribute_bgp %}
+  redistribute bgp
+{% endif %}
   max-lsa 12000
 !
 {% if router.dhcp -%}

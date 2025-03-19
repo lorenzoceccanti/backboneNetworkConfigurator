@@ -7,7 +7,6 @@ import HostConfiguration from "@/components/HostConfiguration";
 import TransitConfiguration from "@/components/TransitConfiguration";
 import PeeringConfiguration from "./PeeringConfiguration";
 import NetworkVisualization from "@/components/NetworkVisualization";
-import RedistributeBGPConfiguration from "@/components/RedistributeBGPConfiguration";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/Spinner";
@@ -39,7 +38,6 @@ export default function MainConfiguration() {
     transitConfigs,
     peeringConfigs,
     localPreferenceConfigs,
-    redistributeBGPCofig,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
@@ -48,13 +46,10 @@ export default function MainConfiguration() {
     handleTransitConfigsChange,
     handlePeeringConfigsChange,
     handleLocalPreferenceConfigsChange,
-    handleRedistributeBGPConfigChange,
     getAvailableASOptions,
-    getAvailableRoutersOptions,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
     handleLocalPreferenceConfigsSend,
-    handleRedistributeBGPConfigSend,
   } = useMainConfig();
   
   return (
@@ -219,18 +214,6 @@ export default function MainConfiguration() {
               <br />
               <Button className="w-fit" onClick={handleLocalPreferenceConfigsSend}>
                 Send Local Preference Configuration
-              </Button>
-            </div>
-          )}
-          {redistributeBGPCofig && (
-            <div>
-              <RedistributeBGPConfiguration
-                initialValues={redistributeBGPCofig}
-                availableRoutersOptions={getAvailableRoutersOptions()}
-                onChange={handleRedistributeBGPConfigChange}
-              />
-              <Button className="w-fit" onClick={handleRedistributeBGPConfigSend}>
-                Send BGP Configuration
               </Button>
             </div>
           )}

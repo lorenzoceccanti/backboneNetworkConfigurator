@@ -360,6 +360,17 @@ export default function RouterConfiguration({
           </div>
         )}
       </div>
+      <div className="border-t pt-4">
+        <div className="flex space-x-4">
+          <label className="block text-sm font-medium">Enable BGP Redistribution</label>
+          <Switch
+            checked={config.redistribute_bgp ?? false}
+            onCheckedChange={(checked) => {
+              handleChange("redistribute_bgp", checked);
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
