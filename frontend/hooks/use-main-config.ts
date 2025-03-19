@@ -469,20 +469,20 @@ export function useMainConfig() {
     const NeighborRouter = getRoutersByName(networkTopologyResponse, localPreferenceConfigs.neighbor_router)
     if(NeighborRouter.length > 1 || !NeighborRouter) return console.error("routers not found");
 
-    const Targetrouter = findTargetRouter(ASrouters, NeighborRouter);
-    if(!Targetrouter) return console.error("router not found");
+    const Target = findTargetRouter(ASrouters, NeighborRouter);
+    if(!Target) return console.error("router not found");
 
 
 
-    //const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Targetrouter, localPreferenceConfigs.neighbor_router, localPreferenceConfigs.local_preference);
-    //console.log(body);
+    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Target.router, Target.matchedIp, localPreferenceConfigs.local_preference);
+    console.log(body);
     if (!serverIp) {
       console.error("Server IP is not set.");
       return;
     }
 
     try {
-      //await sendLocalPreferenceConfiguration(body, serverIp);
+      await sendLocalPreferenceConfiguration(body, serverIp);
       toast({
         variant: "default",
         title: "Local Preference configuration generated!",
