@@ -147,6 +147,8 @@ class ConfigureNetwork:
         if candidate_ip == reserved_ip:
           raise Exception("Reached the maximum number of managment IP addresses.")
         router.mngt_ipv4 = f"{str(ipv4_base + i)}/24"
+      else:
+        router.mngt_ipv4 = f"{str(reserved_ip)}/24"
 
 
   def _enable_dhcp_on_hosts(self) -> None:
