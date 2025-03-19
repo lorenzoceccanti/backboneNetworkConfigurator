@@ -53,6 +53,19 @@ export function useMainConfig() {
   };
 
   const handleGenerateConfiguration = async (routerConfigs: RouterConfig[], hostConfigs: HostConfig[]) => {
+    // check if the name of the routers are unique in the list of routers configurations
+    const isNameUnique = routerConfigs.every((routerConfig, index) => {
+      return routerConfigs.findIndex((router) => router.name === routerConfig.name) === index;
+    });
+    if (!isNameUnique) {
+      toast({
+        variant: "destructive",
+        title: "Router names are not unique.",
+        description: "Please make sure that the names of the routers are unique.",
+      });
+      return;
+    }
+    
     const body: NetworkTopology = {
       project_name: form.getValues("project_name"),
       routers: routerConfigs,
