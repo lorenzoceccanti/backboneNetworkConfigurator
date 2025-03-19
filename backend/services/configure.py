@@ -28,7 +28,7 @@ class ConfigureNetwork:
     Create internet router and internet host.
     :return router internet
     """
-    router_internet = Router(name = Config.INTERNET_ROUTER_NAME, asn = Config.INTERNET_ASN, interfaces = [RouterInterface(name = Config.INTERNET_IFACE_ROUTER, ip = Config.INTERNET_ROUTER_IP, peer = {"name": Config.INTERNET_HOST_NAME, "interface": Config.INTERNET_IFACE_HOST})], neighbors = self._get_internet_neighbor(), redistribute_bgp = False) 
+    router_internet = Router(name = Config.INTERNET_ROUTER_NAME, asn = Config.INTERNET_ASN, interfaces = [RouterInterface(name = Config.INTERNET_IFACE_ROUTER, ip = Config.INTERNET_ROUTER_IP, peer = {"name": Config.INTERNET_HOST_NAME, "interface": Config.INTERNET_IFACE_HOST})], neighbors = self._get_internet_neighbor(), redistribute_bgp = False, mngt_ipv4=Config.INTERNET_ROUTER_MNGT_IP) 
     self._network_topology.routers.append(router_internet)
     internet_host = Host(name = Config.INTERNET_HOST_NAME, interfaces = [HostInterface(name = Config.INTERNET_IFACE_HOST, dhcp = False, ip = Config.INTERNET_HOST_IP)], gateway = Config.INTERNET_ROUTER_IP.split("/")[0])
     self._network_topology.hosts.append(internet_host)
@@ -136,9 +136,17 @@ class ConfigureNetwork:
     and writes it to the router object.
     :param routers: list of routers
     """
+    # Notice: I consider the address reserved for the Ri router
+    # Also: the router Ri has not to be involved in this process
+    # Hint: It's the unique router already having a mngt_ip set at this stage
     ipv4_base = ipaddress.IPv4Address("172.20.20.2")
+    reserved_ip = ipaddress.IPv4Address(Config.INTERNET_ROUTER_MNGT_IP)
     for i, router in enumerate(self._network_topology.routers):
-      router.mngt_ipv4 = f"{str(ipv4_base + i)}/24"
+      if router.mngt_ipv4 is None:
+        candidate_ip = ipv4_base + i
+        if candidate_ip == reserved_ip:
+          raise Exception("Reached the maximum number of managment IP addresses.")
+        router.mngt_ipv4 = f"{str(ipv4_base + i)}/24"
 
 
   def _enable_dhcp_on_hosts(self) -> None:
