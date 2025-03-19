@@ -2,9 +2,9 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, RedistributeBGPConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody } from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody } from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
-import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration, sendRedistributeBGPConfiguration} from "@/lib/api";
+import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration } from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,7 +14,6 @@ export function useMainConfig() {
   const [transitConfigs, setTransitConfigs] = useState<TransitConfig>();
   const [peeringConfigs, setPeeringConfigs] = useState<PeeringConfig>();
   const [localPreferenceConfigs, setlocalPreferenceConfigs] = useState<LocalPreferenceConfig>();
-  const [redistributeBGPCofig, setRedistributeBGPCofig] = useState<RedistributeBGPConfig>();
   const [networkTopologyResponse, setNetworkTopologyResponse] = useState<NetworkTopologyResponse | null>(null);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
   const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
@@ -127,10 +126,6 @@ export function useMainConfig() {
         neighbor_ip: "",
         local_preference: 0,
       });
-      setRedistributeBGPCofig({
-        router: "",
-        redistribute: false
-      });
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -170,10 +165,6 @@ export function useMainConfig() {
   const handleLocalPreferenceConfigsChange = (newConfig: LocalPreferenceConfig) => {
     setlocalPreferenceConfigs(newConfig);
   };
-
-  const handleRedistributeBGPConfigChange = (newConfig: RedistributeBGPConfig) => {
-    setRedistributeBGPCofig(newConfig);
-  }; 
 
   const getRoutersByASN = (networkTopologyResponse: NetworkTopologyResponse, asn: number): RouterResponse[] =>
     networkTopologyResponse.routers.filter(router => router.asn === asn);
@@ -486,43 +477,6 @@ export function useMainConfig() {
 
   };
 
-  const handleRedistributeBGPConfigSend = async() => {
-    if(!networkTopologyResponse || !redistributeBGPCofig) return;
-
-    const router = networkTopologyResponse.routers.find(router => router.name === redistributeBGPCofig.router);
-    if(!router) return console.error("router not found");
-
-    if(!router.mngt_ipv4) return console.error("Router management IP not found.");
-
-    const mngt_ip = router.mngt_ipv4?.split("/")[0];
-
-    const body = {
-      router: mngt_ip,
-      redistribute: redistributeBGPCofig.redistribute
-    };
-
-    if (!serverIp) {
-      console.error("Server IP is not set.");
-      return;
-    }
-
-    try {
-      await sendRedistributeBGPConfiguration(body, serverIp);
-      toast({
-        variant: "default",
-        title: "Redistibute BGP configuration generated!",
-        description: "The configuration has been generated successfully.",
-      })
-    } catch (error) {
-      console.error("Error:", error);
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: "There was a problem with your request: " + error,
-      })
-    }
-  }
-
   return {
     form, 
     onSubmit,
@@ -533,7 +487,6 @@ export function useMainConfig() {
     transitConfigs,
     peeringConfigs,
     localPreferenceConfigs,
-    redistributeBGPCofig,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
@@ -542,12 +495,10 @@ export function useMainConfig() {
     handleTransitConfigsChange,
     handlePeeringConfigsChange,
     handleLocalPreferenceConfigsChange,
-    handleRedistributeBGPConfigChange,
     getAvailableASOptions,
     getAvailableRoutersOptions,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
     handleLocalPreferenceConfigsSend,
-    handleRedistributeBGPConfigSend
   };
 }

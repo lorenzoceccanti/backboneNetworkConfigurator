@@ -1,40 +1,8 @@
 {
     "links": [
         [
-            "Hi:eth1",
-            "Ri:eth1"
-        ],
-        [
-            "H2:eth1",
-            "R1:eth3"
-        ],
-        [
-            "R10:eth3",
-            "R11:eth2"
-        ],
-        [
-            "R11:eth3",
-            "R30:eth1"
-        ],
-        [
-            "H5:eth1",
-            "R30:eth3"
-        ],
-        [
-            "R10:eth1",
-            "R20:eth2"
-        ],
-        [
-            "H3:eth1",
-            "R20:eth3"
-        ],
-        [
             "R1:eth2",
             "R20:eth1"
-        ],
-        [
-            "R1:eth1",
-            "R2:eth2"
         ],
         [
             "R10:eth2",
@@ -45,8 +13,40 @@
             "R11:eth1"
         ],
         [
+            "H3:eth1",
+            "R20:eth3"
+        ],
+        [
+            "R11:eth3",
+            "R30:eth1"
+        ],
+        [
             "H1:eth1",
             "R2:eth1"
+        ],
+        [
+            "R10:eth1",
+            "R20:eth2"
+        ],
+        [
+            "R1:eth1",
+            "R2:eth2"
+        ],
+        [
+            "R10:eth3",
+            "R11:eth2"
+        ],
+        [
+            "H5:eth1",
+            "R30:eth3"
+        ],
+        [
+            "Hi:eth1",
+            "Ri:eth1"
+        ],
+        [
+            "H2:eth1",
+            "R1:eth3"
         ]
     ],
     "routers": [
@@ -81,7 +81,8 @@
                     "asn": 55010,
                     "ip": "134.114.28.2"
                 }
-            ]
+            ],
+            "redistribute_bgp": false
         },
         {
             "asn": 55001,
@@ -114,7 +115,8 @@
                     "asn": 54020,
                     "ip": "132.114.28.1"
                 }
-            ]
+            ],
+            "redistribute_bgp": false
         },
         {
             "asn": 54020,
@@ -151,7 +153,8 @@
                     "asn": 54000,
                     "ip": "140.114.28.2"
                 }
-            ]
+            ],
+            "redistribute_bgp": false
         },
         {
             "asn": 55010,
@@ -188,7 +191,8 @@
                     "asn": 55010,
                     "ip": "192.168.1.1"
                 }
-            ]
+            ],
+            "redistribute_bgp": true
         },
         {
             "asn": 55010,
@@ -221,7 +225,8 @@
                     "asn": 55010,
                     "ip": "192.168.1.2"
                 }
-            ]
+            ],
+            "redistribute_bgp": false
         },
         {
             "asn": 54030,
@@ -250,7 +255,8 @@
                     "asn": 54000,
                     "ip": "141.114.28.2"
                 }
-            ]
+            ],
+            "redistribute_bgp": false
         },
         {
             "asn": 54000,
@@ -279,7 +285,8 @@
                     "asn": 54030,
                     "ip": "141.114.28.1"
                 }
-            ]
+            ],
+            "redistribute_bgp": false
         }
     ]
 }

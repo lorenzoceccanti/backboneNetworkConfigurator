@@ -28,6 +28,7 @@ def configure() -> Response:
           "name": router.name,
           "asn": router.asn,
           "mngt_ipv4": router.mngt_ipv4,
+          "redistribute_bgp": router.redistribute_bgp,
           "interfaces": [{"name": interface.linux_name, "ip": interface.ip} for interface in router.interfaces],
           "neighbors": [{"asn": neighbor.asn, "ip": neighbor.ip} for neighbor in router.neighbors], 
         })
@@ -37,8 +38,8 @@ def configure() -> Response:
       }
       #### REMOVE THIS LINES BEFORE DEPLOYING ####
       # for testing purposes we respond with the generated configurations
-      #with open("our_config.json", "r") as f:
-        #response = json.load(f)
+      # with open("our_config.json", "r") as f:
+        # response = json.load(f)
       #### REMOVE THIS LINES BEFORE DEPLOYING ####
       return jsonify(response), 200
     else:
