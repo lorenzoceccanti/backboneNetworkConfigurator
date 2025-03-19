@@ -56,16 +56,7 @@
                     "192.168.102.10",
                     "192.168.102.99"
                 ]
-            },
-            "internet": true,
-            "internet_iface": {
-                    "name": "Ethernet4",
-                    "ip": "140.114.28.1",
-                    "peer": {
-                        "name": "Internet",
-                        "interface": "Internet_inface1"
-                    }
-            } 
+            }
         },
         {
             "name": "R1",
@@ -179,7 +170,12 @@
                     "192.168.120.10",
                     "192.168.120.99"
                 ]
-            }
+            },
+            "internet_iface": {
+                    "enabled": true,
+                    "name": "Ethernet4",
+                    "ip": "140.114.28.1/24"
+            } 
         },
         {
             "name": "R10",
@@ -334,14 +330,10 @@
                     "192.168.130.99"
                 ]
             },
-            "internet": true,
             "internet_iface": {
+                "enabled": true,
                 "name": "Ethernet4",
-                "ip": "141.114.28.1",
-                "peer": {
-                        "name": "Internet",
-                        "interface": "Internet_inface1"
-                    }
+                "ip": "141.114.28.1/24"
             } 
         } 
     ],

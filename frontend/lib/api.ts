@@ -1,4 +1,4 @@
-import { NetworkTopology, PeeringConfigBody, TransitConfigBody, LocalPreferenceConfigBody } from "@/lib/definitions";
+import { NetworkTopology, PeeringConfigBody, TransitConfigBody, LocalPreferenceConfigBody, RedistributeBGPConfig } from "@/lib/definitions";
 
 export async function sendConfiguration(config: NetworkTopology, serverIp: string) {
   const configApi = `http://${serverIp}:5000/configure`;
@@ -46,6 +46,17 @@ export async function sendPeeringConfiguration(config: PeeringConfigBody, server
 export async function sendLocalPreferenceConfiguration(config: LocalPreferenceConfigBody, serverIp: string){
   const localpreferenceApi = `http://${serverIp}:5000/local-preference`;
   const response = await fetch(localpreferenceApi, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+
+  if (!response.ok) throw new Error(response.statusText);
+}
+
+export async function sendRedistributeBGPConfiguration(config: RedistributeBGPConfig, serverIp: string) {
+  const redistributeBGPApi = `http://${serverIp}:5000/redistribute-bgp`;
+  const response = await fetch(redistributeBGPApi, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(config),

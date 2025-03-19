@@ -156,3 +156,8 @@ export type EdgeData = {
   from: number;
   to: number;
 }
+
+export type RedistributeBGPConfig = {
+  router: string;
+  redistribute: boolean;
+}
