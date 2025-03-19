@@ -1,4 +1,4 @@
-import { LocalPreferenceConfig } from "@/lib/definitions";
+import { LocalPreferenceConfig, RouterResponse} from "@/lib/definitions";
 import { useLocalPreferenceConfig } from "@/hooks/use-localPreference";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,20 +15,23 @@ import {
 type LocalPreferenceConfigurationProps = {
   initialValues: LocalPreferenceConfig;
   availableASOptions: number[];
+  availableRouters: RouterResponse[];
   onChange: (config: LocalPreferenceConfig) => void;
 };
 
 export default function LocalPreferenceConfiguration({
   initialValues,
   availableASOptions,
+  availableRouters,
   onChange,
 }: LocalPreferenceConfigurationProps) {
   const {
     config,
     form,
     handleChange,
+    getAvailableRouterOptions,
     getAvailableLPASOptions,
-  } = useLocalPreferenceConfig(initialValues, availableASOptions, onChange);
+  } = useLocalPreferenceConfig(initialValues, onChange);
 
   return (
     <div className="border-t pt-4">
@@ -64,23 +67,36 @@ export default function LocalPreferenceConfiguration({
                  {form.formState.errors.asn && <p className="text-red-500 text-sm">{form.formState.errors.asn.message}</p>}
             </div>
             <div className = "w-full">
-                <label className="block font-semibold mb-1">Neighbor ip</label>
-                <Input
-                  {...form.register("neighbor_ip")}
-                  className={`border ${config.neighbor_ip ? (form.formState.errors.neighbor_ip ? 'border-red-500' : 'border-green-500') : ''}`}
-                  placeholder="IP Address (eg. 192.168.10.1)"
-                  value={config.neighbor_ip}
-                  onChange={(e) => {
-                    const updatedInterface = e.target.value;
-                    handleChange("neighbor_ip", updatedInterface);
-                  }}
-                />
-                {form.formState.errors.neighbor_ip && <p className="text-red-500 text-sm">{form.formState.errors.neighbor_ip.message}</p>}
+                <label className="block font-semibold mb-1">Neighbor router</label>
+                <Select
+                    value={config.asn === null ? "" : String(config.asn)}
+                    onValueChange={(value) => handleChange("neighbor_router", value)}
+                >
+                    <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select a router">
+                            {config.neighbor_router ?? "Select"}
+                        </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Router name</SelectLabel>
+                                {getAvailableRouterOptions(config, availableRouters).map(
+                                    (option: RouterResponse) => (
+                                        <SelectItem key={option.name} value={option.name}>
+                                            {option.name}
+                                        </SelectItem>
+                                    )
+                                )}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                
             </div>
             <div className = "w-full">
                 <label className="block font-semibold mb-1">Local Preference</label>
                 <Input
                   {...form.register("local_preference")}
+                  type = "number"
                   placeholder="Local Preference"
                   value={config.local_preference}
                   onChange={(e) => {
@@ -88,6 +104,7 @@ export default function LocalPreferenceConfiguration({
                     handleChange("local_preference", updatedInterface);
                   }}
                 />
+                
             </div>
         </div>
     </div>

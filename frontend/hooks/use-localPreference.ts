@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LocalPreferenceConfig, ASN_INTERNET } from "@/lib/definitions";
+import { LocalPreferenceConfig, RouterResponse} from "@/lib/definitions";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,8 +7,7 @@ import { localPreferenceConfigurationFormSchema } from "@/lib/validations";
 
 export function useLocalPreferenceConfig(
   initialValues: LocalPreferenceConfig,
-  availableASOptions: number[],
-  onChange: (config: LocalPreferenceConfig) => void
+  onChange: (config: LocalPreferenceConfig) => void,
 ) {
   const [config, setConfig] = useState<LocalPreferenceConfig>(initialValues);
 
@@ -31,6 +30,14 @@ export function useLocalPreferenceConfig(
     onChange(updatedConfig);
   };
 
+  const getAvailableRouterOptions = (
+    config: LocalPreferenceConfig,
+    availablerouter: RouterResponse[]
+  ) => {
+  
+    return availablerouter.filter((opt) => opt.asn != config.asn);
+  }
+
   const getAvailableLPASOptions = (
     config: LocalPreferenceConfig,
     availableAS: number[],
@@ -40,13 +47,14 @@ export function useLocalPreferenceConfig(
     if (config.asn !== null && field !== "asn") {
       used.push(config.asn);
     }
-    return availableAS.filter((opt) => !used.includes(opt) && opt !== ASN_INTERNET);
+    return availableAS.filter((opt) => !used.includes(opt));
   };
 
   return {
     config,
     form,
     handleChange,
+    getAvailableRouterOptions,
     getAvailableLPASOptions,
   };
 }

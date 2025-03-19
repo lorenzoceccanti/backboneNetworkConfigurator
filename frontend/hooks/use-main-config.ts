@@ -74,6 +74,11 @@ export function useMainConfig() {
         description: "The configuration has been generated successfully.",
       })
       setIsConfigGenerated(true);
+      setlocalPreferenceConfigs({
+        asn: 0,
+        neighbor_router: "",
+        local_preference: 0,
+      });
     } catch (error) {
       console.error("Error:", error);
 
@@ -112,7 +117,7 @@ export function useMainConfig() {
       });
       setlocalPreferenceConfigs({
         asn: 0,
-        neighbor_ip: "",
+        neighbor_router: "",
         local_preference: 0,
       });
     } catch (error) {
@@ -134,6 +139,13 @@ export function useMainConfig() {
 
     // the set is used to remove duplicates
     return Array.from(new Set(networkTopologyResponse.routers.map(router => router.asn)));
+  };
+
+  const getAvailableRouters = () => {
+    if (!networkTopologyResponse) return [];
+
+    // the set is used to remove duplicates
+    return Array.from(new Set(networkTopologyResponse.routers));
   };
 
   const handleTransitConfigsChange = (newConfig: TransitConfig) => {
@@ -327,12 +339,14 @@ export function useMainConfig() {
     }
 
     try {
-      // await sendTransitConfiguration(body, serverIp);
+      await sendTransitConfiguration(body, serverIp);
       toast({
         variant: "default",
         title: "Transit configuration generated!",
         description: "The configuration has been generated successfully.",
       })
+
+      
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -412,6 +426,8 @@ const findTargetrouter = (routers:RouterResponse[], ip:string): RouterResponse |
    
 };
 
+//const findASNeighbor = ()
+
   const buildLocalPreferenceRequestBody = (
     router: RouterResponse,
     neighbor: string,
@@ -431,19 +447,20 @@ const findTargetrouter = (routers:RouterResponse[], ip:string): RouterResponse |
     const ASrouters = getRoutersByASN(networkTopologyResponse, localPreferenceConfigs.asn);
     if(!ASrouters.length) return console.error("routers not found");
 
-    const Targetrouter = findTargetrouter(ASrouters, localPreferenceConfigs.neighbor_ip)
-    if(!Targetrouter) return console.error("router not found");
+    //const Targetrouter = findTargetrouter(ASrouters, )
+    //if(!Targetrouter) return console.error("router not found");
 
 
-    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Targetrouter, localPreferenceConfigs.neighbor_ip, localPreferenceConfigs.local_preference);
-    console.log(body);
+
+    //const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Targetrouter, localPreferenceConfigs.neighbor_router, localPreferenceConfigs.local_preference);
+    //console.log(body);
     if (!serverIp) {
       console.error("Server IP is not set.");
       return;
     }
 
     try {
-      await sendLocalPreferenceConfiguration(body, serverIp);
+      //await sendLocalPreferenceConfiguration(body, serverIp);
       toast({
         variant: "default",
         title: "Local Preference configuration generated!",
@@ -480,6 +497,7 @@ const findTargetrouter = (routers:RouterResponse[], ip:string): RouterResponse |
     handlePeeringConfigsChange,
     handleLocalPreferenceConfigsChange,
     getAvailableASOptions,
+    getAvailableRouters,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
     handleLocalPreferenceConfigsSend

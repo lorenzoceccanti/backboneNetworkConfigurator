@@ -80,7 +80,7 @@ export const peeringConfigurationFormSchema = z.object({
 
 export const localPreferenceConfigurationFormSchema = z.object({
   asn: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
-  neighbor_ip: ipSchema,
+  neighbor_router: z.string().nonempty("Interface name is required"),
   local_preference: z.number().min(0, "Local Preference must be at least 0"),
  
 }); 

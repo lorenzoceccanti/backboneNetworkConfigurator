@@ -1,6 +1,7 @@
 from flask import Blueprint, Response, request, jsonify
 from models.network_topology import NetworkTopology
 from services.configure import ConfigureNetwork
+from config import Config
 import json
 
 configure_bp = Blueprint("configure", __name__)
@@ -24,16 +25,18 @@ def configure() -> Response:
       # prepare the response
       routers = []
       for router in network_topology.routers:
-        routers.append({
-          "name": router.name,
-          "asn": router.asn,
-          "mngt_ipv4": router.mngt_ipv4,
-          "interfaces": [{"name": interface.linux_name, "ip": interface.ip} for interface in router.interfaces],
-          "neighbors": [{"asn": neighbor.asn, "ip": neighbor.ip} for neighbor in router.neighbors], 
-        })
+        if router.name != Config.INTERNET_ROUTER_NAME:
+          routers.append({
+            "name": router.name,
+            "asn": router.asn,
+            "mngt_ipv4": router.mngt_ipv4,
+            "interfaces": [{"name": interface.linux_name, "ip": interface.ip} for interface in router.interfaces],
+            "neighbors": [{"asn": neighbor.asn, "ip": neighbor.ip} for neighbor in router.neighbors],
+          
+          })
       response: dict = {
         "routers": routers,
-        "links": links
+        "links": links,
       }
       #### REMOVE THIS LINES BEFORE DEPLOYING ####
       # for testing purposes we respond with the generated configurations

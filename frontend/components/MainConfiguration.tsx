@@ -47,6 +47,7 @@ export default function MainConfiguration() {
     handlePeeringConfigsChange,
     handleLocalPreferenceConfigsChange,
     getAvailableASOptions,
+    getAvailableRouters,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
     handleLocalPreferenceConfigsSend,
@@ -209,6 +210,7 @@ export default function MainConfiguration() {
               <LocalPreferenceConfiguration
                 initialValues={localPreferenceConfigs}
                 availableASOptions={getAvailableASOptions()}
+                availableRouters={getAvailableRouters()}
                 onChange={handleLocalPreferenceConfigsChange}
               />
               <br />
@@ -217,7 +219,6 @@ export default function MainConfiguration() {
               </Button>
             </div>
           )}
-
         </div>
     </>
   );

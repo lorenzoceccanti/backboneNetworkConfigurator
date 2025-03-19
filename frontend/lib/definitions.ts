@@ -1,4 +1,4 @@
-export const ASN_INTERNET = 54000;
+
 
 export type DHCPConfig = {
   enabled: boolean;
@@ -73,7 +73,7 @@ export type PeeringConfig = {
 
 export type LocalPreferenceConfig = {
   asn: number;
-  neighbor_ip: string;
+  neighbor_router: string;
   local_preference: number;
 }
 
@@ -142,6 +142,7 @@ export type RouterResponse = {
 export type NetworkTopologyResponse = {
   links: [string, string][];
   routers: RouterResponse[];
+  internet_asn: number;
 }
 
 export type NodeData = {

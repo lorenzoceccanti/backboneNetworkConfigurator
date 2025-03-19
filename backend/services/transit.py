@@ -17,6 +17,7 @@ class TransitPolicy:
     self._generate_from_commands()
     self._generate_through_commands()
     self._generate_to_commands()
+    
 
   def _get_route_map_sequence_number(self, route_map_to_search: str, mngt_ip: str) -> int:
     response = Helper.send_arista_commands(mngt_ip, [f"enable", f"configure", f"show running-config"])
@@ -155,7 +156,7 @@ class TransitPolicy:
     with open(f"config/{file_name}_TRANSIT.cfg", "w") as f:
       f.write("\n".join(commands))
 
-  def parse_topology(self):
+  def parse_topology(self, network_topology):
     """
     Read YAML file and create the  map of connection between nodes.
     """
@@ -205,21 +206,17 @@ class TransitPolicy:
     Verifica se un router è un router di transito controllando la sua configurazione BGP.
     Un router è considerato di transito se ha configurazioni BGP che accettano e propagano route tra AS diversi.
     """
-    config_path = f"config/{router}_BGP.cfg"
+    router_mngt = router.mngt_ip
 
-    if not os.path.exists(config_path):
-        print(f"Configuration for {router} not found!")
-        return False
-
-    with open(config_path, "r") as f:
-        config = f.read()
+    running_conf = Helper.send_arista_commands(router_mngt, [f"enable", f"show running_config"])
+    print(f"[DEBUG]: {running_conf}")
 
     # Check if there are route-map that allow transit
     transit = (
-        "route-map RM-IN-" in config and
-        "route-map RM-OUT-" in config and
-        "neighbor" in config and
-        "remote-as" in config
+        "route-map RM-IN-" in running_conf[2] and
+        "route-map RM-OUT-" in running_conf[2] and
+        "neighbor" in running_conf[2] and
+        "remote-as" in running_config[2]
     )
 
     return transit
