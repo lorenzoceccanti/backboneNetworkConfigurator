@@ -2,9 +2,9 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody } from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody} from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
-import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration} from "@/lib/api";
+import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration} from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,6 +13,7 @@ export function useMainConfig() {
   const [hostConfigs, setHostConfigs] = useState<HostConfig[]>([]);
   const [transitConfigs, setTransitConfigs] = useState<TransitConfig>();
   const [peeringConfigs, setPeeringConfigs] = useState<PeeringConfig>();
+  const [localPreferenceConfigs, setlocalPreferenceConfigs] = useState<LocalPreferenceConfig>();
   const [networkTopologyResponse, setNetworkTopologyResponse] = useState<NetworkTopologyResponse | null>(null);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
   const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
@@ -63,6 +64,8 @@ export function useMainConfig() {
     }
 
     try {
+      console.log("Sending Configuration:", JSON.stringify(body, null, 2));
+      console.log("Server IP:", serverIp);
       const data = await sendConfiguration(body, serverIp);
       setNetworkTopologyResponse(data);
       toast({
@@ -73,6 +76,7 @@ export function useMainConfig() {
       setIsConfigGenerated(true);
     } catch (error) {
       console.error("Error:", error);
+
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
@@ -106,6 +110,11 @@ export function useMainConfig() {
         fromAS: 0,
         toAS: 0
       });
+      setlocalPreferenceConfigs({
+        asn: 0,
+        neighbor_ip: "",
+        local_preference: 0,
+      });
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -133,6 +142,11 @@ export function useMainConfig() {
 
   const handlePeeringConfigsChange =  (newConfig: PeeringConfig) => {
     setPeeringConfigs(newConfig);
+  };
+
+  
+  const handleLocalPreferenceConfigsChange = (newConfig: LocalPreferenceConfig) => {
+    setlocalPreferenceConfigs(newConfig);
   };
 
   const getRoutersByASN = (networkTopologyResponse: NetworkTopologyResponse, asn: number): RouterResponse[] =>
@@ -228,6 +242,7 @@ export function useMainConfig() {
       };
     }).filter((item): item is { asn: number; router: string; router_ip: string; mngt_ip: string } => item !== null);
   };
+
 
   const buildRequestBody = (
     fromRouter: RouterResponse,
@@ -391,6 +406,61 @@ export function useMainConfig() {
     }
   };
 
+const findTargetrouter = (routers:RouterResponse[], ip:string): RouterResponse | undefined => {
+   const target = routers.find(router => router.neighbors.some(n => n.ip === ip));
+   if(target) return target;
+   
+};
+
+  const buildLocalPreferenceRequestBody = (
+    router: RouterResponse,
+    neighbor: string,
+    lpf: number
+  ): LocalPreferenceConfigBody => {
+    return {
+      asn: router.asn,
+      neighbor_ip: neighbor,
+      mngt_ip: router.mngt_ipv4?.split("/")[0] ?? "",
+      local_preference: lpf, 
+    };
+  };
+
+  const handleLocalPreferenceConfigsSend = async() =>{
+    if(!networkTopologyResponse || !localPreferenceConfigs) return;
+
+    const ASrouters = getRoutersByASN(networkTopologyResponse, localPreferenceConfigs.asn);
+    if(!ASrouters.length) return console.error("routers not found");
+
+    const Targetrouter = findTargetrouter(ASrouters, localPreferenceConfigs.neighbor_ip)
+    if(!Targetrouter) return console.error("router not found");
+
+
+    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Targetrouter, localPreferenceConfigs.neighbor_ip, localPreferenceConfigs.local_preference);
+    console.log(body);
+    if (!serverIp) {
+      console.error("Server IP is not set.");
+      return;
+    }
+
+    try {
+      await sendLocalPreferenceConfiguration(body, serverIp);
+      toast({
+        variant: "default",
+        title: "Local Preference configuration generated!",
+        description: "The configuration has been generated successfully.",
+      })
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request: " + error,
+      })
+    }
+
+
+  };
+
   return {
     form, 
     onSubmit,
@@ -400,6 +470,7 @@ export function useMainConfig() {
     updateHostConfig,
     transitConfigs,
     peeringConfigs,
+    localPreferenceConfigs,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
@@ -407,8 +478,10 @@ export function useMainConfig() {
     handleDeployNetwork,
     handleTransitConfigsChange,
     handlePeeringConfigsChange,
+    handleLocalPreferenceConfigsChange,
     getAvailableASOptions,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
+    handleLocalPreferenceConfigsSend
   };
 }

@@ -8,6 +8,7 @@ import { routerConfigurationFormSchema } from "@/lib/validations";
 export function useRouterConfig(initialValues: RouterConfig, onChange: (config: RouterConfig) => void) {
   const [config, setConfig] = useState<RouterConfig>(initialValues);
   const [selectedInterfaces, setSelectedInterfaces] = useState<string[]>([]);
+  const [selectedInternetInterface, setSelectedInternetInterface] = useState<string | undefined>("");
 
   const availableInterfaces = ["Ethernet1", "Ethernet2", "Ethernet3", "Ethernet4"];
 
@@ -29,6 +30,7 @@ export function useRouterConfig(initialValues: RouterConfig, onChange: (config: 
     onChange(updatedConfig);
   };
 
+
   const handlePeerInterfaceSelect = (index: number, value: string) => {
     const updatedInterfaces = [...config.interfaces];
     updatedInterfaces[index] = { ...updatedInterfaces[index], peer: { ...updatedInterfaces[index].peer, interface: value } };
@@ -46,13 +48,29 @@ export function useRouterConfig(initialValues: RouterConfig, onChange: (config: 
     });
   };
 
+  const handleInternetInterfaceSelect = (value: string) => {
+    const updatedInterface = { ...config.internet_iface!, name: value };
+    handleChange("internet_iface", updatedInterface);
+    setSelectedInternetInterface(value);
+  };
+
   const availableInterfacesOptions = (index: number) => {
-    return availableInterfaces.filter((iface) => !selectedInterfaces.includes(iface) || selectedInterfaces[index] === iface);
+    return availableInterfaces.filter((iface) => (!selectedInterfaces.includes(iface) || selectedInterfaces[index] === iface) && !selectedInternetInterface?.includes(iface));
   };
   
   const availableDhcpOptions = () => {
     return selectedInterfaces.filter((iface) => iface !== "");
   };
+
+  const availableInternetOptions = () => {
+    return availableInterfaces.filter((iface) => !selectedInterfaces.includes(iface));
+  };
+  
+  const removeInternetInterface = () => {
+    const updatedInterface = { ...config.internet_iface!, name: "" };
+    handleChange("internet_iface", updatedInterface);
+    setSelectedInternetInterface(undefined);
+  }
 
   const removeInterface = (index: number) => {
     const updatedInterfaces = config.interfaces.filter((_, i) => i !== index);
@@ -72,9 +90,11 @@ export function useRouterConfig(initialValues: RouterConfig, onChange: (config: 
     handleInterfaceSelect,
     availableInterfacesOptions,
     removeInterface,
+    removeInternetInterface,
     removeNeighbor,
     availableDhcpOptions,
+    availableInternetOptions,
+    handleInternetInterfaceSelect,
     form
   }
-
 }

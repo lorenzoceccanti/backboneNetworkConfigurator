@@ -1,5 +1,8 @@
+from flask import jsonify
 from models.transit import Transit, TransitTo
 from utils.helpers import Helper
+import yaml
+import os
 
 class TransitPolicy:
   _transit_policy : Transit
@@ -152,6 +155,105 @@ class TransitPolicy:
     with open(f"config/{file_name}_TRANSIT.cfg", "w") as f:
       f.write("\n".join(commands))
 
+  def parse_topology(self):
+    """
+    Read YAML file and create the  map of connection between nodes.
+    """
+    with open(f"config/topology.clab.yml", "r") as file:
+        topology = yaml.safe_load(file)
+
+    # Extract nodes and links from topology
+    nodes = topology.get("topology", {}).get("nodes", {})
+    links = topology.get("topology", {}).get("links", [])
+
+    # Create a map of connections
+    node_connections = {}
+
+    for link in links:
+        endpoint1, endpoint2 = link["endpoints"]
+
+        # Extract device's name (es. "r1" from "r1:eth1")
+        node1 = endpoint1.split(":")[0]
+        node2 = endpoint2.split(":")[0]
+
+        # Add the connection between the nodes into the map
+        node_connections.setdefault(node1, []).append(node2)
+        node_connections.setdefault(node2, []).append(node1)
+
+    return node_connections
+    
+  def find_alternative_paths(self, node_connections, current_node, target_node, visited):
+    """
+    Find all paths from  current_node to target_node and avoid nodes already  visited.
+    """
+    if current_node == target_node:
+        return [[target_node]]
+
+    visited.add(current_node)
+    paths = []
+
+    for neighbor in node_connections.get(current_node, []):
+        if neighbor not in visited:
+            sub_paths = self.find_alternative_paths(node_connections, neighbor, target_node, visited.copy())
+            for sub_path in sub_paths:
+                paths.append([current_node] + sub_path)
+
+    return paths
+
+  def is_transit_router(self, router):
+    """
+    Verifica se un router è un router di transito controllando la sua configurazione BGP.
+    Un router è considerato di transito se ha configurazioni BGP che accettano e propagano route tra AS diversi.
+    """
+    config_path = f"config/{router}_BGP.cfg"
+
+    if not os.path.exists(config_path):
+        print(f"Configuration for {router} not found!")
+        return False
+
+    with open(config_path, "r") as f:
+        config = f.read()
+
+    # Check if there are route-map that allow transit
+    transit = (
+        "route-map RM-IN-" in config and
+        "route-map RM-OUT-" in config and
+        "neighbor" in config and
+        "remote-as" in config
+    )
+
+    return transit
+
+  def check_alternative_paths(self, from_router, to_router, through_router):
+    """
+    Check if there are alternative paths from from_router to to_router without going through through_router.
+    """
+    try:
+        node_connections = self.parse_topology()
+        alternative_paths = self.find_alternative_paths(node_connections, from_router, to_router, set([through_router]))
+        if alternative_paths:
+            print(f"Percorsi alternativi trovati da {from_router} a {to_router}:")
+            for path in alternative_paths:
+                print(" -> ".join(path))
+        valid_paths = []
+        for path in alternative_paths:
+            intermediate_routers = path[1:-1]  # Exclude `from_router` and `to_router`
+            transit_routers = [r for r in intermediate_routers if self.is_transit_router(r)]
+
+            if set(intermediate_routers) == set(transit_routers):
+                valid_paths.append(path)
+
+        if valid_paths:
+            return {
+                "message": "Alternative transit paths found",
+                "valid_transit_paths": valid_paths
+            }
+        else:
+            return {"message": "No valid transit paths"}
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Check error"}), 400
+      
   def generate_transit_policy(self) -> None:
     print("[INFO] Generating transit policy")
     
@@ -168,4 +270,6 @@ class TransitPolicy:
       if isinstance(to, TransitTo):
         self._generate_debug_file(to.router, self._to_commands[index])
     self._generate_debug_file(self._transit_policy.through.router, self._through_commands)
+    for to in self._transit_policy.to:
+      self.check_alternative_paths(self._transit_policy.from_.router, to.router, self._transit_policy.through.router)
     print("[INFO] Transit policy generated successfully")

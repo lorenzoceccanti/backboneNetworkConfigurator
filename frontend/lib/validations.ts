@@ -47,6 +47,11 @@ export const routerConfigurationFormSchema = z.object({
     interface: z.string().nonempty("Interface name is required"),
     range: z.tuple([ipSchema, ipSchema]),
   }).optional(),
+
+  internet_iface: z.object({
+    name: z.string().nonempty("Interface name is required"),
+    ip: ipWithMaskSchema,
+  }).optional(),
 });
 
 export const hostConfigurationFormSchema = z.object({
@@ -71,3 +76,11 @@ export const peeringConfigurationFormSchema = z.object({
   fromAS: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
   toAS: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
 });
+
+
+export const localPreferenceConfigurationFormSchema = z.object({
+  asn: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
+  neighbor_ip: ipSchema,
+  local_preference: z.number().min(0, "Local Preference must be at least 0"),
+ 
+}); 

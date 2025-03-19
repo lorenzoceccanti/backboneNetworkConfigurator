@@ -3,7 +3,7 @@ import os
 import ipaddress
 import crypt
 from config import Config
-from models.network_topology import NetworkTopology
+from models.network_topology import NetworkTopology, Router, RouterInterface, Host, HostInterface, Neighbor
 from utils.helpers import Helper
 
 class ConfigureNetwork:
@@ -14,14 +14,52 @@ class ConfigureNetwork:
 
   def __init__(self, _network_topology: NetworkTopology):
     self._network_topology = _network_topology
+    router_internet = self._create_internet_network()
     self._links = self._generate_links()
+    self._generate_internet_interfaces(router_internet)
     self._generate_mngt_ip()
     self._enable_dhcp_on_hosts()
     self._generate_admin_password_hash()
     self._generate_networks_for_routers()
+    print("[DEBUG] finito")
+
+
+  def _create_internet_network(self) -> Router:
+    """
+    Create internet router and internet host.
+    :return router internet
+    """
+    print("[DEBUG] entrato")
+    router_internet = Router(name = Config.INTERNET_ROUTER_NAME, asn = Config.INTERNET_ASN, interfaces = [RouterInterface(name = Config.INTERNET_IFACE_ROUTER, ip = Config.INTERNET_ROUTER_IP, peer = {"name": Config.INTERNET_HOST_NAME, "interface": Config.INTERNET_IFACE_HOST})], neighbors = self._get_internet_neighbor()) 
+    print("[DEBUG] apposto")
+    self._network_topology.routers.append(router_internet)
+    internet_host = Host(name = Config.INTERNET_HOST_NAME, interfaces = [HostInterface(name = Config.INTERNET_IFACE_HOST, dhcp = False, ip = Config.INTERNET_HOST_IP)], gateway = Config.INTERNET_ROUTER_IP.split("/")[0])
+    print("[DEBUG] apposto")
+    self._network_topology.hosts.append(internet_host)
+
+  
+    return router_internet
+
+
+  def _get_internet_neighbor(self) -> list[Neighbor]:
+    """
+    Generate list of neighbor for internet router.
+    :return list of neighbor
+    """
+    list_neighbor: list[Neighbor] = []
+    for router in self._network_topology.routers:
+      if router.internet_iface and router.internet_iface.enabled and router != self:
+        neighbor_ip = router.internet_iface.ip.split("/")[0]
+        new_neighbor = Neighbor(ip= neighbor_ip , asn=router.asn)
+        list_neighbor.append(new_neighbor)
+    return list_neighbor
 
 
   def get_links(self) -> list[list[str, str]]:
+    """
+    Returns the links between the routers and hosts.
+    :return list of links
+    """
     return self._links
 
 
@@ -59,11 +97,47 @@ class ConfigureNetwork:
 
     return links_list
 
+  
+  def _generate_internet_interfaces(self, router_internet) -> None:
+    """
+    This function generates the interfaces for the internet router
+    based on the internet interfaces of the other routers.
+    :param router_internet: internet router on which to add the interfaces.
+    """
+    # the internet interface number starts from 2 since the first one is already created
+    # for the connection between the internet router and the internet host
+    internet_interface_name_count = 2 
+    for router in self._network_topology.routers:
+      if router.internet_iface and router.internet_iface.enabled:
+
+        # convert the IP address to an ipaddress object
+        network = ipaddress.IPv4Network(router.internet_iface.ip, strict=False)
+        host_ip = ipaddress.IPv4Address(router.internet_iface.ip.split("/")[0])
+
+        # find the next available IP address in the network
+        next_ip = host_ip + 1 if host_ip + 1 in network else None
+
+        if next_ip is None:
+          raise ValueError(f"No IP address available for {network}")
+
+        internet_ip = f"{next_ip}/{network.prefixlen}"
+
+        # create a new interfaces to connect to the internet router
+        new_interface = RouterInterface(name =f"Ethernet{str(internet_interface_name_count)}", ip = f"{internet_ip}", peer={"name":f"{router.name}", "interface":f"{router.internet_iface.name}"})
+        router_internet.interfaces.append(new_interface)
+        
+        internet_interface_name_count = internet_interface_name_count + 1
+       
+        # add internet router as neighbor for the router
+        neighbor_ip = internet_ip.split("/")[0]
+        internet_neighbor = Neighbor(ip=neighbor_ip, asn=Config.INTERNET_ASN)
+        router.neighbors.append(internet_neighbor)
+
 
   def _generate_mngt_ip(self) -> None:
     """ 
     Generates the management IP address for the routers
-    and writes it to the router object 
+    and writes it to the router object.
     :param routers: list of routers
     """
     ipv4_base = ipaddress.IPv4Address("172.20.20.2")
@@ -127,7 +201,7 @@ class ConfigureNetwork:
 
     env = Environment(loader=FileSystemLoader(Config.TEMPLATE_DIR))
     template = env.get_template("containerlab.j2")
-    config_content = template.render(project_name=self._network_topology.project_name, routers=self._network_topology.routers, hosts=self._network_topology.hosts, links=self._links)
+    config_content = template.render(project_name=self._network_topology.project_name, routers=self._network_topology.routers, hosts=self._network_topology.hosts, links=self._links, router_internet= Config.INTERNET_ROUTER_NAME, internet_iface = Config.INTERNET_IFACE_ROUTER)
 
     containerlab_file = os.path.join(Config.CONFIG_DIR, "topology.clab.yml")
     with open(containerlab_file, "w") as f:
@@ -145,7 +219,7 @@ class ConfigureNetwork:
     files = []
 
     for router in self._network_topology.routers:
-      config_content = template.render(router=router)
+      config_content = template.render(router=router, router_internet = Config.INTERNET_ROUTER_NAME)
       file_path = os.path.join(Config.CONFIG_DIR, f"{router.name}.cfg")
 
       with open(file_path, "w") as f:
@@ -153,4 +227,3 @@ class ConfigureNetwork:
 
       files.append(file_path)
     print(f"[INFO] Arista configuration files written successfully to {Config.CONFIG_DIR}")
-

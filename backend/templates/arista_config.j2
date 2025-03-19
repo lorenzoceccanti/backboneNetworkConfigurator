@@ -29,7 +29,11 @@ management api netconf
 !
 ip routing
 !
+{% if router.name == router_internet %}
+ip route 0.0.0.0/0 192.168.140.2
+{% else %}
 ip route 0.0.0.0/0 172.20.20.1
+{% endif %}
 !
 interface Management0
    ip address {{ router.mngt_ipv4 }}
@@ -45,6 +49,24 @@ interface {{ iface.name }}
   {% endif %}
 {% endfor %}
 !
+{% if router.name == router_internet %}
+ip prefix-list DEFAULT_ROUTE seq 10 permit 0.0.0.0/0
+
+{% for neighbor in router.neighbors %}
+ip as-path access-list AS{{neighbor.asn}}-IN permit ^{{neighbor.asn}}_ any
+{% endfor %}
+!
+{% for neighbor in router.neighbors %}
+route-map RM-IN-{{neighbor.asn}} permit 10
+   match as-path AS{{neighbor.asn}}-IN
+!
+{% endfor %}
+
+route-map RM-OUT-INTERNET permit 10
+   match ip address prefix-list DEFAULT_ROUTE
+!
+{% endif %}
+
 router bgp {{ router.asn }}
   bgp missing-policy direction in action deny
   bgp missing-policy direction out action deny
@@ -56,10 +78,16 @@ router bgp {{ router.asn }}
   {% for neighbor in router.neighbors %}
   {% if neighbor.asn != router.asn %}
   neighbor {{ neighbor.ip }} remote-as {{ neighbor.asn }}
+  {% if router.name == router_internet %}
+  neighbor {{ neighbor.ip }} route-map RM-IN-{{neighbor.asn}} in
+  neighbor {{ neighbor.ip }} route-map RM-OUT-INTERNET out
+  {% endif %}
   {% endif %}
   {% endfor %}
-!
-ip routing
+
+  {% if router.name == router_internet %} 
+  network 0.0.0.0/0
+  {% endif %}
 !
 router multicast
   ipv4

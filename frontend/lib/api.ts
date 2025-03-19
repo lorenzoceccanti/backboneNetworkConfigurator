@@ -1,4 +1,4 @@
-import { NetworkTopology, PeeringConfigBody, TransitConfigBody } from "@/lib/definitions";
+import { NetworkTopology, PeeringConfigBody, TransitConfigBody, LocalPreferenceConfigBody } from "@/lib/definitions";
 
 export async function sendConfiguration(config: NetworkTopology, serverIp: string) {
   const configApi = `http://${serverIp}:5000/configure`;
@@ -35,6 +35,17 @@ export async function sendTransitConfiguration(config: TransitConfigBody, server
 export async function sendPeeringConfiguration(config: PeeringConfigBody, serverIp: string){
   const peeringApi = `http://${serverIp}:5000/peering`;
   const response = await fetch(peeringApi, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+
+  if (!response.ok) throw new Error(response.statusText);
+}
+
+export async function sendLocalPreferenceConfiguration(config: LocalPreferenceConfigBody, serverIp: string){
+  const localpreferenceApi = `http://${serverIp}:5000/local-preference`;
+  const response = await fetch(localpreferenceApi, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(config),

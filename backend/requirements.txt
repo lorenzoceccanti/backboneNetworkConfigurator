@@ -4,3 +4,4 @@ jinja2
 pydantic
 jsonrpclib
 python-dotenv
+pyyaml
