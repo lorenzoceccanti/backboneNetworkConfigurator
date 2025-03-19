@@ -7,6 +7,7 @@ import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib
 import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration} from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
+import { get } from "http";
 
 export function useMainConfig() {
   const [routerConfigs, setRouterConfigs] = useState<RouterConfig[]>([]);
@@ -420,13 +421,31 @@ export function useMainConfig() {
     }
   };
 
-const findTargetrouter = (routers:RouterResponse[], ip:string): RouterResponse | undefined => {
-   const target = routers.find(router => router.neighbors.some(n => n.ip === ip));
-   if(target) return target;
-   
+  const getRoutersByName = (networkTopologyResponse: NetworkTopologyResponse, name: string): RouterResponse[] =>
+    networkTopologyResponse.routers.filter(router => router.name === name);
+
+  const findTargetRouter = (routers: RouterResponse[], neighbors: RouterResponse[]): { router: RouterResponse, matchedIp: string } | undefined => {
+    
+    const result = routers.map(router => {
+       
+        const match = router.neighbors.find(routerNeighbor => {
+            
+            return neighbors.some(neighbor => 
+                neighbor.interfaces.some(interfaceData => interfaceData.ip.split("/")[0] === routerNeighbor.ip)
+            );
+        });
+
+        if (match) {
+            const matchedIp = match.ip; 
+            return { router, matchedIp }; 
+        }
+        return undefined;
+    }).find(result => result !== undefined); 
+
+    return result; 
 };
 
-//const findASNeighbor = ()
+
 
   const buildLocalPreferenceRequestBody = (
     router: RouterResponse,
@@ -447,8 +466,11 @@ const findTargetrouter = (routers:RouterResponse[], ip:string): RouterResponse |
     const ASrouters = getRoutersByASN(networkTopologyResponse, localPreferenceConfigs.asn);
     if(!ASrouters.length) return console.error("routers not found");
 
-    //const Targetrouter = findTargetrouter(ASrouters, )
-    //if(!Targetrouter) return console.error("router not found");
+    const NeighborRouter = getRoutersByName(networkTopologyResponse, localPreferenceConfigs.neighbor_router)
+    if(NeighborRouter.length > 1 || !NeighborRouter) return console.error("routers not found");
+
+    const Targetrouter = findTargetRouter(ASrouters, NeighborRouter);
+    if(!Targetrouter) return console.error("router not found");
 
 
 
