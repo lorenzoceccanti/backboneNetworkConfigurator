@@ -16,6 +16,15 @@ export default function NetworkVisualization({
     const hostImage = '/imgs/computer.png';
 
     const routerNames = new Set(config.routers.map((router) => router.name));
+    const asnGroups: { [asn: number]: string[] } = {};
+
+    // Raggruppa i nodi per ASN
+    config.routers.forEach((router) => {
+      if (!asnGroups[router.asn]) {
+        asnGroups[router.asn] = [];
+      }
+      asnGroups[router.asn].push(router.name);
+    });
 
     const allNodes = new Set<string>();
     config.links.forEach((link) => {
@@ -30,12 +39,15 @@ export default function NetworkVisualization({
     let nodeId = 1;
     allNodes.forEach((name) => {
       const isRouter = routerNames.has(name);
+      const asn = config.routers.find((router) => router.name === name)?.asn || 0;
+    
       nodesData.push({
         id: nodeId,
-        label: name,
+        label: isRouter ? `${name}\nASN: ${asn}` : name,
         shape: 'image',
         image: isRouter ? routerImage : hostImage,
       });
+    
       nodeIds[name] = nodeId;
       nodeId++;
     });
@@ -50,6 +62,15 @@ export default function NetworkVisualization({
       };
     });
 
+    // Disegna i quadrati attorno ai gruppi di ASN
+    const groups = Object.entries(asnGroups).map(([asn, nodes]) => {
+      const nodePositions = nodes.map((node) => nodeIds[node]);
+      return {
+        label: `ASN: ${asn}`,
+        nodes: nodePositions,
+      };
+    });
+
     if (containerRef.current) {
       const nodes = new DataSet(nodesData);
       const edges = new DataSet(edgesData);
@@ -58,6 +79,19 @@ export default function NetworkVisualization({
         physics: {
           stabilization: true,
         },
+        groups: groups.reduce((acc: { [key: number]: { shape: string; label: string; color: { border: string; background: string } } }, group) => {
+          group.nodes.forEach((nodeId) => {
+            acc[nodeId] = {
+              shape: 'box',
+              label: group.label,
+              color: {
+                border: '#000',
+                background: '#f0f0f0',
+              },
+            };
+          });
+          return acc;
+        }, {}),
       };
       new Network(containerRef.current, data, options);
     }
@@ -78,4 +112,3 @@ export default function NetworkVisualization({
     </div>
   );
 };
-

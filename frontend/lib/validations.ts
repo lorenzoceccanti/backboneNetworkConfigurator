@@ -83,4 +83,9 @@ export const localPreferenceConfigurationFormSchema = z.object({
   neighbor_ip: ipSchema,
   local_preference: z.number().min(0, "Local Preference must be at least 0"),
  
-}); 
+});
+
+export const redistributeBGPConfigurationFormSchema = z.object({
+  router: z.string().nonempty("Router name is required"),
+  redistribute: z.boolean()
+});
