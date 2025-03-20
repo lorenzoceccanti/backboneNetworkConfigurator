@@ -31,8 +31,6 @@ ip routing
 !
 {% if router.name == router_internet %}
 ip route 0.0.0.0/0 192.168.114.10
-{% else %}
-ip route 0.0.0.0/0 172.20.20.1
 {% endif %}
 !
 interface Management0
