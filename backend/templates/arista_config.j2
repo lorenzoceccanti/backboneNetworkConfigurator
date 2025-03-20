@@ -30,9 +30,7 @@ management api netconf
 ip routing
 !
 {% if router.name == router_internet %}
-ip route 0.0.0.0/0 192.168.140.2
-{% else %}
-ip route 0.0.0.0/0 172.20.20.1
+ip route 0.0.0.0/0 192.168.114.10
 {% endif %}
 !
 interface Management0
@@ -48,6 +46,11 @@ interface {{ iface.name }}
   dhcp server ipv4
   {% endif %}
 {% endfor %}
+{% if router.internet_iface is not none and router.internet_iface.enabled %}
+interface {{ router.internet_iface.name }}
+  no switchport
+  ip address {{ router.internet_iface.ip }}
+{% endif %}
 !
 {% if router.name == router_internet %}
 ip prefix-list DEFAULT_ROUTE seq 10 permit 0.0.0.0/0

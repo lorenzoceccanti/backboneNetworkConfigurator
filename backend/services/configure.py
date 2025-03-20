@@ -163,7 +163,7 @@ class ConfigureNetwork:
     for host in self._network_topology.hosts:
       for interface in host.interfaces:
         if interface.dhcp:
-          host.dhcp_enabled = True
+          host.is_dhcp_enabled = True
           break
 
 
