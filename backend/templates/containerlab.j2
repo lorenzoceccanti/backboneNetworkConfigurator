@@ -31,7 +31,7 @@ topology:
         - ip addr add {{ iface.ip }} dev {{ iface.linux_name }}
         {% endif %}
         {% endfor %}
-        {% if host.dhcp_enabled == false %}
+        {% if host.is_dhcp_enabled == false %}
         - ip route add default via {{ host.gateway }}
         {% endif %}
   {% endfor %}
