@@ -136,21 +136,25 @@ class ConfigureNetwork:
     and writes it to the router object.
     :param routers: list of routers
     """
-    # Notice: I consider the address reserved for the Ri router
-    # Also: the router Ri has not to be involved in this process
-    # Hint: It's the unique router already having a mngt_ip set at this stage
     ipv4_base = ipaddress.IPv4Address("172.20.20.2")
+    max_ip = ipaddress.IPv4Address("172.20.20.254")
     reserved_ip = ipaddress.IPv4Address(Config.INTERNET_ROUTER_MNGT_IP)
-    for i, router in enumerate(self._network_topology.routers):
-      if router.mngt_ipv4 is None:
-        candidate_ip = ipv4_base + i
+
+    candidate_ip = ipv4_base
+    for router in self._network_topology.routers:
+        if router.name == Config.INTERNET_ROUTER_NAME:
+            router.mngt_ipv4 = f"{str(reserved_ip)}/24"
+            candidate_ip = reserved_ip
+            continue
+
         if candidate_ip == reserved_ip:
-          raise Exception("Reached the maximum number of managment IP addresses.")
-        router.mngt_ipv4 = f"{str(ipv4_base + i)}/24"
-      else:
-        router.mngt_ipv4 = f"{str(reserved_ip)}/24"
+            candidate_ip += 1 
 
+        if candidate_ip > max_ip:
+            raise Exception("Reached the maximum number of management IP addresses.")
 
+        router.mngt_ipv4 = f"{str(candidate_ip)}/24"
+        candidate_ip += 1
   def _enable_dhcp_on_hosts(self) -> None:
     """ 
     If any of the interfaces of the host has the dhcp enabled,
