@@ -26,6 +26,7 @@ def configure() -> Response:
       # prepare the response
       routers = []
       for router in network_topology.routers:
+
         subnetworks = []
         print(f"[DEBUG]: {links}")
         for link in links:
@@ -56,14 +57,15 @@ def configure() -> Response:
             "subnetworks": subnetworks,
           
           })
+
       response: dict = {
         "routers": routers,
         "links": links,
       }
       #### REMOVE THIS LINES BEFORE DEPLOYING ####
       # for testing purposes we respond with the generated configurations
-      #with open("our_config.json", "r") as f:
-        #response = json.load(f)
+      # with open("our_config.json", "r") as f:
+        # response = json.load(f)
       #### REMOVE THIS LINES BEFORE DEPLOYING ####
       return jsonify(response), 200
     else:

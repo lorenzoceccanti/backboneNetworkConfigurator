@@ -222,6 +222,7 @@ export default function MainConfiguration() {
               </Button>
             </div>
           )}
+<<<<<<< HEAD
           {announceConfigs && (
             <div>
               <AnnounceConfiguration

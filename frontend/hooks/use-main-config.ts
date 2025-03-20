@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody, AnnounceConfig} from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
-import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration} from "@/lib/api";
+import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration } from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
 import { get } from "http";
@@ -54,6 +54,19 @@ export function useMainConfig() {
   };
 
   const handleGenerateConfiguration = async (routerConfigs: RouterConfig[], hostConfigs: HostConfig[]) => {
+    // check if the name of the routers are unique in the list of routers configurations
+    const isNameUnique = routerConfigs.every((routerConfig, index) => {
+      return routerConfigs.findIndex((router) => router.name === routerConfig.name) === index;
+    });
+    if (!isNameUnique) {
+      toast({
+        variant: "destructive",
+        title: "Router names are not unique.",
+        description: "Please make sure that the names of the routers are unique.",
+      });
+      return;
+    }
+    
     const body: NetworkTopology = {
       project_name: form.getValues("project_name"),
       routers: routerConfigs,
@@ -66,8 +79,6 @@ export function useMainConfig() {
     }
 
     try {
-      console.log("Sending Configuration:", JSON.stringify(body, null, 2));
-      console.log("Server IP:", serverIp);
       const data = await sendConfiguration(body, serverIp);
       setNetworkTopologyResponse(data);
       toast({
@@ -143,12 +154,21 @@ export function useMainConfig() {
     return Array.from(new Set(networkTopologyResponse.routers.map(router => router.asn)));
   };
 
+<<<<<<< HEAD
   const getAvailableRouters = () => {
     if (!networkTopologyResponse) return [];
 
     // the set is used to remove duplicates
     return Array.from(new Set(networkTopologyResponse.routers));
   };
+=======
+  const getAvailableRoutersOptions = () => {
+    if (!networkTopologyResponse) return [];
+
+    // the set is used to remove duplicates
+    return Array.from(new Set(networkTopologyResponse.routers.map(router => router.name)));
+  }
+>>>>>>> main
 
   const handleTransitConfigsChange = (newConfig: TransitConfig) => {
     setTransitConfigs(newConfig);
@@ -158,7 +178,6 @@ export function useMainConfig() {
     setPeeringConfigs(newConfig);
   };
 
-  
   const handleLocalPreferenceConfigsChange = (newConfig: LocalPreferenceConfig) => {
     setlocalPreferenceConfigs(newConfig);
   };
@@ -260,7 +279,6 @@ export function useMainConfig() {
       };
     }).filter((item): item is { asn: number; router: string; router_ip: string; mngt_ip: string } => item !== null);
   };
-
 
   const buildRequestBody = (
     fromRouter: RouterResponse,
@@ -428,6 +446,7 @@ export function useMainConfig() {
     }
   };
 
+<<<<<<< HEAD
   const getRoutersByName = (networkTopologyResponse: NetworkTopologyResponse, name: string): RouterResponse[] =>
     networkTopologyResponse.routers.filter(router => router.name === name);
 
@@ -451,6 +470,7 @@ export function useMainConfig() {
 
     return result; 
 };
+
 
 
 
@@ -533,6 +553,6 @@ export function useMainConfig() {
     getAvailableRouters,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
-    handleLocalPreferenceConfigsSend
+    handleLocalPreferenceConfigsSend,
   };
 }

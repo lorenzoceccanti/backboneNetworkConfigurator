@@ -197,7 +197,6 @@ class PeeringNetwork:
     :return: None
     """
     print(f"[INFO] Generating peering policy")
-    print(f"[DEBUG] authorization -> {self._authorization}")
     if self._authorization["father"] == True:
       Helper.send_arista_commands(self._peers.mngt_ip, self._father_commands)
     else:

@@ -35,6 +35,7 @@ export type RouterConfig = {
   dhcp?: DHCPConfig;
   mngt_ipv4?: string;
   internet_iface?: InternetInterface;
+  redistribute_bgp: boolean;
 };
 
 export type HostInterface = {
