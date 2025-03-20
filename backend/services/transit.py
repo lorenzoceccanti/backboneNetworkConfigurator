@@ -149,7 +149,6 @@ class TransitPolicy:
     
     if isinstance(self._transit_policy.to, str):
        if self._transit_policy.to == "Internet":
-          # NO, NO! qua ci va messo il neighbor_ip
           neighbor_ip = self._get_neighbor_address(through_asn, Config.INTERNET_ASN)
           if neighbor_ip != "":
             self._append_through_commands(Config.INTERNET_ASN, neighbor_ip)
