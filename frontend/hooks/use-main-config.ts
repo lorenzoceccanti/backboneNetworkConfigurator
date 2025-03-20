@@ -2,7 +2,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody} from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody, AnnounceConfig} from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
 import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration} from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
@@ -15,6 +15,7 @@ export function useMainConfig() {
   const [transitConfigs, setTransitConfigs] = useState<TransitConfig>();
   const [peeringConfigs, setPeeringConfigs] = useState<PeeringConfig>();
   const [localPreferenceConfigs, setlocalPreferenceConfigs] = useState<LocalPreferenceConfig>();
+  const [announceConfigs, setAnnounceConfigs] = useState<AnnounceConfig>();
   const [networkTopologyResponse, setNetworkTopologyResponse] = useState<NetworkTopologyResponse | null>(null);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
   const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
@@ -75,6 +76,11 @@ export function useMainConfig() {
         description: "The configuration has been generated successfully.",
       })
       setIsConfigGenerated(true);
+      setAnnounceConfigs({
+        router: "",
+        network_ip: "",
+        to: [0],
+      });
     } catch (error) {
       console.error("Error:", error);
 
@@ -155,6 +161,10 @@ export function useMainConfig() {
   
   const handleLocalPreferenceConfigsChange = (newConfig: LocalPreferenceConfig) => {
     setlocalPreferenceConfigs(newConfig);
+  };
+
+  const handleAnnounceConfigsChange = (newConfig: AnnounceConfig) => {
+    setAnnounceConfigs(newConfig);
   };
 
   const getRoutersByASN = (networkTopologyResponse: NetworkTopologyResponse, asn: number): RouterResponse[] =>
@@ -509,6 +519,7 @@ export function useMainConfig() {
     transitConfigs,
     peeringConfigs,
     localPreferenceConfigs,
+    announceConfigs,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
@@ -517,6 +528,7 @@ export function useMainConfig() {
     handleTransitConfigsChange,
     handlePeeringConfigsChange,
     handleLocalPreferenceConfigsChange,
+    handleAnnounceConfigsChange,
     getAvailableASOptions,
     getAvailableRouters,
     handleTransitConfigsSend,

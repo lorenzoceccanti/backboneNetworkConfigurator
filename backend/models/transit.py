@@ -73,7 +73,6 @@ class Transit:
   from_: TransitFrom
   through: TransitThrough
   to: List[TransitTo | str] # TODO da testare il caso Internet
-  links: List[str, str]
 
   def __post_init__(self):
     self.from_ = TransitFrom(**self.from_) if isinstance(self.from_, dict) else self.from_

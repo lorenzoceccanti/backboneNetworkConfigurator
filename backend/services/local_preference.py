@@ -18,11 +18,11 @@ class LocalPreferenceNetwork:
     self._commands = [
       "enable",
       "configure",
-      f"route-map RM-IN-{self.local_preference.neighbor_asn} permit 10",
+      f"route-map RM-IN-{self._local_preference.neighbor_asn} permit 10",
       f"   set local-preference {self._local_preference.local_preference}",
       "exit",
       f"router bgp {self._local_preference.asn}",
-      f"   neighbor {self._local_preference.neighbor_ip} route-map RM-IN{self.local_preference.neighbor_asn} in",
+      f"   neighbor {self._local_preference.neighbor_ip} route-map RM-IN{self._local_preference.neighbor_asn} in",
       "exit"
     ]
 

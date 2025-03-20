@@ -104,7 +104,6 @@ export type TransitConfigBody = {
     router_ip: string;
     mngt_ip: string;
   },
-  //links:[string, string][];
 }
 
 export type PeeringConfigBody = {
@@ -142,13 +141,13 @@ export type RouterResponse = {
   asn: number;
   interfaces: RouterInterfaceResponse[];
   neighbors: RouterNeighborResponse[];
+  subnetworks: string[];
   mngt_ipv4?: string;
 }
 
 export type NetworkTopologyResponse = {
   links: [string, string][];
   routers: RouterResponse[];
-  internet_asn: number;
 }
 
 export type NodeData = {

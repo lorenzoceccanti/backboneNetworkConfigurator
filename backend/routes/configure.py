@@ -3,6 +3,7 @@ from models.network_topology import NetworkTopology
 from services.configure import ConfigureNetwork
 from config import Config
 import json
+import ipaddress
 
 configure_bp = Blueprint("configure", __name__)
 
@@ -25,6 +26,26 @@ def configure() -> Response:
       # prepare the response
       routers = []
       for router in network_topology.routers:
+        subnetworks = []
+        print(f"[DEBUG]: {links}")
+        for link in links:
+          endpoint1, endpoint2 = link
+          part1 = endpoint1.split(":")
+          part2 = endpoint2.split(":")
+          if (router.name == part1[0] or router.name == part2[0]):
+            for host in network_topology.hosts:
+              if (host.name == part1[0] or host.name == part2[0]):
+                router_iface = part1[1] if router.name == part1[0] else part2[1]
+
+
+                for interface in router.interfaces:
+                  if(interface.linux_name == router_iface):
+
+                    subnetworks.append(interface.network)
+
+
+          
+
         if router.name != Config.INTERNET_ROUTER_NAME:
           routers.append({
             "name": router.name,
@@ -32,6 +53,7 @@ def configure() -> Response:
             "mngt_ipv4": router.mngt_ipv4,
             "interfaces": [{"name": interface.linux_name, "ip": interface.ip} for interface in router.interfaces],
             "neighbors": [{"asn": neighbor.asn, "ip": neighbor.ip} for neighbor in router.neighbors],
+            "subnetworks": subnetworks,
           
           })
       response: dict = {

@@ -158,21 +158,21 @@ class TransitPolicy:
 
   def parse_topology(self):
     
-    links = self._transit_policy.links
+    #links = self._transit_policy.links
 
     # Create a map of connections
     node_connections = {}
 
-    for link in links:
-        endpoint1, endpoint2 = link["endpoints"]
+    #for link in links:
+        #endpoint1, endpoint2 = link["endpoints"]
 
         # Extract device's name (es. "r1" from "r1:eth1")
-        node1 = endpoint1.split(":")[0]
-        node2 = endpoint2.split(":")[0]
+        #node1 = endpoint1.split(":")[0]
+        #node2 = endpoint2.split(":")[0]
 
         # Add the connection between the nodes into the map
-        node_connections.setdefault(node1, []).append(node2)
-        node_connections.setdefault(node2, []).append(node1)
+        #node_connections.setdefault(node1, []).append(node2)
+        #node_connections.setdefault(node2, []).append(node1)
     return node_connections
     
   def find_alternative_paths(self, node_connections, current_node, target_node, visited):
@@ -233,12 +233,10 @@ class TransitPolicy:
                 valid_paths.append(path)
 
         if valid_paths:
-            return jsonify({
-                "message": "Alternative transit paths found",
-                "valid_transit_paths": valid_paths
-            }), 202
+            return jsonify({"message": "Alternative transit paths found"}), 202
+                
         else:
-            return return jsonify({"message": "No valid transit paths"}), 500
+            return jsonify({"message": "No valid transit paths"}), 500
     except Exception as e:
         print(e)
         return jsonify({"error": "Check error"}), 400

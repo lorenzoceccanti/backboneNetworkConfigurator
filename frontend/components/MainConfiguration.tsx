@@ -25,6 +25,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import LocalPreferenceConfiguration from "./LocalPreferenceConfiguration";
+import AnnounceConfiguration from "./AnnounceConfiguration";
 
 export default function MainConfiguration() {
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
@@ -38,6 +39,7 @@ export default function MainConfiguration() {
     transitConfigs,
     peeringConfigs,
     localPreferenceConfigs,
+    announceConfigs,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
@@ -46,6 +48,7 @@ export default function MainConfiguration() {
     handleTransitConfigsChange,
     handlePeeringConfigsChange,
     handleLocalPreferenceConfigsChange,
+    handleAnnounceConfigsChange,
     getAvailableASOptions,
     getAvailableRouters,
     handleTransitConfigsSend,
@@ -212,6 +215,20 @@ export default function MainConfiguration() {
                 availableASOptions={getAvailableASOptions()}
                 availableRouters={getAvailableRouters()}
                 onChange={handleLocalPreferenceConfigsChange}
+              />
+              <br />
+              <Button className="w-fit" onClick={handleLocalPreferenceConfigsSend}>
+                Send Local Preference Configuration
+              </Button>
+            </div>
+          )}
+          {announceConfigs && (
+            <div>
+              <AnnounceConfiguration
+                initialValues={announceConfigs}
+                availableASOptions={getAvailableASOptions()}
+                availableRouterOptions={getAvailableRouters()}
+                onChange={handleAnnounceConfigsChange}
               />
               <br />
               <Button className="w-fit" onClick={handleLocalPreferenceConfigsSend}>
