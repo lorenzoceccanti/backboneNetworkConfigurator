@@ -65,6 +65,19 @@ export function useMainConfig() {
       return;
     }
     
+    // check if the ip's of the internet interfaces are unique in the list of routers configurations
+    const isInternetIpUnique = routerConfigs.every((routerConfig, index) => {
+      return routerConfigs.findIndex((router) => router.internet_iface?.ip === routerConfig.internet_iface?.ip) === index;
+    });
+    if (!isInternetIpUnique) {
+      toast({
+        variant: "destructive",
+        title: "Internet IPs are not unique.",
+        description: "Please make sure that the IPs of the internet interfaces are unique.",
+      });
+      return;
+    }
+    
     const body: NetworkTopology = {
       project_name: form.getValues("project_name"),
       routers: routerConfigs,
