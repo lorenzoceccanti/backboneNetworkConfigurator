@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/accordion";
 import LocalPreferenceConfiguration from "./LocalPreferenceConfiguration";
 import AnnounceConfiguration from "./AnnounceConfiguration";
+import StopAnnounceConfiguration from "./StopAnnounceConfiguration";
 
 export default function MainConfiguration() {
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
@@ -40,6 +41,8 @@ export default function MainConfiguration() {
     peeringConfigs,
     localPreferenceConfigs,
     announceConfigs,
+    stopAnnounceConfigs,
+    announcedNetworks,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
@@ -49,12 +52,14 @@ export default function MainConfiguration() {
     handlePeeringConfigsChange,
     handleLocalPreferenceConfigsChange,
     handleAnnounceConfigsChange,
+    handleStopAnnounceConfigsChange,
     getAvailableASOptions,
     getAvailableRouters,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
     handleLocalPreferenceConfigsSend,
-    handleAnnounceConfigSend
+    handleAnnounceConfigSend,
+    handleStopAnnounceConfigSend
   } = useMainConfig();
   
   return (
@@ -235,6 +240,21 @@ export default function MainConfiguration() {
               <Button className="w-fit" onClick={handleAnnounceConfigSend}>
                 Send Announce Configuration
               </Button>
+            </div>
+          )}
+          {stopAnnounceConfigs && (
+            <div>
+              <StopAnnounceConfiguration
+                initialValues={stopAnnounceConfigs}
+                announcedNetworks={announcedNetworks}
+                availableRouterOptions={getAvailableRouters()}
+                onChange={handleStopAnnounceConfigsChange}
+              />
+              <br />
+              <Button className="w-fit" onClick={handleStopAnnounceConfigSend}>
+                Send Stop Announce Configuration
+              </Button>
+             
             </div>
           )}
         </div>

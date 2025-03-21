@@ -71,7 +71,7 @@ export type PeeringConfig = {
 
 
 export type LocalPreferenceConfig = {
-  asn: number;
+  asn: number; 
   neighbor_router: string;
   local_preference: number;
 }
@@ -81,6 +81,11 @@ export type AnnounceConfig = {
   network_ip: string;
   to: number[];
 
+}
+
+export type StopAnnounceConfig = {
+  router: string;
+  network_ip: string;
 }
 
 export type TransitConfigBody = {
@@ -137,6 +142,13 @@ export type AnnounceConfigBody = {
   mngt_ip: string;
   network_to_announce: string;
   to: AnnounceToConfigBody[]
+}
+
+export type StopAnnounceConfigBody = {
+  router: string;
+  asn: number;
+  mngt_ip: string;
+  network_to_stop_announce: string;
 }
 
 

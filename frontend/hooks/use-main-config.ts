@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, AnnounceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody, AnnounceConfigBody, AnnounceToConfigBody, RouterNeighborResponse} from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, AnnounceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody, AnnounceConfigBody, AnnounceToConfigBody, StopAnnounceConfig, StopAnnounceConfigBody} from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
-import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration, sendAnnounceConfiguration} from "@/lib/api";
+import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration, sendAnnounceConfiguration, sendStopAnnounceConfiguration} from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
 import { get } from "http";
@@ -17,6 +17,9 @@ export function useMainConfig() {
   const [peeringConfigs, setPeeringConfigs] = useState<PeeringConfig>();
   const [localPreferenceConfigs, setlocalPreferenceConfigs] = useState<LocalPreferenceConfig>();
   const [announceConfigs, setAnnounceConfigs] = useState<AnnounceConfig>();
+  const [stopAnnounceConfigs, setStopAnnounceConfigs] = useState<StopAnnounceConfig>();
+  {/*Record to store routers and their announced network*/}
+  const [announcedNetworks, setAnnouncedNetworks] = useState<Record<string, string[]>>({});
   const [networkTopologyResponse, setNetworkTopologyResponse] = useState<NetworkTopologyResponse | null>(null);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
   const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
@@ -88,6 +91,15 @@ export function useMainConfig() {
         description: "The configuration has been generated successfully.",
       })
       setIsConfigGenerated(true);
+      setAnnounceConfigs({
+        router: "",
+        network_ip: "",
+        to: [0],
+      });
+      setStopAnnounceConfigs({
+        router: "",
+        network_ip: ""
+      })
     } catch (error) {
       console.error("Error:", error);
 
@@ -134,6 +146,10 @@ export function useMainConfig() {
         network_ip: "",
         to: [0],
       });
+      setStopAnnounceConfigs({
+        router: "",
+        network_ip: ""
+      });
     } catch (error) {
       console.error("Error:", error);
       toast({
@@ -177,6 +193,12 @@ export function useMainConfig() {
   const handleAnnounceConfigsChange = (newConfig: AnnounceConfig) => {
     setAnnounceConfigs(newConfig);
   };
+
+  const handleStopAnnounceConfigsChange = (newConfig: StopAnnounceConfig) => {
+    setStopAnnounceConfigs(newConfig);
+  };
+
+
 
   const getRoutersByASN = (networkTopologyResponse: NetworkTopologyResponse, asn: number): RouterResponse[] =>
     networkTopologyResponse.routers.filter(router => router.asn === asn);
@@ -554,6 +576,10 @@ export function useMainConfig() {
      return to_list;
   }
 
+  useEffect(() => {
+    console.log("Announced Networks Updated:", announcedNetworks);
+  }, [announcedNetworks]);
+
   const handleAnnounceConfigSend = async() =>{
     if(!networkTopologyResponse || !announceConfigs) return;
 
@@ -563,15 +589,76 @@ export function useMainConfig() {
     const to_list = getTolist(router[0])
 
     const body : AnnounceConfigBody = buildAnnounceRequestBody(router[0], announceConfigs.network_ip, to_list);
-    console.log(body);
     if (!serverIp) {
       console.error("Server IP is not set.");
       return;
     }
 
     try {
-      console.log(JSON.stringify(body));
       await sendAnnounceConfiguration(body, serverIp);
+      setAnnouncedNetworks((prev = {}) => ({
+        ...prev,
+        [router[0].name]: [
+          ...(prev[router[0].name] || []),
+          ...(prev[router[0].name]?.includes(announceConfigs.network_ip) ? [] : [announceConfigs.network_ip])
+        ]
+      }));
+      
+      toast({
+        variant: "default",
+        title: "Announce configuration generated!",
+        description: "The configuration has been generated successfully.",
+      })
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request: " + error,
+      })
+    }
+  };
+
+  const buildStopAnnounceRequestBody = (
+    router: RouterResponse,
+    network: string,
+  ): StopAnnounceConfigBody => {
+    return {
+      router: router.name,
+      asn: router.asn,
+      mngt_ip: router.mngt_ipv4?.split("/")[0] ?? "",
+      network_to_stop_announce: network,
+      
+    };
+  };
+  const handleStopAnnounceConfigSend = async() =>{
+    if(!networkTopologyResponse || !stopAnnounceConfigs) return;
+
+    const router = getRoutersByName(networkTopologyResponse, stopAnnounceConfigs.router);
+    if(router.length > 1 || !router.length) return console.error("routers not found");
+
+    const body : StopAnnounceConfigBody = buildStopAnnounceRequestBody(router[0], stopAnnounceConfigs.network_ip);
+    if (!serverIp) {
+      console.error("Server IP is not set.");
+      return;
+    }
+
+    try {
+      await sendStopAnnounceConfiguration(body, serverIp);
+      setAnnouncedNetworks((prev = {}) => {
+        const routerName = stopAnnounceConfigs.router;
+      
+        if (prev[routerName]) {
+          return {
+            ...prev,
+            [routerName]: prev[routerName].filter(
+              (network) => network !== stopAnnounceConfigs.network_ip
+            ),
+          };
+        }
+        return prev;
+      });
+      
       toast({
         variant: "default",
         title: "Announce configuration generated!",
@@ -598,6 +685,8 @@ export function useMainConfig() {
     peeringConfigs,
     localPreferenceConfigs,
     announceConfigs,
+    stopAnnounceConfigs,
+    announcedNetworks,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
@@ -607,11 +696,13 @@ export function useMainConfig() {
     handlePeeringConfigsChange,
     handleLocalPreferenceConfigsChange,
     handleAnnounceConfigsChange,
+    handleStopAnnounceConfigsChange,
     getAvailableASOptions,
     getAvailableRouters,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
     handleLocalPreferenceConfigsSend,
-    handleAnnounceConfigSend
+    handleAnnounceConfigSend, 
+    handleStopAnnounceConfigSend  
   };
 }
