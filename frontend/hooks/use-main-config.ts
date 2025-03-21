@@ -129,6 +129,11 @@ export function useMainConfig() {
         neighbor_router: "",
         local_preference: 0,
       });
+      setAnnounceConfigs({
+        router: "",
+        network_ip: "",
+        to: [0],
+      });
     } catch (error) {
       console.error("Error:", error);
       toast({
