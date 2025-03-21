@@ -24,40 +24,23 @@ def configure() -> Response:
       links: list[list[str, str]] = configure_network.get_links()
       
       # prepare the response
-      routers = []
-      for router in network_topology.routers:
 
-        subnetworks = []
-        print(f"[DEBUG]: {links}")
-        for link in links:
-          endpoint1, endpoint2 = link
-          part1 = endpoint1.split(":")
-          part2 = endpoint2.split(":")
-          if (router.name == part1[0] or router.name == part2[0]):
-            for host in network_topology.hosts:
-              if (host.name == part1[0] or host.name == part2[0]):
-                router_iface = part1[1] if router.name == part1[0] else part2[1]
-
-
-                for interface in router.interfaces:
-                  if(interface.linux_name == router_iface):
-
-                    subnetworks.append(interface.network)
-
-
+      #routers = []
+      #for router in self._network_topology.routers:
           
 
-        if router.name != Config.INTERNET_ROUTER_NAME:
-          routers.append({
-            "name": router.name,
-            "asn": router.asn,
-            "mngt_ipv4": router.mngt_ipv4,
-            "interfaces": [{"name": interface.linux_name, "ip": interface.ip} for interface in router.interfaces],
-            "neighbors": [{"asn": neighbor.asn, "ip": neighbor.ip} for neighbor in router.neighbors],
-            "subnetworks": subnetworks,
+        #if router.name != Config.INTERNET_ROUTER_NAME:
+          #routers.append({
+            #"name": router.name,
+            #"asn": router.asn,
+            #"mngt_ipv4": router.mngt_ipv4,
+            #"redistribute_bgp": router.redistribute_bgp,
+            #"interfaces": [{"name": interface.linux_name, "ip": interface.ip} for interface in router.interfaces],
+            #"neighbors": [{"asn": neighbor.asn, "ip": neighbor.ip} for neighbor in router.neighbors],
+            #"subnetworks": subnetworks,
           
-          })
-
+          #})
+      routers = generate_response(network_topology, links)
       response: dict = {
         "routers": routers,
         "links": links,
@@ -74,3 +57,49 @@ def configure() -> Response:
     return jsonify({"JSON format error": str(e)}), 400
   except Exception as e:
     return jsonify({"error": str(e)}), 500
+
+def generate_response(network_topology, links) -> dict:
+      
+    #subnetwork directly connect
+    routers = []
+
+    for router in network_topology.routers:
+
+      subnetworks = []
+      for link in links:
+        endpoint1, endpoint2 = link
+        part1 = endpoint1.split(":")
+        part2 = endpoint2.split(":")
+        if (router.name == part1[0] or router.name == part2[0]):
+          for host in network_topology.hosts:
+            if (host.name == part1[0] or host.name == part2[0]):
+              router_iface = part1[1] if router.name == part1[0] else part2[1]
+
+              for interface in router.interfaces:
+                if(interface.linux_name == router_iface):
+
+                  subnetworks.append(interface.network)
+
+      if router.name != Config.INTERNET_ROUTER_NAME:
+        routers.append({
+          "name": router.name,
+          "asn": router.asn,
+          "mngt_ipv4": router.mngt_ipv4,
+          "redistribute_bgp": router.redistribute_bgp,
+          "interfaces": [{"name": interface.linux_name, "ip": interface.ip} for interface in router.interfaces],
+          "neighbors": [{"asn": neighbor.asn, "ip": neighbor.ip} for neighbor in router.neighbors],
+          "subnetworks": subnetworks,
+          
+        })
+    
+
+    # if router has redistribute_bgp active add subnetworks in same AS
+    for router in routers:
+      if(router["redistribute_bgp"]):
+        for r in routers:
+          if(router["asn"] == r["asn"] and r != router):
+            for subnetwork in r["subnetworks"]:
+              if subnetwork not in router["subnetworks"]:
+                router["subnetworks"].append(subnetwork)
+    
+    return routers

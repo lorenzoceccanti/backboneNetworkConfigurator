@@ -2,9 +2,9 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody, AnnounceConfig} from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, AnnounceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody, AnnounceConfigBody, AnnounceToConfigBody} from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
-import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration } from "@/lib/api";
+import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration, sendAnnounceConfiguration} from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
 import { get } from "http";
@@ -81,6 +81,7 @@ export function useMainConfig() {
     try {
       const data = await sendConfiguration(body, serverIp);
       setNetworkTopologyResponse(data);
+      console.log(data)
       toast({
         variant: "default",
         title: "Configuration generated!",
@@ -154,21 +155,12 @@ export function useMainConfig() {
     return Array.from(new Set(networkTopologyResponse.routers.map(router => router.asn)));
   };
 
-<<<<<<< HEAD
   const getAvailableRouters = () => {
     if (!networkTopologyResponse) return [];
 
     // the set is used to remove duplicates
     return Array.from(new Set(networkTopologyResponse.routers));
   };
-=======
-  const getAvailableRoutersOptions = () => {
-    if (!networkTopologyResponse) return [];
-
-    // the set is used to remove duplicates
-    return Array.from(new Set(networkTopologyResponse.routers.map(router => router.name)));
-  }
->>>>>>> main
 
   const handleTransitConfigsChange = (newConfig: TransitConfig) => {
     setTransitConfigs(newConfig);
@@ -286,7 +278,7 @@ export function useMainConfig() {
     throughRouterIps: { asn: number; my_router_ip: string }[],
     to: { asn: number; router: string; router_ip: string; mngt_ip: string }[],
     fromInterfaceConnectedToThrough: string | null,
-    //links: [string, string][]
+
   ): TransitConfigBody => {
     const from_ip = fromRouter.interfaces.find(int => int.name === fromInterfaceConnectedToThrough)?.ip.split("/")[0] ?? "";
     const from_mngt = fromRouter.mngt_ipv4?.split("/")[0] ?? "";
@@ -323,7 +315,7 @@ export function useMainConfig() {
         router_ip: cleanedThroughRouterIps,
       },
       to: toObj,
-      //links: links
+     
     };
   };
 
@@ -357,7 +349,7 @@ export function useMainConfig() {
 
     const to = buildToArray(throughRouter, throughToLinks, toRouters);
 
-    const body: TransitConfigBody = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough /*, networkTopologyResponse.links*/);
+    const body: TransitConfigBody = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough);
     console.log(body);
     if (!serverIp) {
       console.error("Server IP is not set.");
@@ -446,7 +438,6 @@ export function useMainConfig() {
     }
   };
 
-<<<<<<< HEAD
   const getRoutersByName = (networkTopologyResponse: NetworkTopologyResponse, name: string): RouterResponse[] =>
     networkTopologyResponse.routers.filter(router => router.name === name);
 
@@ -529,6 +520,63 @@ export function useMainConfig() {
 
   };
 
+  const buildAnnounceRequestBody = (
+    router: RouterResponse,
+    network: string,
+    to_list: AnnounceToConfigBody[]
+  ): AnnounceConfigBody => {
+    return {
+      router: router.name,
+      asn: router.asn,
+      mngt_ip: router.mngt_ipv4?.split("/")[0] ?? "",
+      network_to_announce: network,
+      to: to_list
+    };
+  };
+
+  const handleAnnounceConfigSend = async() =>{
+    if(!networkTopologyResponse || !announceConfigs) return;
+
+    const router = getRoutersByName(networkTopologyResponse, announceConfigs.router);
+    if(router.length > 1 || !router.length) return console.error("routers not found");
+
+    announceConfigs.to.forEach((val) => router[0].neighbors.filter((neig) => neig.asn === val))
+
+    const to_list: AnnounceToConfigBody[] = []
+    router[0].neighbors.forEach((val) => {
+       const obj: AnnounceToConfigBody = {asn: 0, his_router_ip: ""};
+       obj.asn = val.asn;
+       obj.his_router_ip = val.ip;
+       to_list.push(obj);
+       
+     }
+    )
+
+    const body : AnnounceConfigBody = buildAnnounceRequestBody(router[0], announceConfigs.network_ip, to_list);
+    console.log(body);
+    if (!serverIp) {
+      console.error("Server IP is not set.");
+      return;
+    }
+
+    try {
+      console.log(JSON.stringify(body));
+      await sendAnnounceConfiguration(body, serverIp);
+      toast({
+        variant: "default",
+        title: "Announce configuration generated!",
+        description: "The configuration has been generated successfully.",
+      })
+    } catch (error) {
+      console.error("Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem with your request: " + error,
+      })
+    }
+  };
+
   return {
     form, 
     onSubmit,
@@ -554,5 +602,6 @@ export function useMainConfig() {
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
     handleLocalPreferenceConfigsSend,
+    handleAnnounceConfigSend
   };
 }

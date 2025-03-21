@@ -4,6 +4,9 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { announceConfigurationFormSchema } from "@/lib/validations";
+import { useToast } from "@/hooks/use-toast";
+
+
 
 export function useAnnounceConfig(
   initialValues: AnnounceConfig,
@@ -11,6 +14,7 @@ export function useAnnounceConfig(
   onChange: (config: AnnounceConfig) => void
 ) {
   const [config, setConfig] = useState<AnnounceConfig>(initialValues);
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof announceConfigurationFormSchema>>({
     resolver: zodResolver(announceConfigurationFormSchema),
@@ -39,14 +43,24 @@ export function useAnnounceConfig(
 
   }
 
-  // NOTA aggiungere poi il controllo sulla as e sul redistribute bgp
+  const getRoutersByName = (
+    name: string,
+    routers: RouterResponse[]
+  ): RouterResponse[] => {
+    const result = routers.filter(router => router.name === name);
+    return result
+  }
+
+  
   const getAvailableNetworksOptions = (
     config: AnnounceConfig,
     availableRouter: RouterResponse[],
-  ) => {
+  ): string[] => {
+    
+    
     const options = availableRouter.filter((opt) => opt.name === config.router);
     if(options.length > 1 || !options.length){
-       return[]
+       return[];
     }
 
     return options[0].subnetworks || []
@@ -64,6 +78,11 @@ export function useAnnounceConfig(
   
       if (newOption == undefined) {
         console.error("No available AS numbers to add");
+        toast({
+          variant: "destructive",
+          title: "No available AS",
+          description: "There are  not available AS numbers to add.",
+        })
         return;
       }
       handleChange("to", [...config.to, newOption]);
@@ -90,6 +109,14 @@ export function useAnnounceConfig(
       const used: number[] = [];
       const as = getASNbyRouter(config.router, routers)
       used.push(as)
+
+      const router = getRoutersByName(config.router, routers)
+      if(router.length > 1 || !router.length){
+        console.error("router not found");
+        return []
+      }
+      const neighbor_asn: number[] = []
+      router[0].neighbors.forEach((val) => {neighbor_asn.push(val.asn)})
     
       config.to.forEach((val, i) => {
         if ( i !== toIndex ) {
@@ -97,7 +124,7 @@ export function useAnnounceConfig(
         }
       });
 
-      const filtered = availableAS.filter((opt) => !used.includes(opt));
+      const filtered = availableAS.filter((opt) => !used.includes(opt) && neighbor_asn.includes(opt));
     
       return filtered;
     };

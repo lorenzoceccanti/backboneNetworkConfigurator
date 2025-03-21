@@ -126,6 +126,19 @@ export type LocalPreferenceConfigBody = {
   local_preference: number;
 }
 
+export type AnnounceToConfigBody = {
+  asn: number;
+  his_router_ip: string;
+}
+
+export type AnnounceConfigBody = {
+  router: string;
+  asn: number;
+  mngt_ip: string;
+  network_to_announce: string;
+  to: AnnounceToConfigBody[]
+}
+
 
 export type RouterInterfaceResponse = {
   ip: string,
@@ -143,6 +156,7 @@ export type RouterResponse = {
   interfaces: RouterInterfaceResponse[];
   neighbors: RouterNeighborResponse[];
   subnetworks: string[];
+  redistribute_bgp: boolean;
   mngt_ipv4?: string;
 }
 

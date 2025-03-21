@@ -54,6 +54,7 @@ export default function MainConfiguration() {
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
     handleLocalPreferenceConfigsSend,
+    handleAnnounceConfigSend
   } = useMainConfig();
   
   return (
@@ -222,7 +223,6 @@ export default function MainConfiguration() {
               </Button>
             </div>
           )}
-<<<<<<< HEAD
           {announceConfigs && (
             <div>
               <AnnounceConfiguration
@@ -232,8 +232,8 @@ export default function MainConfiguration() {
                 onChange={handleAnnounceConfigsChange}
               />
               <br />
-              <Button className="w-fit" onClick={handleLocalPreferenceConfigsSend}>
-                Send Local Preference Configuration
+              <Button className="w-fit" onClick={handleAnnounceConfigSend}>
+                Send Announce Configuration
               </Button>
             </div>
           )}
