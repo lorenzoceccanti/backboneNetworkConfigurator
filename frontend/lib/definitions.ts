@@ -1,5 +1,3 @@
-export const ASN_INTERNET = 54000;
-
 export type DHCPConfig = {
   enabled: boolean;
   subnet: string;
@@ -73,11 +71,22 @@ export type PeeringConfig = {
 
 
 export type LocalPreferenceConfig = {
-  asn: number;
-  neighbor_ip: string;
+  asn: number; 
+  neighbor_router: string;
   local_preference: number;
 }
 
+export type AnnounceConfig = {
+  router: string;
+  network_ip: string;
+  to: number[];
+
+}
+
+export type StopAnnounceConfig = {
+  router: string;
+  network_ip: string;
+}
 
 export type TransitConfigBody = {
   from_: {
@@ -100,7 +109,7 @@ export type TransitConfigBody = {
     router: string;
     router_ip: string;
     mngt_ip: string;
-  }
+  },
 }
 
 export type PeeringConfigBody = {
@@ -118,7 +127,28 @@ export type LocalPreferenceConfigBody = {
   asn: number;
   mngt_ip: string;
   neighbor_ip: string;
+  neighbor_asn: number;
   local_preference: number;
+}
+
+export type AnnounceToConfigBody = {
+  asn: number;
+  his_router_ip: string;
+}
+
+export type AnnounceConfigBody = {
+  router: string;
+  asn: number;
+  mngt_ip: string;
+  network_to_announce: string;
+  to: AnnounceToConfigBody[]
+}
+
+export type StopAnnounceConfigBody = {
+  router: string;
+  asn: number;
+  mngt_ip: string;
+  network_to_stop_announce: string;
 }
 
 
@@ -137,6 +167,8 @@ export type RouterResponse = {
   asn: number;
   interfaces: RouterInterfaceResponse[];
   neighbors: RouterNeighborResponse[];
+  subnetworks: string[];
+  redistribute_bgp: boolean;
   mngt_ipv4?: string;
 }
 

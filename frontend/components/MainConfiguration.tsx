@@ -25,6 +25,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import LocalPreferenceConfiguration from "./LocalPreferenceConfiguration";
+import AnnounceConfiguration from "./AnnounceConfiguration";
+import StopAnnounceConfiguration from "./StopAnnounceConfiguration";
 
 export default function MainConfiguration() {
   const [expandedItem, setExpandedItem] = useState<string | undefined>(undefined);
@@ -38,6 +40,9 @@ export default function MainConfiguration() {
     transitConfigs,
     peeringConfigs,
     localPreferenceConfigs,
+    announceConfigs,
+    stopAnnounceConfigs,
+    announcedNetworks,
     isConfigGenerated,
     isDeploying,
     getNetworkTopologyResponse,
@@ -46,10 +51,15 @@ export default function MainConfiguration() {
     handleTransitConfigsChange,
     handlePeeringConfigsChange,
     handleLocalPreferenceConfigsChange,
+    handleAnnounceConfigsChange,
+    handleStopAnnounceConfigsChange,
     getAvailableASOptions,
+    getAvailableRouters,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
     handleLocalPreferenceConfigsSend,
+    handleAnnounceConfigSend,
+    handleStopAnnounceConfigSend
   } = useMainConfig();
   
   return (
@@ -209,12 +219,42 @@ export default function MainConfiguration() {
               <LocalPreferenceConfiguration
                 initialValues={localPreferenceConfigs}
                 availableASOptions={getAvailableASOptions()}
+                availableRouters={getAvailableRouters()}
                 onChange={handleLocalPreferenceConfigsChange}
               />
               <br />
               <Button className="w-fit" onClick={handleLocalPreferenceConfigsSend}>
                 Send Local Preference Configuration
               </Button>
+            </div>
+          )}
+          {announceConfigs && (
+            <div>
+              <AnnounceConfiguration
+                initialValues={announceConfigs}
+                availableASOptions={getAvailableASOptions()}
+                availableRouterOptions={getAvailableRouters()}
+                onChange={handleAnnounceConfigsChange}
+              />
+              <br />
+              <Button className="w-fit" onClick={handleAnnounceConfigSend}>
+                Send Announce Configuration
+              </Button>
+            </div>
+          )}
+          {stopAnnounceConfigs && (
+            <div>
+              <StopAnnounceConfiguration
+                initialValues={stopAnnounceConfigs}
+                announcedNetworks={announcedNetworks}
+                availableRouterOptions={getAvailableRouters()}
+                onChange={handleStopAnnounceConfigsChange}
+              />
+              <br />
+              <Button className="w-fit" onClick={handleStopAnnounceConfigSend}>
+                Send Stop Announce Configuration
+              </Button>
+             
             </div>
           )}
         </div>
