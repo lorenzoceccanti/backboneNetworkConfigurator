@@ -88,6 +88,11 @@ export function useMainConfig() {
         description: "The configuration has been generated successfully.",
       })
       setIsConfigGenerated(true);
+      setAnnounceConfigs({
+        router: "",
+        network_ip: "",
+        to: [0],
+      });
     } catch (error) {
       console.error("Error:", error);
 
@@ -539,14 +544,14 @@ export function useMainConfig() {
   ): AnnounceToConfigBody[]  => {
     if(!announceConfigs) return [];
     
-    const filteredNeighbors = announceConfigs.to.map((val) => router.neighbors.filter((neig) => neig.asn === val))
+    const filteredNeighbors = announceConfigs.to.map((val) => router.neighbors.filter((neig) => neig.asn === val)).flat()
     
-
     const to_list: AnnounceToConfigBody[] = []
-    filteredNeighbors.forEach((val, i) => {
+    filteredNeighbors.forEach((val) => {
        const obj: AnnounceToConfigBody = {asn: 0, his_router_ip: ""};
-       obj.asn = val[i].asn;
-       obj.his_router_ip = val[i].ip;
+       console.log(val)
+       obj.asn = val.asn;
+       obj.his_router_ip = val.ip;
        to_list.push(obj);
        
      })
