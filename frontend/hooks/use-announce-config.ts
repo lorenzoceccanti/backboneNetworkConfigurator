@@ -31,8 +31,16 @@ export function useAnnounceConfig(
     value: AnnounceConfig[K]
   ) => {
     const updatedConfig = { ...config, [field]: value };
+    console.log("updatedConfig:" + updatedConfig);
     setConfig(updatedConfig);
     onChange(updatedConfig);
+  };
+
+  const handleRouterChange = (routerName: string) => {
+    const updatedConfig = { ...config, "router": routerName, "network_ip": "", "to": [0]};
+    setConfig(updatedConfig);
+    onChange(updatedConfig);
+
   };
 
   const getAvailableRouterOptions = (
@@ -138,6 +146,7 @@ export function useAnnounceConfig(
     config,
     form,
     handleChange,
+    handleRouterChange,
     getAvailableASOptions,
     getAvailableRouterOptions,
     getAvailableNetworksOptions,

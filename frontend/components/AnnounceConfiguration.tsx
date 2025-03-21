@@ -30,6 +30,7 @@ export default function AnnounceConfiguration({
     config,
     form,
     handleChange,
+    handleRouterChange,
     getAvailableASOptions,
     getAvailableRouterOptions,
     getAvailableNetworksOptions,
@@ -50,7 +51,7 @@ export default function AnnounceConfiguration({
           <label className="block font-semibold mb-1">Router</label>
           <Select
             value={config.router === null ? "" : config.router}
-            onValueChange={(value) => handleChange("router", value)}
+            onValueChange={(value) => handleRouterChange(value)}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a Router">

@@ -88,11 +88,6 @@ export function useMainConfig() {
         description: "The configuration has been generated successfully.",
       })
       setIsConfigGenerated(true);
-      setAnnounceConfigs({
-        router: "",
-        network_ip: "",
-        to: [0],
-      });
     } catch (error) {
       console.error("Error:", error);
 
@@ -534,23 +529,31 @@ export function useMainConfig() {
     };
   };
 
+  const getTolist = (
+    router: RouterResponse,
+  ): AnnounceToConfigBody[]  => {
+    if(!announceConfigs) return [];
+    announceConfigs.to.forEach((val) => router.neighbors.filter((neig) => neig.asn === val))
+
+    const to_list: AnnounceToConfigBody[] = []
+    router.neighbors.forEach((val) => {
+       const obj: AnnounceToConfigBody = {asn: 0, his_router_ip: ""};
+       obj.asn = val.asn;
+       obj.his_router_ip = val.ip;
+       to_list.push(obj);
+       
+     })
+
+     return to_list;
+  }
+
   const handleAnnounceConfigSend = async() =>{
     if(!networkTopologyResponse || !announceConfigs) return;
 
     const router = getRoutersByName(networkTopologyResponse, announceConfigs.router);
     if(router.length > 1 || !router.length) return console.error("routers not found");
 
-    announceConfigs.to.forEach((val) => router[0].neighbors.filter((neig) => neig.asn === val))
-
-    const to_list: AnnounceToConfigBody[] = []
-    router[0].neighbors.forEach((val) => {
-       const obj: AnnounceToConfigBody = {asn: 0, his_router_ip: ""};
-       obj.asn = val.asn;
-       obj.his_router_ip = val.ip;
-       to_list.push(obj);
-       
-     }
-    )
+    const to_list = getTolist(router[0])
 
     const body : AnnounceConfigBody = buildAnnounceRequestBody(router[0], announceConfigs.network_ip, to_list);
     console.log(body);
