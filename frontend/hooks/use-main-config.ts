@@ -2,12 +2,13 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, AnnounceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody, AnnounceConfigBody, AnnounceToConfigBody} from "@/lib/definitions";
+import { RouterConfig, HostConfig, TransitConfig, PeeringConfig, LocalPreferenceConfig, AnnounceConfig, NetworkTopology, NetworkTopologyResponse, RouterResponse, TransitConfigBody, PeeringConfigBody, LocalPreferenceConfigBody, AnnounceConfigBody, AnnounceToConfigBody, RouterNeighborResponse} from "@/lib/definitions";
 import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib/default-values";
 import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration, sendAnnounceConfiguration} from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
 import { get } from "http";
+import { NextFlightResponse } from "next/dist/server/app-render/types";
 
 export function useMainConfig() {
   const [routerConfigs, setRouterConfigs] = useState<RouterConfig[]>([]);
@@ -81,7 +82,6 @@ export function useMainConfig() {
     try {
       const data = await sendConfiguration(body, serverIp);
       setNetworkTopologyResponse(data);
-      console.log(data)
       toast({
         variant: "default",
         title: "Configuration generated!",
@@ -538,13 +538,15 @@ export function useMainConfig() {
     router: RouterResponse,
   ): AnnounceToConfigBody[]  => {
     if(!announceConfigs) return [];
-    announceConfigs.to.forEach((val) => router.neighbors.filter((neig) => neig.asn === val))
+    
+    const filteredNeighbors = announceConfigs.to.map((val) => router.neighbors.filter((neig) => neig.asn === val))
+    
 
     const to_list: AnnounceToConfigBody[] = []
-    router.neighbors.forEach((val) => {
+    filteredNeighbors.forEach((val, i) => {
        const obj: AnnounceToConfigBody = {asn: 0, his_router_ip: ""};
-       obj.asn = val.asn;
-       obj.his_router_ip = val.ip;
+       obj.asn = val[i].asn;
+       obj.his_router_ip = val[i].ip;
        to_list.push(obj);
        
      })
