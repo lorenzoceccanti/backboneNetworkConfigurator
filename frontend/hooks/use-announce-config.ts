@@ -120,7 +120,6 @@ export function useAnnounceConfig(
 
       const router = getRoutersByName(config.router, routers)
       if(router.length > 1 || !router.length){
-        console.error("router not found");
         return []
       }
       const neighbor_asn: number[] = []
