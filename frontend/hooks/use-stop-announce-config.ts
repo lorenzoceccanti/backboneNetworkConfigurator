@@ -16,12 +16,6 @@ export function useStopAnnounceConfig(
   const [config, setConfig] = useState<StopAnnounceConfig>(initialValues);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof StopAnnounceConfigFormSchema>>({
-    resolver: zodResolver(StopAnnounceConfigFormSchema),
-    mode: "onBlur",
-    defaultValues: initialValues,
-  });
-
   useEffect(() => {
     setConfig(initialValues);
   }, [initialValues]);
@@ -93,7 +87,6 @@ const getASNbyRouter = (
 
   return {
     config,
-    form,
     handleChange,
     handleRouterChange,
     getAvailableRouterOptions,
