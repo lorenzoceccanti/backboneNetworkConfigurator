@@ -24,23 +24,8 @@ def configure() -> Response:
       links: list[list[str, str]] = configure_network.get_links()
       
       # prepare the response
-
-      #routers = []
-      #for router in self._network_topology.routers:
-          
-
-        #if router.name != Config.INTERNET_ROUTER_NAME:
-          #routers.append({
-            #"name": router.name,
-            #"asn": router.asn,
-            #"mngt_ipv4": router.mngt_ipv4,
-            #"redistribute_bgp": router.redistribute_bgp,
-            #"interfaces": [{"name": interface.linux_name, "ip": interface.ip} for interface in router.interfaces],
-            #"neighbors": [{"asn": neighbor.asn, "ip": neighbor.ip} for neighbor in router.neighbors],
-            #"subnetworks": subnetworks,
-          
-          #})
       routers = generate_response(network_topology, links)
+      links = eliminate_internet_links(links)
       response: dict = {
         "routers": routers,
         "links": links,
@@ -103,3 +88,16 @@ def generate_response(network_topology, links) -> dict:
                 router["subnetworks"].append(subnetwork)
     
     return routers
+
+def eliminate_internet_links(links) -> list[list[str, str]]:
+  filtered_links = []
+  for link in links: 
+    
+    endpoint1, endpoint2 = link
+    part1 = endpoint1.split(":")[0]
+    part2 = endpoint2.split(":")[0]
+    internet = {Config.INTERNET_ROUTER_NAME, Config.INTERNET_HOST_NAME}
+
+    if(part1 not in internet or part2 not in internet):
+      filtered_links.append(link)
+  return filtered_links

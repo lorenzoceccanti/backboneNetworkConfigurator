@@ -63,25 +63,7 @@ export function useStopAnnounceConfig(
         onChange(updatedConfig);
     
       };
-  const getRoutersByName = (
-    name: string,
-    routers: RouterResponse[]
-  ): RouterResponse[] => {
-    const result = routers.filter(router => router.name === name);
-    return result
-  }
-
   
-    
-const getASNbyRouter = (
-    name: string,
-      routers: RouterResponse[]
-    ): number => {
-      const result = routers.filter(router => router.name === name)
-      if(result.length > 1 || !result.length) return 0
-      return result[0].asn 
-      
-    }
     
 
 

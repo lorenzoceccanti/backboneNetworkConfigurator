@@ -20,6 +20,7 @@ export function useMainConfig() {
   const [stopAnnounceConfigs, setStopAnnounceConfigs] = useState<StopAnnounceConfig>();
   {/*Record to store routers and their announced network*/}
   const [announcedNetworks, setAnnouncedNetworks] = useState<Record<string, string[]>>({});
+  
   const [networkTopologyResponse, setNetworkTopologyResponse] = useState<NetworkTopologyResponse | null>(null);
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
   const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
