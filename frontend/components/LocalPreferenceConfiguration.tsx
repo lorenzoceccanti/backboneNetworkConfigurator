@@ -39,7 +39,7 @@ export default function LocalPreferenceConfiguration({
       <p className="text-sm">
         The local preference attribute is used to select the exit point for an autonomous system.
       </p>
-      <div className="text-sm grid grid-cols-3 gap-x-10 w-fit mx-auto my-5">
+      <div className="text-sm grid grid-cols-4 gap-x-10 w-fit mx-auto my-5">
         {/* AS Number */}
         <div>
           <label className="block font-semibold mb-1">AS Number</label>
@@ -93,6 +93,21 @@ export default function LocalPreferenceConfiguration({
             </SelectContent>
           </Select>  
         </div>
+        {/* Network */}
+        <div className = "w-full">
+            <label className="block font-semibold mb-1">Network</label>
+              <Input
+                    {...form.register(`network_ip`)}
+                        className={`border ${config.network_ip ? (form.formState.errors.network_ip ? 'border-red-500' : 'border-green-500') : ''}`}
+                        placeholder="IP Address (eg. 192.168.10.1/24)"
+                        value={config.network_ip}
+                        onChange={(e) => {
+                            handleChange("network_ip", e.target.value);
+                        }}
+                />
+                {form.formState.errors.network_ip && <p className="text-red-500 text-sm">{form.formState.errors.network_ip.message}</p>}
+
+            </div>
         {/* Local Preference */}
         <div className = "w-full">
           <label className="block font-semibold mb-1">Local Preference</label>

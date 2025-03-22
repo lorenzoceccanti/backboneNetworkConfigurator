@@ -74,6 +74,7 @@ export type LocalPreferenceConfig = {
   asn: number; 
   neighbor_router: string;
   local_preference: number;
+  network_ip: string;
 }
 
 export type AnnounceConfig = {
@@ -129,6 +130,7 @@ export type LocalPreferenceConfigBody = {
   neighbor_ip: string;
   neighbor_asn: number;
   local_preference: number;
+  network: string;
 }
 
 export type AnnounceToConfigBody = {
