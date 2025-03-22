@@ -586,6 +586,15 @@ export function useMainConfig() {
   const handleLocalPreferenceConfigsSend = async() =>{
     if(!networkTopologyResponse || !localPreferenceConfigs) return;
 
+    if(localPreferenceConfigs.network_ip === "") {
+      toast({
+        variant: "destructive",
+        title: "Network IP not set.",
+        description: "Please set the network IP in the form.",
+      });
+      return;
+    }
+
     const ASrouters = getRoutersByASN(networkTopologyResponse, localPreferenceConfigs.asn);
     if(!ASrouters.length) {
       toast({
@@ -615,8 +624,6 @@ export function useMainConfig() {
       });
       return;
     }
-
-    if(localPreferenceConfigs.network_ip === "internet" || localPreferenceConfigs.network_ip === "Internet" || localPreferenceConfigs.network_ip === "INTERNET") {localPreferenceConfigs.network_ip = "0.0.0.0/0"};
 
     const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(target.router, target.matchedIp,  localPreferenceConfigs.local_preference, localPreferenceConfigs.network_ip);
     if (!serverIp) {

@@ -31,6 +31,7 @@ export default function LocalPreferenceConfiguration({
     handleChange,
     getAvailableRouterOptions,
     getAvailableLPASOptions,
+    handleNeighborChange,
     getAvailableNetworksOptions
   } = useLocalPreferenceConfig(initialValues, onChange);
 
@@ -73,7 +74,9 @@ export default function LocalPreferenceConfiguration({
           <label className="block font-semibold mb-1">Neighbor router</label>
           <Select
             value={config.asn === null ? "" : String(config.asn)}
-            onValueChange={(value) => handleChange("neighbor_router", value)}
+            onValueChange={(value) => {
+              handleNeighborChange(value);
+            }}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a router">

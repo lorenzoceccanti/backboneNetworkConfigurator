@@ -82,12 +82,7 @@ export const localPreferenceConfigurationFormSchema = z.object({
   asn: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
   neighbor_router: z.string().nonempty("Router name is required"),
   local_preference: z.number().min(1, "Local Preference must be at least 1"),
-  network_ip: z.union([
-    ipWithMaskSchema, 
-    z.literal("Internet"), 
-    z.literal("internet"), 
-    z.literal("INTERNET")  
-  ])
+  network_ip: ipWithMaskSchema
 }); 
 
 export const announceConfigurationFormSchema = z.object({

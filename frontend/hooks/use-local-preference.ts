@@ -30,13 +30,11 @@ export function useLocalPreferenceConfig(
     onChange(updatedConfig);
   };
   
-
   const getAvailableRouterOptions = (
     config: LocalPreferenceConfig,
-    availablerouter: RouterResponse[]
+    availableRouters: RouterResponse[]
   ) => {
-  
-    return availablerouter.filter((opt) => opt.asn != config.asn);
+    return availableRouters.filter((opt) => opt.asn != config.asn);
   }
 
   const getAvailableNetworksOptions = (
@@ -48,7 +46,7 @@ export function useLocalPreferenceConfig(
       return[];
     }
 
-    const networks = options[0].subnetworks
+    const networks = options[0].subnetworks;
     if (!networks.includes("0.0.0.0/0")) {
       networks.push("0.0.0.0/0");
     }
@@ -67,12 +65,19 @@ export function useLocalPreferenceConfig(
     return availableAS.filter((opt) => !used.includes(opt));
   };
 
+  const handleNeighborChange = (value: string) => {
+    const updatedConfig = { ...config, neighbor_router: value, network_ip: "" };
+    setConfig(updatedConfig);
+    onChange(updatedConfig);
+  }
+
   return {
     config,
     form,
     handleChange,
     getAvailableRouterOptions,
     getAvailableLPASOptions,
+    handleNeighborChange,
     getAvailableNetworksOptions
   };
 }
