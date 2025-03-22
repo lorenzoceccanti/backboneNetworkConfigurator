@@ -7,8 +7,6 @@ import { initialMainConfig, initialRouterConfig, initialHostConfig } from "@/lib
 import { sendConfiguration, deployNetwork, sendTransitConfiguration, sendPeeringConfiguration, sendLocalPreferenceConfiguration, sendAnnounceConfiguration, sendStopAnnounceConfiguration} from "@/lib/api";
 import { mainConfigurationFormSchema } from "@/lib/validations";
 import { useToast } from "@/hooks/use-toast";
-import { get } from "http";
-import { NextFlightResponse } from "next/dist/server/app-render/types";
 
 export function useMainConfig() {
   const [routerConfigs, setRouterConfigs] = useState<RouterConfig[]>([]);
@@ -18,7 +16,6 @@ export function useMainConfig() {
   const [localPreferenceConfigs, setlocalPreferenceConfigs] = useState<LocalPreferenceConfig>();
   const [announceConfigs, setAnnounceConfigs] = useState<AnnounceConfig>();
   const [stopAnnounceConfigs, setStopAnnounceConfigs] = useState<StopAnnounceConfig>();
-  {/*Record to store routers and their announced network*/}
   const [announcedNetworks, setAnnouncedNetworks] = useState<Record<string, string[]>>({});
   
   const [networkTopologyResponse, setNetworkTopologyResponse] = useState<NetworkTopologyResponse | null>(null);

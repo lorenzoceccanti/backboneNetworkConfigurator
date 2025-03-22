@@ -4,8 +4,6 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { StopAnnounceConfigFormSchema} from "@/lib/validations";
-import { useToast } from "@/hooks/use-toast";
-
 
 
 export function useStopAnnounceConfig(
@@ -14,7 +12,12 @@ export function useStopAnnounceConfig(
   onChange: (config: StopAnnounceConfig) => void
 ) {
   const [config, setConfig] = useState<StopAnnounceConfig>(initialValues);
-  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof StopAnnounceConfigFormSchema>>({
+    resolver: zodResolver(StopAnnounceConfigFormSchema),
+    mode: "onBlur",
+    defaultValues: initialValues,
+  });
 
   useEffect(() => {
     setConfig(initialValues);
@@ -28,48 +31,36 @@ export function useStopAnnounceConfig(
     setConfig(updatedConfig);
     onChange(updatedConfig);
   };
-
   
   const getAvailableRouterOptions = (
     config: StopAnnounceConfig,
     availableRouter: RouterResponse[],
   ) => {
     return availableRouter;
-
   }
 
   const getAvailableNetworksOptions = (
-      config: StopAnnounceConfig,
-      availableRouter: RouterResponse[],
-      announcedNetworks: Record<string, string[]>
-    ): string[] => {
-      
-      
-        const networksForRouter = announcedNetworks[config.router];
-
-       
-        if (!networksForRouter || networksForRouter.length === 0) {
-          return [];
-        }
-      
-       
-        return networksForRouter;
+    config: StopAnnounceConfig,
+    availableRouter: RouterResponse[],
+    announcedNetworks: Record<string, string[]>
+  ): string[] => {
+    const networksForRouter = announcedNetworks[config.router];
+    if (!networksForRouter || networksForRouter.length === 0) {
+      return [];
     }
-
+    return networksForRouter;
+  };
     
-    const handleRouterChange = (routerName: string) => {
-        const updatedConfig = { ...config, "router": routerName, "network_ip": ""};
-        setConfig(updatedConfig);
-        onChange(updatedConfig);
-    
-      };
+  const handleRouterChange = (routerName: string) => {
+    const updatedConfig = { ...config, "router": routerName, "network_ip": ""};
+    setConfig(updatedConfig);
+    onChange(updatedConfig);
+  };
   
-    
-
-
   return {
     config,
     handleChange,
+    form,
     handleRouterChange,
     getAvailableRouterOptions,
     getAvailableNetworksOptions,

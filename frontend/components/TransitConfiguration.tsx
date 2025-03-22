@@ -34,7 +34,7 @@ export default function TransitConfiguration({
   } = useTransitConfig(initialValues, availableASOptions, onChange);
 
   return (
-    <div>
+    <div className="my-3">
       <h1 className="font-bold text-base">Transit Configuration</h1>
       <p className="text-sm">
         Transit means that traffic from the &quot;From&quot; AS can reach

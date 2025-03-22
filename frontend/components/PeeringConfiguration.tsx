@@ -30,7 +30,7 @@ export default function PeeringConfiguration({
   } = usePeeringConfig(initialValues, availableASOptions, onChange);
 
   return (
-    <div>
+    <div className="my-3">
       <h1 className="font-bold text-base">Peering Configuration</h1>
       <p className="text-sm">
         Peering allows direct traffic exchange between &quot;From&quot; AS and &quot;To&quot; AS

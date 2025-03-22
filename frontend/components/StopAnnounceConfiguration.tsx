@@ -27,19 +27,19 @@ export default function StopAnnounceConfiguration({
   const {
     config,
     handleChange,
+    form,
     handleRouterChange,
     getAvailableRouterOptions,
     getAvailableNetworksOptions,
   } = useStopAnnounceConfig(initialValues, announcedNetworks, onChange);
 
   return (
-    <div>
-      <h1 className="font-bold text-base"> Stop Announce Configuration</h1>
-      <p className="text-sm">
-      Stop Announce allows you to stop the announcement of a network that &quot;Router&quot; was announcing
-      </p>
-
-      <div className="md:flex md:space-x-2 my-2 space-y-3 md:space-y-0 mb-10 md:mb-0">
+    <div className="my-3">
+    <h1 className="font-bold text-base">Stop Announce Configuration</h1>
+    <p className="text-sm">
+      The stop announce configuration is used to stop announcing a network to a specific router.
+    </p>
+    <div className="text-sm grid grid-cols-2 gap-x-10 w-fit mx-auto my-5">
         <div className="w-full">
           <label className="block font-semibold mb-1">Router</label>
           <Select
@@ -64,6 +64,7 @@ export default function StopAnnounceConfiguration({
               </SelectGroup>
             </SelectContent>
           </Select>
+          {form.formState.errors.router && ( <p className="text-red-500 text-xs mt-1">{form.formState.errors.router.message}</p>)}
         </div>
 
         {/* Networks */}
@@ -91,9 +92,8 @@ export default function StopAnnounceConfiguration({
               </SelectGroup>
             </SelectContent>
           </Select>
+          {form.formState.errors.network_ip && ( <p className="text-red-500 text-xs mt-1">{form.formState.errors.network_ip.message}</p>)}
         </div> 
-        
-        
       </div>
     </div>
   );

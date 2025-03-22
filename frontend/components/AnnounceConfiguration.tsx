@@ -40,14 +40,14 @@ export default function AnnounceConfiguration({
   } = useAnnounceConfig(initialValues, availableASOptions, onChange);
 
   return (
-    <div>
-      <h1 className="font-bold text-base">Announce Configuration</h1>
+    <div className="my-3">
+      <h1 className="font-bold text-base">Announce Network Configuration</h1>
       <p className="text-sm">
-        Annouce allows to announce an AS local network  to &quot;To&quot; AS
+        The announce network configuration is used to announce a network to a specific AS.
       </p>
-
-      <div className="md:flex md:space-x-2 my-2 space-y-3 md:space-y-0 mb-10 md:mb-0">
-        <div className="w-full">
+      <div className="text-sm grid grid-cols-3 gap-x-10 w-fit mx-auto my-5">
+        {/* Router */}
+        <div>
           <label className="block font-semibold mb-1">Router</label>
           <Select
             value={config.router === null ? "" : config.router}
@@ -74,7 +74,7 @@ export default function AnnounceConfiguration({
         </div>
 
         {/* Networks */}
-        <div className="w-full">
+        <div>
           <label className="block font-semibold mb-1">Network to announce</label>
           <Select
             value={config.network_ip === null ? "" : config.network_ip}
@@ -101,7 +101,7 @@ export default function AnnounceConfiguration({
         </div>
         
         {/* To */}
-        <div className="w-full">
+        <div>
           <label className="block font-semibold mb-1">To AS</label>
             {config.to.map((value: number, i: number) => (
               <div key={i} className="flex space-x-4 mb-2">
