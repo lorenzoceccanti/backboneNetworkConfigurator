@@ -81,18 +81,16 @@ export const peeringConfigurationFormSchema = z.object({
 export const localPreferenceConfigurationFormSchema = z.object({
   asn: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
   neighbor_router: z.string().nonempty("Router name is required"),
-  local_preference: z.number().min(0, "Local Preference must be at least 0"),
- 
+  local_preference: z.number().min(1, "Local Preference must be at least 1"),
 }); 
 
 export const announceConfigurationFormSchema = z.object({
   router: z.string().nonempty("Router name is required"),
-  network_ip: ipWithMaskSchema,
+  network_ip: ipWithMaskSchema.nonempty("Network IP is required"),
   to: z.array(z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534")),
 }); 
 
-export const StopAnnounceConfigFormSchema = z.object({
+export const stopAnnounceConfigFormSchema = z.object({
   router: z.string().nonempty("Router name is required"),
   network_ip: ipWithMaskSchema
-
-})
+});
