@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, request, jsonify
+from jsonschema import validate, ValidationError
 from services.local_preference import LocalPreferenceNetwork
 from models.local_preference import LocalPreference
 
@@ -13,6 +14,10 @@ def local_preference() -> Response:
   try:
     if request.is_json:
       print("[INFO] Received request to set local preference")
+      try:
+        validate(request.get_json(), LocalPreference.schema())
+      except ValidationError as e:
+        return jsonify({"error": "JSON schema format error"}), 400
       local_preference = LocalPreference(**request.get_json())
       local_preference_network = LocalPreferenceNetwork(local_preference)
       local_preference_network._generate_debug_file()

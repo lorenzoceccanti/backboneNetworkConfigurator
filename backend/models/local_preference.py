@@ -27,3 +27,33 @@ class LocalPreference:
       ipaddress.IPv4Network(self.network)
     except ValueError:
       raise ValueError(f"Invalid IPv4 network {self.network}")
+
+  @staticmethod
+  def schema() -> dict:
+    """
+    JSON schema for validating a LocalPreference request.
+    :return: JSON schema
+    """
+    return {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LocalPreference",
+      "description": "Schema for validating a local preference request",
+      "type": "object",
+      "properties": {
+        "asn": {"type": "integer"},
+        "router": {"type": "string"},
+        "mngt_ip": {"type": "string"},
+        "neighbor_ip": {"type": "string"},
+        "local_preference": {"type": "integer"},
+        "network": {"type": "string"}
+      },
+      "required": [
+        "asn",
+        "router",
+        "mngt_ip",
+        "neighbor_ip",
+        "local_preference",
+        "network"
+      ],
+      "additionalProperties": False
+    }

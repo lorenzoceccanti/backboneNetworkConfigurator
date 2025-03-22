@@ -145,3 +145,143 @@ class NetworkTopology:
   def __post_init__(self):
     self.routers = [Router(**router) if isinstance(router, dict) else router for router in self.routers]
     self.hosts = [Host(**host) if isinstance(host, dict) else host for host in self.hosts]
+
+  @staticmethod
+  def schema() -> dict:
+    """
+    Returns the JSON Schema for validating a NetworkTopology object.
+    :return: JSON Schema for NetworkTopology object.
+    """
+    return {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "NetworkTopology",
+      "type": "object",
+      "properties": {
+        "project_name": {"type": "string"},
+        "routers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "asn": {"type": "integer"},
+              "interfaces": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {"type": "string"},
+                    "ip": {"type": "string"},
+                    "peer": {
+                      "type": "object",
+                      "properties": {
+                        "name": {"type": "string"},
+                        "interface": {"type": "string"},
+                        "linux_name": {"type": ["string", "null"]}
+                      },
+                      "required": ["name", "interface"],
+                      "additionalProperties": False
+                    },
+                    "linux_name": {"type": ["string", "null"]},
+                    "network": {"type": ["string", "null"]}
+                  },
+                  "required": ["name", "ip", "peer"],
+                  "additionalProperties": False
+                }
+              },
+              "neighbors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "ip": {"type": "string"},
+                    "asn": {"type": "integer"}
+                  },
+                  "required": ["ip", "asn"],
+                  "additionalProperties": False
+                }
+              },
+              "redistribute_bgp": {"type": "boolean"},
+              "admin_password": {"type": ["string", "null"]},
+              "dhcp": {
+                "oneOf": [
+                  {"type": "null"},
+                  {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {"type": "boolean"},
+                      "subnet": {"type": "string"},
+                      "interface": {"type": "string"},
+                      "range": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 2,
+                        "maxItems": 2
+                      }
+                    },
+                    "required": ["enabled", "subnet", "interface", "range"],
+                    "additionalProperties": False
+                  }
+                ]
+              },
+              "mngt_ipv4": {"type": ["string", "null"]},
+              "internet_iface": {
+                "oneOf": [
+                  {"type": "null"},
+                  {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {"type": "boolean"},
+                      "name": {"type": "string"},
+                      "ip": {"type": "string"}
+                    },
+                    "required": ["enabled", "name", "ip"],
+                    "additionalProperties": False
+                  }
+                ]
+              }
+          },
+          "required": ["name", "asn", "interfaces", "neighbors", "redistribute_bgp"],
+          "additionalProperties": False
+          }
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "interfaces": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {"type": "string"},
+                    "dhcp": {"type": "boolean"},
+                    "linux_name": {"type": ["string", "null"]},
+                    "ip": {"type": ["string", "null"]}
+                  },
+                  "required": ["name", "dhcp"],
+                  "additionalProperties": False
+                }
+              },
+              "gateway": {"type": "string"},
+              "is_dhcp_enabled": {"type": ["boolean", "null"]}
+            },
+            "required": ["name", "interfaces", "gateway"],
+            "additionalProperties": False
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 2,
+            "maxItems": 2
+          }
+        }
+      },
+      "required": ["project_name", "routers", "hosts"],
+      "additionalProperties": False
+    }

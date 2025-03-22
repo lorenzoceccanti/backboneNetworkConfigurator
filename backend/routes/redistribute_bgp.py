@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, request, jsonify
+from jsonschema import validate, ValidationError
 from services.redistribute_bgp import RedistributeBGPNetwork
 from models.redistribute_bgp import RedistributeBGP
 
@@ -13,6 +14,10 @@ def redistribute_bgp() -> Response:
   try:
     if request.is_json:
       print("[INFO] Received request to redistribute BGP routes")
+      try:
+        validate(request.get_json(), RedistributeBGP.schema())
+      except ValidationError as e:
+        return jsonify({"error": "JSON schema format error"}), 400
       redistribute_bgp = RedistributeBGP(**request.get_json())
       redistribute_bgp_network = RedistributeBGPNetwork(redistribute_bgp)
       redistribute_bgp_network.redistribute_bgp()
