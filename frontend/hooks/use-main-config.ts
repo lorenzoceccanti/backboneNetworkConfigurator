@@ -92,6 +92,12 @@ export function useMainConfig() {
         description: "The configuration has been generated successfully.",
       })
       setIsConfigGenerated(true);
+      setlocalPreferenceConfigs({
+        asn: 0,
+        neighbor_router: "",
+        local_preference: 0,
+        network_ip: ""
+      });
     } catch (error) {
       console.error("Error:", error);
 
@@ -132,6 +138,7 @@ export function useMainConfig() {
         asn: 0,
         neighbor_router: "",
         local_preference: 0,
+        network_ip: ""
       });
       setAnnounceConfigs({
         router: "",
@@ -483,7 +490,8 @@ export function useMainConfig() {
     router: RouterResponse,
     neighbor_ip: string,
     neighbor_asn: number,
-    lpf: number
+    lpf: number,
+    network: string
   ): LocalPreferenceConfigBody => {
     return {
       asn: router.asn,
@@ -491,6 +499,7 @@ export function useMainConfig() {
       neighbor_asn: neighbor_asn, 
       mngt_ip: router.mngt_ipv4?.split("/")[0] ?? "",
       local_preference: lpf, 
+      network: network,
     };
   };
 
@@ -506,9 +515,11 @@ export function useMainConfig() {
     const Target = findTargetRouter(ASrouters, NeighborRouter);
     if(!Target) return console.error("router not found");
 
+    if(localPreferenceConfigs.network_ip === "internet" || localPreferenceConfigs.network_ip === "Internet" || localPreferenceConfigs.network_ip === "INTERNET") {localPreferenceConfigs.network_ip = "0.0.0.0/0"};
 
 
-    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Target.router, Target.matchedIp, NeighborRouter[0].asn, localPreferenceConfigs.local_preference);
+
+    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Target.router, Target.matchedIp, NeighborRouter[0].asn, localPreferenceConfigs.local_preference, localPreferenceConfigs.network_ip);
     console.log(body);
     if (!serverIp) {
       console.error("Server IP is not set.");
@@ -516,6 +527,7 @@ export function useMainConfig() {
     }
 
     try {
+      console.log(JSON.stringify(body))
       await sendLocalPreferenceConfiguration(body, serverIp);
       toast({
         variant: "default",
