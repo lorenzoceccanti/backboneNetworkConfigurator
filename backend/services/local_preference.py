@@ -14,6 +14,7 @@ class LocalPreferenceNetwork:
     Generates the command to set the local preference.
     :return: None
     """
+
     arista_response = Helper.send_arista_commands(self._local_preference.mngt_ip, [f"enable", f"configure", f"show running-config"])
     general_response_dict = arista_response[2].get("cmds", {})
 
@@ -85,7 +86,6 @@ class LocalPreferenceNetwork:
       f"enable",
       f"configure",
     ]
-
     self._commands.append(f"ip prefix-list {self._local_preference.router}-LOCAL-PREF-{self._local_preference.local_preference} seq {pref_list_seq_num} permit {self._local_preference.network}")
     if count_local_pref_values == 0:
       # First time issueing a local_preference ever

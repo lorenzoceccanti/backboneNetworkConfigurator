@@ -126,9 +126,9 @@ export type PeeringConfigBody = {
 
 export type LocalPreferenceConfigBody = {
   asn: number;
+  router: string;
   mngt_ip: string;
   neighbor_ip: string;
-  neighbor_asn: number;
   local_preference: number;
   network: string;
 }

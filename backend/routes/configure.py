@@ -32,8 +32,8 @@ def configure() -> Response:
       }
       #### REMOVE THIS LINES BEFORE DEPLOYING ####
       # for testing purposes we respond with the generated configurations
-      with open("our_config.json", "r") as f:
-        response = json.load(f)
+      #with open("our_config.json", "r") as f:
+        #response = json.load(f)
       #### REMOVE THIS LINES BEFORE DEPLOYING ####
       return jsonify(response), 200
     else:

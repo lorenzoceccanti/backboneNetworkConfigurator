@@ -570,14 +570,13 @@ export function useMainConfig() {
   const buildLocalPreferenceRequestBody = (
     router: RouterResponse,
     neighbor_ip: string,
-    neighbor_asn: number,
     lpf: number,
     network: string
   ): LocalPreferenceConfigBody => {
     return {
       asn: router.asn,
-      neighbor_ip: neighbor_ip,
-      neighbor_asn: neighbor_asn, 
+      router: router.name,
+      neighbor_ip: neighbor_ip, 
       mngt_ip: router.mngt_ipv4?.split("/")[0] ?? "",
       local_preference: lpf, 
       network: network
@@ -619,7 +618,7 @@ export function useMainConfig() {
 
     if(localPreferenceConfigs.network_ip === "internet" || localPreferenceConfigs.network_ip === "Internet" || localPreferenceConfigs.network_ip === "INTERNET") {localPreferenceConfigs.network_ip = "0.0.0.0/0"};
 
-    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(target.router, target.matchedIp, neighborRouter[0].asn, localPreferenceConfigs.local_preference, localPreferenceConfigs.network_ip);
+    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(target.router, target.matchedIp,  localPreferenceConfigs.local_preference, localPreferenceConfigs.network_ip);
 
     if (!serverIp) {
       toast({
