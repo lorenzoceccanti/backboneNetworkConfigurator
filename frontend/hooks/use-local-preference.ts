@@ -29,6 +29,7 @@ export function useLocalPreferenceConfig(
     setConfig(updatedConfig);
     onChange(updatedConfig);
   };
+  
 
   const getAvailableRouterOptions = (
     config: LocalPreferenceConfig,
@@ -37,6 +38,22 @@ export function useLocalPreferenceConfig(
   
     return availablerouter.filter((opt) => opt.asn != config.asn);
   }
+
+  const getAvailableNetworksOptions = (
+    config: LocalPreferenceConfig,
+    availableRouter: RouterResponse[],
+  ): string[] => {
+    const options = availableRouter.filter((opt) => opt.name === config.neighbor_router);
+    if(options.length > 1 || !options.length) {
+      return[];
+    }
+
+    const networks = options[0].subnetworks
+    if (!networks.includes("0.0.0.0/0")) {
+      networks.push("0.0.0.0/0");
+    }
+    return networks || [];
+  };
 
   const getAvailableLPASOptions = (
     config: LocalPreferenceConfig,
@@ -56,6 +73,7 @@ export function useLocalPreferenceConfig(
     handleChange,
     getAvailableRouterOptions,
     getAvailableLPASOptions,
+    getAvailableNetworksOptions
   };
 }
   

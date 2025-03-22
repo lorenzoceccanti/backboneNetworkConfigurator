@@ -31,6 +31,7 @@ export default function LocalPreferenceConfiguration({
     handleChange,
     getAvailableRouterOptions,
     getAvailableLPASOptions,
+    getAvailableNetworksOptions
   } = useLocalPreferenceConfig(initialValues, onChange);
 
   return (
@@ -96,16 +97,28 @@ export default function LocalPreferenceConfiguration({
         {/* Network */}
         <div className = "w-full">
           <label className="block font-semibold mb-1">Network</label>
-          <Input
-          {...form.register("network_ip")}
-            className={`border ${config.network_ip ? (form.formState.errors.network_ip ? 'border-red-500' : 'border-green-500') : ''}`}
-            placeholder="IP Address (eg. 192.168.10.1/24)"
-            value={config.network_ip}
-            onChange={(e) => {
-              handleChange("network_ip", e.target.value);
-            }}
-          />
-          {form.formState.errors.network_ip && <p className="text-red-500 text-sm">{form.formState.errors.network_ip.message}</p>}
+          <Select
+            value={config.network_ip === null ? "" : config.network_ip}
+            onValueChange={(value) => handleChange("network_ip", value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select a Network">
+                {config.network_ip ?? "Select"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Networks</SelectLabel>
+                {getAvailableNetworksOptions(config, availableRouters).map(
+                  (option: string) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  )
+                )}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
         {/* Local Preference */}
         <div className = "w-full">
