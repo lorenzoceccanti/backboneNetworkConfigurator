@@ -38,3 +38,37 @@ class Announce:
     if not self.to:
       raise ValueError("You must specify at least one network to announce")
     self.to = [AnnounceTo(**to) for to in self.to]
+
+  @staticmethod
+  def schema() -> dict:
+    """
+    JSON schema for validating an Announce request.
+    :return: JSON schema
+    """
+    return {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Announce",
+      "description": "Schema for validating an Announce request",
+      "type": "object",
+      "properties": {
+        "router": {"type": "string"},
+        "asn": {"type": "integer"},
+        "mngt_ip": {"type": "string"},
+        "network_to_announce": {"type": "string"},
+        "to": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "asn": {"type": "integer"},
+              "his_router_ip": {"type": "string"}
+            },
+            "required": ["asn", "his_router_ip"],
+            "additionalProperties": False
+          }
+        }
+      },
+      "required": ["router", "asn", "mngt_ip", "network_to_announce", "to"],
+      "additionalProperties": False
+    }

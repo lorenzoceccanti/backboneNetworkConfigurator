@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, request, jsonify
+from jsonschema import validate, ValidationError
 from models.transit import Transit
 from services.transit import TransitPolicy
 
@@ -14,6 +15,10 @@ def transit() -> Response:
   print("[INFO] Received request to configure transit policy")
   try:
     if request.is_json:
+      try:
+        validate(request.get_json(), Transit.schema())
+      except ValidationError as e:
+        return jsonify({"error": "JSON schema format error"}), 400
       transit_policy: Transit = Transit(**request.get_json())
       transit = TransitPolicy(transit_policy)
       transit.generate_transit_policy()

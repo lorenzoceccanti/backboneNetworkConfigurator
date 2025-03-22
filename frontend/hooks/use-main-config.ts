@@ -619,7 +619,7 @@ export function useMainConfig() {
     if(localPreferenceConfigs.network_ip === "internet" || localPreferenceConfigs.network_ip === "Internet" || localPreferenceConfigs.network_ip === "INTERNET") {localPreferenceConfigs.network_ip = "0.0.0.0/0"};
 
     const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(target.router, target.matchedIp,  localPreferenceConfigs.local_preference, localPreferenceConfigs.network_ip);
-
+    console.log(body);
     if (!serverIp) {
       toast({
         variant: "destructive",

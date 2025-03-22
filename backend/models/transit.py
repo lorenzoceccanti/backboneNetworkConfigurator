@@ -79,3 +79,71 @@ class Transit:
     self.through = TransitThrough(**self.through) if isinstance(self.through, dict) else self.through
     if isinstance(self.to, list):
       self.to = [TransitTo(**to) if isinstance(to, dict) else to for to in self.to]
+
+  @staticmethod
+  def schema() -> dict:
+    """
+    Returns the JSON Schema for validating a Transit object.
+    :return: JSON Schema for Transit object
+    """
+    return {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transit",
+      "type": "object",
+      "properties": {
+        "from_": {
+          "type": "object",
+          "properties": {
+            "asn": {"type": "integer"},
+            "router": {"type": "string"},
+            "router_ip": {"type": "string"},
+            "mngt_ip": {"type": "string"}
+          },
+          "required": ["asn", "router", "router_ip", "mngt_ip"],
+          "additionalProperties": False
+        },
+        "through": {
+          "type": "object",
+          "properties": {
+            "asn": {"type": "integer"},
+            "router": {"type": "string"},
+            "router_ip": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asn": {"type": "integer"},
+                  "my_router_ip": {"type": "string"}
+                },
+                "required": ["asn", "my_router_ip"],
+                "additionalProperties": False
+              }
+            },
+            "mngt_ip": {"type": "string"}
+          },
+          "required": ["asn", "router", "router_ip", "mngt_ip"],
+          "additionalProperties": False
+        },
+        "to": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asn": {"type": "integer"},
+                  "router": {"type": "string"},
+                  "router_ip": {"type": "string"},
+                  "mngt_ip": {"type": "string"}
+                },
+                "required": ["asn", "router", "router_ip", "mngt_ip"],
+                "additionalProperties": False
+              }
+            },
+            {"type": "string"}
+          ]
+        }
+      },
+      "required": ["from_", "through", "to"],
+      "additionalProperties": False
+    }

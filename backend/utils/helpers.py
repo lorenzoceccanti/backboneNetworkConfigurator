@@ -44,16 +44,16 @@ class Helper:
     :return: Response from the switch
     """
     if not mngt_ip:
-        return {"error": "Management IP not specified"}
+      return {"error": "Management IP not specified"}, 400
 
     url = f"http://{Config.USERNAME}:{Config.PASSWORD}@{mngt_ip}/command-api"
 
     try:
-        switch = Server(url)
-        response = switch.runCmds(1, commands)
-        return response
+      switch = Server(url)
+      response = switch.runCmds(1, commands)
+      return response
     except Exception as e:
-        return {"error": str(e)}
+      return {"error": "Error while sending commands to the Arista switch, please check the connection."}, 400
 
   @staticmethod
   def generate_timestamp() -> int:

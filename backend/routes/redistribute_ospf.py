@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, request, jsonify
+from jsonschema import validate, ValidationError
 from services.redistribute_ospf import RedistributeOSPFNetwork
 from models.redistribute_ospf import RedistributeOSPF
 
@@ -13,6 +14,10 @@ def redistribute_ospf() -> Response:
   try:
     if request.is_json:
       print("[INFO] Received request to redistribute OSPF routes")
+      try:
+        validate(request.get_json(), RedistributeOSPF.schema())
+      except ValidationError as e:
+        return jsonify({"error": "JSON schema format error"}), 400
       redistribute_ospf = RedistributeOSPF(**request.get_json())
       redistribute_ospf_network = RedistributeOSPFNetwork(redistribute_ospf)
       redistribute_ospf_network.redistribute_ospf()

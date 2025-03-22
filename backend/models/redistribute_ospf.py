@@ -14,3 +14,22 @@ class RedistributeOSPF:
       ipaddress.IPv4Address(self.mngt_ip)
     except ValueError:
       raise ValueError(f"Invalid Management IP address {self.mngt_ip}")
+
+  @staticmethod
+  def schema() -> dict:
+    """
+    Returns the JSON Schema for validating a RedistributeOSPF object.
+    :return: JSON Schema for RedistributeOSPF
+    """
+    return {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RedistributeOSPF",
+      "type": "object",
+      "properties": {
+        "asn": {"type": "integer"},
+        "mngt_ip": {"type": "string"},
+        "redistribute": {"type": "boolean"}
+      },
+      "required": ["asn", "mngt_ip", "redistribute"],
+      "additionalProperties": False
+    }

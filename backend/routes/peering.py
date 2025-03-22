@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, request, jsonify
+from jsonschema import validate, ValidationError
 from services.peering import PeeringNetwork
 from models.peering import Peering
 
@@ -13,6 +14,10 @@ def peering() -> Response:
   try:
     if request.is_json:
       print("[INFO] Received request to a new peering relationship")
+      try:
+        validate(request.get_json(), Peering.schema())
+      except ValidationError as e:
+        return jsonify({"error": "JSON schema format error"}), 400
       peers = Peering(**request.get_json())
       peering_network = PeeringNetwork(peers)
       peering_network.generate_peering_policy()

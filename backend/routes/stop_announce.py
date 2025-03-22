@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, request, jsonify
+from jsonschema import validate, ValidationError
 from services.stop_announce import StopAnnounceNetwork
 from models.stop_announce import StopAnnounce
 
@@ -13,6 +14,10 @@ def stop_annouce() -> Response:
   try:
     if request.is_json:
       print("[INFO] Received request to announce network")
+      try:
+        validate(request.get_json(), StopAnnounce.schema())
+      except ValidationError as e:
+        return jsonify({"error": "JSON schema format error"}), 400
       network_to_stop_announce = StopAnnounce(**request.get_json())
       stop_announce_network = StopAnnounceNetwork(network_to_stop_announce)
       stop_announce_network.stop_announce_network()

@@ -40,3 +40,32 @@ class Peering:
       raise ValueError(f"Invalid IPv4 address {self.mngt_ip}")
 
     self.peer = Peer(**self.peer) if isinstance(self.peer, dict) else self.peer
+
+  @staticmethod
+  def schema() -> dict:
+    """
+    Returns the JSON Schema for validating a Peering object.
+    :return: JSON Schema for Peering object
+    """
+    return {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Peering",
+      "type": "object",
+      "properties": {
+        "asn": {"type": "integer"},
+        "router_ip": {"type": "string"},
+        "mngt_ip": {"type": "string"},
+        "peer": {
+          "type": "object",
+          "properties": {
+              "asn": {"type": "integer"},
+              "router_ip": {"type": "string"},
+              "mngt_ip": {"type": "string"}
+          },
+          "required": ["asn", "router_ip", "mngt_ip"],
+          "additionalProperties": False
+        }
+      },
+      "required": ["asn", "router_ip", "mngt_ip", "peer"],
+      "additionalProperties": False
+    }

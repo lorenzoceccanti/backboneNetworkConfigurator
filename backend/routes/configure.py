@@ -1,4 +1,5 @@
 from flask import Blueprint, Response, request, jsonify
+from jsonschema import validate, ValidationError
 from models.network_topology import NetworkTopology
 from services.configure import ConfigureNetwork
 from config import Config
@@ -17,6 +18,10 @@ def configure() -> Response:
   print("[INFO] Received request to configure network")
   try:
     if request.is_json:
+      try:
+        validate(request.get_json(), NetworkTopology.schema())
+      except ValidationError as e:
+        return jsonify({"error": "JSON schema format error"}), 400
       network_topology: NetworkTopology = NetworkTopology(**request.get_json())
       configure_network = ConfigureNetwork(network_topology)
       configure_network.generate_containerlab_config()
@@ -32,8 +37,8 @@ def configure() -> Response:
       }
       #### REMOVE THIS LINES BEFORE DEPLOYING ####
       # for testing purposes we respond with the generated configurations
-      #with open("our_config.json", "r") as f:
-        #response = json.load(f)
+      with open("our_config.json", "r") as f:
+        response = json.load(f)
       #### REMOVE THIS LINES BEFORE DEPLOYING ####
       return jsonify(response), 200
     else:
