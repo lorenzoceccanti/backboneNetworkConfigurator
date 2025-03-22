@@ -8,7 +8,7 @@ export const initialMainConfig = {
 }
 
 export const initialRouterConfig: RouterConfig = {
-  name: "r1",
+  name: "R1",
   asn: 55001,
   interfaces: [
     {
@@ -41,10 +41,11 @@ export const initialRouterConfig: RouterConfig = {
     range: ["192.168.100.10", "192.168.100.99"]
   },
   internet_iface: undefined,
+  redistribute_bgp: false
 };
 
 export const initialHostConfig: HostConfig = {
-  name: "h1",
+  name: "H1",
   interfaces: [
     {
       name: "Ethernet1",

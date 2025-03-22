@@ -21,7 +21,6 @@ class ConfigureNetwork:
     self._enable_dhcp_on_hosts()
     self._generate_admin_password_hash()
     self._generate_networks_for_routers()
-    print("[DEBUG] finito")
 
 
   def _create_internet_network(self) -> Router:
@@ -29,12 +28,9 @@ class ConfigureNetwork:
     Create internet router and internet host.
     :return router internet
     """
-    print("[DEBUG] entrato")
-    router_internet = Router(name = Config.INTERNET_ROUTER_NAME, asn = Config.INTERNET_ASN, interfaces = [RouterInterface(name = Config.INTERNET_IFACE_ROUTER, ip = Config.INTERNET_ROUTER_IP, peer = {"name": Config.INTERNET_HOST_NAME, "interface": Config.INTERNET_IFACE_HOST})], neighbors = self._get_internet_neighbor()) 
-    print("[DEBUG] apposto")
+    router_internet = Router(name = Config.INTERNET_ROUTER_NAME, asn = Config.INTERNET_ASN, interfaces = [RouterInterface(name = Config.INTERNET_IFACE_ROUTER, ip = Config.INTERNET_ROUTER_IP, peer = {"name": Config.INTERNET_HOST_NAME, "interface": Config.INTERNET_IFACE_HOST})], neighbors = self._get_internet_neighbor(), redistribute_bgp = False, mngt_ipv4=Config.INTERNET_ROUTER_MNGT_IP) 
     self._network_topology.routers.append(router_internet)
     internet_host = Host(name = Config.INTERNET_HOST_NAME, interfaces = [HostInterface(name = Config.INTERNET_IFACE_HOST, dhcp = False, ip = Config.INTERNET_HOST_IP)], gateway = Config.INTERNET_ROUTER_IP.split("/")[0])
-    print("[DEBUG] apposto")
     self._network_topology.hosts.append(internet_host)
 
   
@@ -141,10 +137,24 @@ class ConfigureNetwork:
     :param routers: list of routers
     """
     ipv4_base = ipaddress.IPv4Address("172.20.20.2")
-    for i, router in enumerate(self._network_topology.routers):
-      router.mngt_ipv4 = f"{str(ipv4_base + i)}/24"
+    max_ip = ipaddress.IPv4Address("172.20.20.254")
+    reserved_ip = ipaddress.IPv4Address(Config.INTERNET_ROUTER_MNGT_IP)
 
+    candidate_ip = ipv4_base
+    for router in self._network_topology.routers:
+        if router.name == Config.INTERNET_ROUTER_NAME:
+            router.mngt_ipv4 = f"{str(reserved_ip)}/24"
+            candidate_ip = reserved_ip
+            continue
 
+        if candidate_ip == reserved_ip:
+            candidate_ip += 1 
+
+        if candidate_ip > max_ip:
+            raise Exception("Reached the maximum number of management IP addresses.")
+
+        router.mngt_ipv4 = f"{str(candidate_ip)}/24"
+        candidate_ip += 1
   def _enable_dhcp_on_hosts(self) -> None:
     """ 
     If any of the interfaces of the host has the dhcp enabled,
@@ -153,7 +163,7 @@ class ConfigureNetwork:
     for host in self._network_topology.hosts:
       for interface in host.interfaces:
         if interface.dhcp:
-          host.dhcp_enabled = True
+          host.is_dhcp_enabled = True
           break
 
 

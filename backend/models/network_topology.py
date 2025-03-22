@@ -87,6 +87,7 @@ class Router:
   asn: int
   interfaces: List[RouterInterface]
   neighbors: List[Neighbor]
+  redistribute_bgp: bool
   admin_password: Optional[str] = None
   dhcp: Optional[DHCP] = None
   mngt_ipv4: Optional[str] = None
