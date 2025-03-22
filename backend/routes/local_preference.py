@@ -15,6 +15,7 @@ def local_preference() -> Response:
       print("[INFO] Received request to set local preference")
       local_preference = LocalPreference(**request.get_json())
       local_preference_network = LocalPreferenceNetwork(local_preference)
+      local_preference_network._generate_debug_file()
       local_preference_network.generate_local_preference()
       return jsonify({}), 204
     else:
