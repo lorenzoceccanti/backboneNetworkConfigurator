@@ -92,15 +92,6 @@ export function useMainConfig() {
         description: "The configuration has been generated successfully.",
       })
       setIsConfigGenerated(true);
-      setAnnounceConfigs({
-        router: "",
-        network_ip: "",
-        to: [0],
-      });
-      setStopAnnounceConfigs({
-        router: "",
-        network_ip: ""
-      })
     } catch (error) {
       console.error("Error:", error);
 
