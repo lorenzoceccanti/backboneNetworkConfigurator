@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
 type StopAnnounceConfigurationProps = {
   initialValues: StopAnnounceConfig;
   announcedNetworks: Record<string, string[]>;
@@ -29,9 +28,8 @@ export default function StopAnnounceConfiguration({
     handleChange,
     form,
     handleRouterChange,
-    getAvailableRouterOptions,
     getAvailableNetworksOptions,
-  } = useStopAnnounceConfig(initialValues, announcedNetworks, onChange);
+  } = useStopAnnounceConfig(initialValues, onChange);
 
   return (
     <div className="my-3">
@@ -54,7 +52,7 @@ export default function StopAnnounceConfiguration({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Router</SelectLabel>
-                {getAvailableRouterOptions(config, availableRouterOptions).map(
+                {availableRouterOptions.map(
                   (option: RouterResponse) => (
                     <SelectItem key={option.name} value={option.name}>
                       {option.name}
@@ -82,7 +80,7 @@ export default function StopAnnounceConfiguration({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Networks</SelectLabel>
-                {getAvailableNetworksOptions(config, availableRouterOptions, announcedNetworks).map(
+                {getAvailableNetworksOptions(config, announcedNetworks).map(
                   (option: string) => (
                     <SelectItem key={option} value={option}>
                       {option}

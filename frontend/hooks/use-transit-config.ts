@@ -6,7 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { transitConfigurationFormSchema } from "@/lib/validations";
 
 
-export function useTransitConfig(initialValues: TransitConfig, availableASOptions: number[], onChange: (config: TransitConfig) => void) {
+export function useTransitConfig(
+  initialValues: TransitConfig, 
+  availableASOptions: number[], 
+  onChange: (config: TransitConfig) => void
+) {
   const [config, setConfig] = useState<TransitConfig>(initialValues);
 
   const form = useForm<z.infer<typeof transitConfigurationFormSchema>>({

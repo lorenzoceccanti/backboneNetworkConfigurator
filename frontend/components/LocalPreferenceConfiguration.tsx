@@ -1,5 +1,5 @@
 import { LocalPreferenceConfig, RouterResponse} from "@/lib/definitions";
-import { useLocalPreferenceConfig } from "@/hooks/use-localPreference";
+import { useLocalPreferenceConfig } from "@/hooks/use-local-preference";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -102,8 +102,8 @@ export default function LocalPreferenceConfiguration({
             placeholder="Local Preference"
             value={config.local_preference}
             onChange={(e) => {
-              const updatedInterface = Number(e.target.value);
-              handleChange("local_preference", updatedInterface);
+              const updatedLocalPreference = Number(e.target.value);
+              handleChange("local_preference", updatedLocalPreference);
             }}
           />
           {form.formState.errors.local_preference && <p className="text-red-500 text-sm">{form.formState.errors.local_preference.message}</p>}

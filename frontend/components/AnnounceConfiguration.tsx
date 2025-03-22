@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/select";
 import { X } from "lucide-react";
 
-
 type AnnounceConfigurationProps = {
   initialValues: AnnounceConfig;
   availableASOptions: number[];
@@ -32,7 +31,6 @@ export default function AnnounceConfiguration({
     handleChange,
     handleRouterChange,
     getAvailableASOptions,
-    getAvailableRouterOptions,
     getAvailableNetworksOptions,
     handleToChange,
     addToField,
@@ -61,7 +59,7 @@ export default function AnnounceConfiguration({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Router</SelectLabel>
-                {getAvailableRouterOptions(config, availableRouterOptions).map(
+                {availableRouterOptions.map(
                   (option: RouterResponse) => (
                     <SelectItem key={option.name} value={option.name}>
                       {option.name}

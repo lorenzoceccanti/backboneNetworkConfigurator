@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
-import { StopAnnounceConfig, RouterResponse} from "@/lib/definitions";
+import { StopAnnounceConfig } from "@/lib/definitions";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { StopAnnounceConfigFormSchema} from "@/lib/validations";
+import { stopAnnounceConfigFormSchema} from "@/lib/validations";
 
 
 export function useStopAnnounceConfig(
   initialValues: StopAnnounceConfig,
-  announcedNetworks: Record<string, string[]>,
   onChange: (config: StopAnnounceConfig) => void
 ) {
   const [config, setConfig] = useState<StopAnnounceConfig>(initialValues);
 
-  const form = useForm<z.infer<typeof StopAnnounceConfigFormSchema>>({
-    resolver: zodResolver(StopAnnounceConfigFormSchema),
+  const form = useForm<z.infer<typeof stopAnnounceConfigFormSchema>>({
+    resolver: zodResolver(stopAnnounceConfigFormSchema),
     mode: "onBlur",
     defaultValues: initialValues,
   });
@@ -31,17 +30,9 @@ export function useStopAnnounceConfig(
     setConfig(updatedConfig);
     onChange(updatedConfig);
   };
-  
-  const getAvailableRouterOptions = (
-    config: StopAnnounceConfig,
-    availableRouter: RouterResponse[],
-  ) => {
-    return availableRouter;
-  }
 
   const getAvailableNetworksOptions = (
     config: StopAnnounceConfig,
-    availableRouter: RouterResponse[],
     announcedNetworks: Record<string, string[]>
   ): string[] => {
     const networksForRouter = announcedNetworks[config.router];
@@ -62,7 +53,6 @@ export function useStopAnnounceConfig(
     handleChange,
     form,
     handleRouterChange,
-    getAvailableRouterOptions,
     getAvailableNetworksOptions,
   };
 }

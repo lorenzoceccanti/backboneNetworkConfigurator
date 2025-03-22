@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -76,7 +76,11 @@ export function useMainConfig() {
     };
 
     if (!serverIp) {
-      console.error("Server IP is not set.");
+      toast({
+        variant: "destructive",
+        title: "Server IP is not set.",
+        description: "Please set the server IP in the form.",
+      });
       return;
     }
 
@@ -87,16 +91,15 @@ export function useMainConfig() {
         variant: "default",
         title: "Configuration generated!",
         description: "The configuration has been generated successfully.",
-      })
+      });
       setIsConfigGenerated(true);
     } catch (error) {
       console.error("Error:", error);
-
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
-      })
+      });
       setIsConfigGenerated(false);
     }
   };
@@ -105,7 +108,11 @@ export function useMainConfig() {
     setIsDeploying(true);
 
     if (!serverIp) {
-      console.error("Server IP is not set.");
+      toast({
+        variant: "destructive",
+        title: "Server IP not set.",
+        description: "Please set the server IP in the form.",
+      });
       return;
     }
 
@@ -117,18 +124,18 @@ export function useMainConfig() {
         description: "The network has been deployed successfully.",
       });
       setTransitConfigs({
-        from: 0,
-        through: 0,
-        to: [0],
+        from: networkTopologyResponse?.routers[0].asn || 0,
+        through: networkTopologyResponse?.routers[1].asn || 0,
+        to: [networkTopologyResponse?.routers[2].asn || 0],
       });
       setPeeringConfigs({
-        fromAS: 0,
-        toAS: 0
+        fromAS: networkTopologyResponse?.routers[0].asn || 0,
+        toAS: networkTopologyResponse?.routers[1].asn || 0,
       });
       setlocalPreferenceConfigs({
         asn: 0,
         neighbor_router: "",
-        local_preference: 0,
+        local_preference: 100,
       });
       setAnnounceConfigs({
         router: "",
@@ -137,7 +144,7 @@ export function useMainConfig() {
       });
       setStopAnnounceConfigs({
         router: "",
-        network_ip: ""
+        network_ip: "",
       });
     } catch (error) {
       console.error("Error:", error);
@@ -186,8 +193,6 @@ export function useMainConfig() {
   const handleStopAnnounceConfigsChange = (newConfig: StopAnnounceConfig) => {
     setStopAnnounceConfigs(newConfig);
   };
-
-
 
   const getRoutersByASN = (networkTopologyResponse: NetworkTopologyResponse, asn: number): RouterResponse[] =>
     networkTopologyResponse.routers.filter(router => router.asn === asn);
@@ -334,24 +339,73 @@ export function useMainConfig() {
     if (!networkTopologyResponse || !transitConfigs) return;
 
     const fromRouters = getRoutersByASN(networkTopologyResponse, transitConfigs.from);
-    if (!fromRouters.length) return console.error("From router not found.");
+    if (!fromRouters.length) {
+      toast({
+        variant: "destructive",
+        title: "From router not found.",
+        description: "The router with the ASN provided was not found.",
+      });
+    }
 
     const throughRouters = getRoutersByASN(networkTopologyResponse, transitConfigs.through);
-    if (!throughRouters.length) return console.error("Through router not found.");
+    if (!throughRouters.length) {
+      toast({
+        variant: "destructive",
+        title: "Through router not found.",
+        description: "The router with the ASN provided was not found.",
+      });
+      return;
+    }
 
     const toRouters = getRoutersByASNs(networkTopologyResponse, transitConfigs.to);
-    if (!toRouters.length) return console.error("To routers not found.");
+    if (!toRouters.length) {
+      toast({
+        variant: "destructive",
+        title: "To router not found.",
+        description: "The router with the ASN provided was not found.",
+      });
+      return;
+    }
 
     const fromThroughLinks = findLinksBetweenRouters(networkTopologyResponse, fromRouters, throughRouters);
-    if (!fromThroughLinks.length) return console.error("From-Through link not found.");
+    if (!fromThroughLinks.length) {
+      toast({
+        variant: "destructive",
+        title: "From-Through link not found.",
+        description: "There is no link between the from and through routers.",
+      });
+      return;
+    }
 
     const fromRouter = findConnectedRouter(fromRouters, fromThroughLinks);
-    if (!fromRouter) return console.error("From router not found.");
+    if (!fromRouter) {
+      toast({
+        variant: "destructive",
+        title: "From router not found.",
+        description: "The from router was not found.",
+      });
+      return;
+    }
 
     const throughRouter = findConnectedRouter(throughRouters, fromThroughLinks);
-    if (!throughRouter) return console.error("Through router not found.");
+    if (!throughRouter) {
+      toast({
+        variant: "destructive",
+        title: "Through router not found.",
+        description: "The through router was not found.",
+      });
+      return;
+    }
 
     const throughToLinks = findThroughToLinks(networkTopologyResponse, throughRouters, toRouters);
+    if (throughToLinks[0]?.[0] === "" && throughToLinks[0]?.[1] === "") {
+      toast({
+        variant: "destructive",
+        title: "Through-To link not found.",
+        description: "There is no link between the through and to routers.",
+      });
+      return;
+    }
     
     const fromInterfaceConnectedToThrough = getConnectedInterface(fromRouter, fromThroughLinks);
     const throughInterfaceConnectedToFrom = getConnectedInterface(throughRouter, fromThroughLinks);
@@ -361,9 +415,13 @@ export function useMainConfig() {
     const to = buildToArray(throughRouter, throughToLinks, toRouters);
 
     const body: TransitConfigBody = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough);
-    console.log(body);
+
     if (!serverIp) {
-      console.error("Server IP is not set.");
+      toast({
+        variant: "destructive",
+        title: "Server IP not set.",
+        description: "Please set the server IP in the form.",
+      });
       return;
     }
 
@@ -373,7 +431,7 @@ export function useMainConfig() {
         variant: "default",
         title: "Transit configuration generated!",
         description: "The configuration has been generated successfully.",
-      })
+      });
 
       
     } catch (error) {
@@ -382,7 +440,7 @@ export function useMainConfig() {
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
-      })
+      });
     }
   };
 
@@ -408,27 +466,66 @@ export function useMainConfig() {
     if(!networkTopologyResponse || !peeringConfigs) return;
 
     const fatherASRouters = getRoutersByASN(networkTopologyResponse, peeringConfigs.fromAS);
-    if(!fatherASRouters.length) return console.error("Father peer router not found");
+    if(!fatherASRouters.length) {
+      toast({
+        variant: "destructive",
+        title: "Father peer router not found.",
+        description: "No router with the ASN provided was found.",
+      });
+      return;
+    }
 
     const sonASRouters = getRoutersByASN(networkTopologyResponse, peeringConfigs.toAS);
-    if(!sonASRouters.length) return console.error("Son peer router not found");
+    if(!sonASRouters.length) {
+      toast({
+        variant: "destructive",
+        title: "Son peer router not found.",
+        description: "No router with the ASN provided was found.",
+      });
+      return;
+    }
 
     const fatherSonLinks = findLinksBetweenRouters(networkTopologyResponse, fatherASRouters, sonASRouters);
-    if(!fatherSonLinks.length) return console.error("Peering link not found")
+    if(!fatherSonLinks.length) {
+      toast({
+        variant: "destructive",
+        title: "From-To link not found.",
+        description: "There is no link between the From and To AS.",
+      });
+      return;
+    }
 
     const fatherRouter = findConnectedRouter(fatherASRouters, fatherSonLinks);
-    if (!fatherRouter) return console.error("Father peer router not found");
+    if (!fatherRouter) {
+      toast({
+        variant: "destructive",
+        title: "From peer router not found.",
+        description: "From peer router not found.",
+      });
+      return;
+    }
 
     const sonRouter = findConnectedRouter(sonASRouters, fatherSonLinks);
-    if (!sonRouter) return console.error("Son peer router not found");
+    if (!sonRouter) {
+      toast({
+        variant: "destructive",
+        title: "To peer router not found.",
+        description: "To peer router not found.",
+      });
+      return;
+    }
 
     const fatherInterfaceConnectedToSon = getConnectedInterface(fatherRouter, fatherSonLinks);
     const sonInterfaceConnectedToFather = getConnectedInterface(sonRouter, fatherSonLinks);
 
     const body : PeeringConfigBody = buildPeerRequestBody(fatherRouter, sonRouter, fatherInterfaceConnectedToSon, sonInterfaceConnectedToFather);
-    console.log(body);
+
     if (!serverIp) {
-      console.error("Server IP is not set.");
+      toast({
+        variant: "destructive",
+        title: "Server IP not set.",
+        description: "Please set the server IP in the form.",
+      });
       return;
     }
 
@@ -453,28 +550,21 @@ export function useMainConfig() {
     networkTopologyResponse.routers.filter(router => router.name === name);
 
   const findTargetRouter = (routers: RouterResponse[], neighbors: RouterResponse[]): { router: RouterResponse, matchedIp: string } | undefined => {
-    
     const result = routers.map(router => {
-       
-        const match = router.neighbors.find(routerNeighbor => {
-            
-            return neighbors.some(neighbor => 
-                neighbor.interfaces.some(interfaceData => interfaceData.ip.split("/")[0] === routerNeighbor.ip)
-            );
-        });
+      const match = router.neighbors.find(routerNeighbor => {   
+        return neighbors.some(neighbor => 
+          neighbor.interfaces.some(interfaceData => interfaceData.ip.split("/")[0] === routerNeighbor.ip)
+        );
+      });
 
-        if (match) {
-            const matchedIp = match.ip; 
-            return { router, matchedIp }; 
-        }
-        return undefined;
+      if (match) {
+        const matchedIp = match.ip; 
+        return { router, matchedIp }; 
+      }
+      return undefined;
     }).find(result => result !== undefined); 
-
     return result; 
-};
-
-
-
+  };
 
   const buildLocalPreferenceRequestBody = (
     router: RouterResponse,
@@ -495,20 +585,43 @@ export function useMainConfig() {
     if(!networkTopologyResponse || !localPreferenceConfigs) return;
 
     const ASrouters = getRoutersByASN(networkTopologyResponse, localPreferenceConfigs.asn);
-    if(!ASrouters.length) return console.error("routers not found");
+    if(!ASrouters.length) {
+      toast({
+        variant: "destructive",
+        title: "AS routers not founded.",
+        description: "No router with the ASN provided was found.",
+      });
+      return;
+    }
 
-    const NeighborRouter = getRoutersByName(networkTopologyResponse, localPreferenceConfigs.neighbor_router)
-    if(NeighborRouter.length > 1 || !NeighborRouter) return console.error("routers not found");
+    const neighborRouter = getRoutersByName(networkTopologyResponse, localPreferenceConfigs.neighbor_router)
+    if(neighborRouter.length > 1 || !neighborRouter) {
+      toast({
+        variant: "destructive",
+        title: "Neighbor router not found.",
+        description: "The neighbor router was not found.",
+      });
+      return;
+    }
 
-    const Target = findTargetRouter(ASrouters, NeighborRouter);
-    if(!Target) return console.error("router not found");
+    const target = findTargetRouter(ASrouters, neighborRouter);
+    if(!target) {
+      toast({
+        variant: "destructive",
+        title: "Neighbor router not found.",
+        description: "The Neighbor router was not found.",
+      });
+      return;
+    }
 
+    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(target.router, target.matchedIp, neighborRouter[0].asn, localPreferenceConfigs.local_preference);
 
-
-    const body : LocalPreferenceConfigBody = buildLocalPreferenceRequestBody(Target.router, Target.matchedIp, NeighborRouter[0].asn, localPreferenceConfigs.local_preference);
-    console.log(body);
     if (!serverIp) {
-      console.error("Server IP is not set.");
+      toast({
+        variant: "destructive",
+        title: "Server IP not set.",
+        description: "Please set the server IP in the form.",
+      });
       return;
     }
 
@@ -527,8 +640,6 @@ export function useMainConfig() {
         description: "There was a problem with your request: " + error,
       })
     }
-
-
   };
 
   const buildAnnounceRequestBody = (
@@ -552,34 +663,38 @@ export function useMainConfig() {
     
     const filteredNeighbors = announceConfigs.to.map((val) => router.neighbors.filter((neig) => neig.asn === val)).flat()
     
-    const to_list: AnnounceToConfigBody[] = []
+    const to_list: AnnounceToConfigBody[] = [];
     filteredNeighbors.forEach((val) => {
-       const obj: AnnounceToConfigBody = {asn: 0, his_router_ip: ""};
-       console.log(val)
-       obj.asn = val.asn;
-       obj.his_router_ip = val.ip;
-       to_list.push(obj);
-       
-     })
-
-     return to_list;
+      const obj: AnnounceToConfigBody = {asn: 0, his_router_ip: ""};
+      obj.asn = val.asn;
+      obj.his_router_ip = val.ip;
+      to_list.push(obj);
+    });
+    return to_list;
   }
-
-  useEffect(() => {
-    console.log("Announced Networks Updated:", announcedNetworks);
-  }, [announcedNetworks]);
 
   const handleAnnounceConfigSend = async() =>{
     if(!networkTopologyResponse || !announceConfigs) return;
 
     const router = getRoutersByName(networkTopologyResponse, announceConfigs.router);
-    if(router.length > 1 || !router.length) return console.error("routers not found");
+    if(router.length > 1 || !router.length) {
+      toast({
+        variant: "destructive",
+        title: "Router not found.",
+        description: "The router was not found.",
+      });
+      return;
+    }
 
-    const to_list = getTolist(router[0])
+    const to_list = getTolist(router[0]);
 
     const body : AnnounceConfigBody = buildAnnounceRequestBody(router[0], announceConfigs.network_ip, to_list);
     if (!serverIp) {
-      console.error("Server IP is not set.");
+      toast({
+        variant: "destructive",
+        title: "Server IP not set.",
+        description: "Please set the server IP in the form.",
+      });
       return;
     }
 
@@ -597,14 +712,14 @@ export function useMainConfig() {
         variant: "default",
         title: "Announce configuration generated!",
         description: "The configuration has been generated successfully.",
-      })
+      });
     } catch (error) {
       console.error("Error:", error);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
-      })
+      });
     }
   };
 
@@ -617,18 +732,28 @@ export function useMainConfig() {
       asn: router.asn,
       mngt_ip: router.mngt_ipv4?.split("/")[0] ?? "",
       network_to_stop_announce: network,
-      
     };
   };
   const handleStopAnnounceConfigSend = async() =>{
     if(!networkTopologyResponse || !stopAnnounceConfigs) return;
 
     const router = getRoutersByName(networkTopologyResponse, stopAnnounceConfigs.router);
-    if(router.length > 1 || !router.length) return console.error("routers not found");
+    if(router.length > 1 || !router.length) {
+      toast({
+        variant: "destructive",
+        title: "Router not found.",
+        description: "The router was not found.",
+      });
+      return;
+    }
 
     const body : StopAnnounceConfigBody = buildStopAnnounceRequestBody(router[0], stopAnnounceConfigs.network_ip);
     if (!serverIp) {
-      console.error("Server IP is not set.");
+      toast({
+        variant: "destructive",
+        title: "Server IP not set.",
+        description: "Please set the server IP in the form.",
+      });
       return;
     }
 
@@ -652,14 +777,14 @@ export function useMainConfig() {
         variant: "default",
         title: "Announce configuration generated!",
         description: "The configuration has been generated successfully.",
-      })
+      });
     } catch (error) {
       console.error("Error:", error);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
-      })
+      });
     }
   };
 
