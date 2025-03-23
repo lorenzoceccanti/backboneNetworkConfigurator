@@ -235,5 +235,4 @@ class TransitPolicy:
           self._generate_debug_file(Config.INTERNET_ROUTER_NAME, self._to_commands[0])
     self._generate_debug_file(self._transit_policy.through.router, self._through_commands)
     if isinstance(self._transit_policy.to, list):
-     
-    print("[INFO] Transit policy generated successfully")
+      print("[INFO] Transit policy generated successfully")
