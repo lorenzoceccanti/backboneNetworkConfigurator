@@ -786,7 +786,7 @@ export function useMainConfig() {
       
       toast({
         variant: "default",
-        title: "Announce configuration generated!",
+        title: "Stop Announce configuration generated!",
         description: "The configuration has been generated successfully.",
       });
     } catch (error) {
