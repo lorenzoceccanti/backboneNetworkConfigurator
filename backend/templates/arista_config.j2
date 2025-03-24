@@ -29,8 +29,8 @@ management api netconf
 !
 ip routing
 !
-{% if router.name == router_internet %}
-ip route 0.0.0.0/0 192.168.114.10
+{% if router.name == internet_router_name %}
+ip route 0.0.0.0/0 {{ internet_host_ip.split("/")[0] }}
 {% endif %}
 !
 interface Management0
@@ -52,7 +52,7 @@ interface {{ router.internet_iface.name }}
   ip address {{ router.internet_iface.ip }}
 {% endif %}
 !
-{% if router.name == router_internet %}
+{% if router.name == internet_router_name %}
 ip prefix-list DEFAULT_ROUTE seq 10 permit 0.0.0.0/0
 
 {% for neighbor in router.neighbors %}
@@ -81,14 +81,14 @@ router bgp {{ router.asn }}
   {% for neighbor in router.neighbors %}
   {% if neighbor.asn != router.asn %}
   neighbor {{ neighbor.ip }} remote-as {{ neighbor.asn }}
-  {% if router.name == router_internet %}
+  {% if router.name == internet_router_name %}
   neighbor {{ neighbor.ip }} route-map RM-IN-{{neighbor.asn}} in
   neighbor {{ neighbor.ip }} route-map RM-OUT-INTERNET out
   {% endif %}
   {% endif %}
   {% endfor %}
 
-  {% if router.name == router_internet %} 
+  {% if router.name == internet_router_name %} 
   network 0.0.0.0/0
   {% endif %}
 !
