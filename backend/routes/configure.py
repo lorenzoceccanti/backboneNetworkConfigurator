@@ -103,6 +103,6 @@ def eliminate_internet_links(links) -> list[list[str, str]]:
     part2 = endpoint2.split(":")[0]
     internet = {Config.INTERNET_ROUTER_NAME, Config.INTERNET_HOST_NAME}
 
-    if(part1 not in internet or part2 not in internet):
+    if(part1 not in internet and part2 not in internet):
       filtered_links.append(link)
   return filtered_links
