@@ -79,6 +79,7 @@ class TransitPolicy:
     through_asn = self._transit_policy.through.asn
     from_router_ip = self._transit_policy.from_.router_ip
 
+    self._through_commands.append(f"router bgp {through_asn}")
     self._through_commands.append(f"   neighbor {from_router_ip} route-map RM-OUT-{from_asn} out")
     self._through_commands.append(f"exit")
 
