@@ -72,13 +72,15 @@ class TransitFrom:
 class Transit:
   from_: TransitFrom
   through: TransitThrough
-  to: Union[List[TransitTo], str]
+  to: List[Union[TransitTo, str]]
 
   def __post_init__(self):
     self.from_ = TransitFrom(**self.from_) if isinstance(self.from_, dict) else self.from_
     self.through = TransitThrough(**self.through) if isinstance(self.through, dict) else self.through
     if isinstance(self.to, list):
       self.to = [TransitTo(**to) if isinstance(to, dict) else to for to in self.to]
+    else:
+       raise ValueError("'to' must be a list")
 
   @staticmethod
   def schema() -> dict:
@@ -125,10 +127,11 @@ class Transit:
           "additionalProperties": False
         },
         "to": {
-          "oneOf": [
-            {
-              "type": "array",
-              "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
                 "type": "object",
                 "properties": {
                   "asn": {"type": "integer"},
@@ -138,12 +141,12 @@ class Transit:
                 },
                 "required": ["asn", "router", "router_ip", "mngt_ip"],
                 "additionalProperties": False
-              }
-            },
-            {"type": "string"}
-          ]
+              },
+              {"type": "string", "enum": ["Internet"]}
+            ]
+          }
         }
       },
       "required": ["from_", "through", "to"],
       "additionalProperties": False
-    }
+  }
