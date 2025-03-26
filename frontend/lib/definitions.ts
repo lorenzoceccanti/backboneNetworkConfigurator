@@ -100,17 +100,17 @@ export type TransitConfigBody = {
     asn: number;
     router: string;
     mngt_ip: string;
-    router_ip: {
+    router_ip: ({
         asn: number;
         my_router_ip: string;
-    }[];
+    } | string)[];
   },
-  to: {
+  to: ({
     asn: number;
     router: string;
     router_ip: string;
     mngt_ip: string;
-  },
+  } | string)[],
 }
 
 export type PeeringConfigBody = {

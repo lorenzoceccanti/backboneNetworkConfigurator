@@ -69,7 +69,12 @@ export const hostConfigurationFormSchema = z.object({
 export const transitConfigurationFormSchema = z.object({
   from: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
   through: z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
-  to: z.array(z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534")),
+  to: z.array(
+    z.union([
+      z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
+      z.literal(-1)
+    ])
+  ),
 });
 
 export const peeringConfigurationFormSchema = z.object({
