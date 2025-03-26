@@ -9,5 +9,5 @@ def deploy() -> Response:
   Deploys the network configuration.
   :return: Response object with a message and status code.
   """
-  #DeployNetwork.deploy_network()
+  DeployNetwork.deploy_network()
   return jsonify({}), 204

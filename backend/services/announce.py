@@ -1,4 +1,4 @@
-from models.announce import Announce
+from models.announce import Announce, AnnounceTo
 from config import Config
 from utils.helpers import Helper
 
@@ -25,13 +25,15 @@ class AnnounceNetwork:
     print(arista_response)
     response_dict = arista_response[2].get("cmds", {}).get(f"router bgp {local_asn}").get("cmds")
     neigh_addr = ""
+    internet_rule_found = False
     for row in response_dict:
       if row.startswith("neighbor"):
         words = row.split()
         if len(words) == 4 and words[3] == str(remote_asn):
+           internet_rule_found = True
            neigh_addr = words[1]
-        else:
-           raise ValueError("No internet neighbor")
+    if not internet_rule_found:
+      raise ValueError("No Internet neighbor")
 
     return neigh_addr
 
@@ -99,15 +101,19 @@ class AnnounceNetwork:
     ]
 
     for to in self._network_to_announce.to:
-      if (to == "Internet"):
-        neighbot_ip = self._get_neighbor_address(self._network_to_announce.asn, Config.INTERNET_ASN)
-      # get the sequence number for the route-map of the through as
-      new_seq = self._get_route_map_sequence_number(f"RM-OUT-{to.asn}", self._network_to_announce.mngt_ip)
+      
+      if isistance(to, str):
+        if (to == "Internet"):
+          neighbor_ip = self._get_neighbor_address(self._network_to_announce.asn, Config.INTERNET_ASN)
 
-      self._commands.append(f"route-map RM-OUT-{to.asn} permit {new_seq}")
-      self._commands.append(f"   match ip address prefix-list {self._network_to_announce.router}-NETWORKS")
-      self._commands.append(f"   exit")
-      self._commands.append(f"route-map RM-OUT-{to.asn} deny 99")
+      # get the sequence number for the route-map of the through as
+      if isinstance(to, AnnounceTo):
+        new_seq = self._get_route_map_sequence_number(f"RM-OUT-{to.asn}", self._network_to_announce.mngt_ip)
+
+        self._commands.append(f"route-map RM-OUT-{to.asn} permit {new_seq}")
+        self._commands.append(f"   match ip address prefix-list {self._network_to_announce.router}-NETWORKS")
+        self._commands.append(f"   exit")
+        self._commands.append(f"route-map RM-OUT-{to.asn} deny 99")
 
     # get the sequence number of the prefix-list
     seq = self._get_prefix_list_sequence_number()
@@ -126,7 +132,11 @@ class AnnounceNetwork:
 
     self._commands.append(f"router bgp {self._network_to_announce.asn}")
     for to in self._network_to_announce.to:
-      self._commands.append(f"   neighbor {to.his_router_ip} route-map RM-OUT-{to.asn} out")
+      if isinstance(to, AnnounceTo):
+        self._commands.append(f"   neighbor {to.his_router_ip} route-map RM-OUT-{to.asn} out")
+      if isinstance(to, str):
+        if to == "Internet":
+          self._commands.append(f"   neighbor {neighbor_ip} route-map RM-OUT-{Config.INTERNET_ASN} out")
 
     self._commands.append(f"   network {self._network_to_announce.network_to_announce}")
     self._commands.append("exit")
