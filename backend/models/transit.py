@@ -37,7 +37,7 @@ class TransitThroughRouterIP:
 class TransitThrough:
   asn: int
   router: str
-  router_ip: List[TransitThroughRouterIP]
+  router_ip: List[Union[TransitThroughRouterIP, str]]
   mngt_ip: str
 
   def __post_init__(self):
@@ -112,13 +112,18 @@ class Transit:
             "router_ip": {
               "type": "array",
               "items": {
-                "type": "object",
-                "properties": {
-                  "asn": {"type": "integer"},
-                  "my_router_ip": {"type": "string"}
-                },
-                "required": ["asn", "my_router_ip"],
-                "additionalProperties": False
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "asn": {"type": "integer"},
+                      "my_router_ip": {"type": "string"}
+                    },
+                    "required": ["asn", "my_router_ip"],
+                    "additionalProperties": False
+                  },
+                  {"type": "string"}
+                ]
               }
             },
             "mngt_ip": {"type": "string"}
