@@ -744,6 +744,17 @@ export function useMainConfig() {
 
     const to_list = getTolist(router[0]);
 
+    if(to_list.includes("Internet") && !isInternetLinkPresent(router[0])){
+      toast({
+        variant: "destructive",
+        title: "Internet link not found",
+        description: "The internet link was not found",
+      });
+      return;
+
+    }
+
+
     const body : AnnounceConfigBody = buildAnnounceRequestBody(router[0], announceConfigs.network_ip, to_list);
     if (!serverIp) {
       toast({
@@ -755,7 +766,6 @@ export function useMainConfig() {
     }
 
     try {
-      console.log(JSON.stringify(body))
       await sendAnnounceConfiguration(body, serverIp);
       setAnnouncedNetworks((prev = {}) => ({
         ...prev,
