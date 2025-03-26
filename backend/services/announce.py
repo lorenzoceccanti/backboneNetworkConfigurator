@@ -102,7 +102,7 @@ class AnnounceNetwork:
 
     for to in self._network_to_announce.to:
       
-      if isistance(to, str):
+      if isinstance(to, str):
         if (to == "Internet"):
           neighbor_ip = self._get_neighbor_address(self._network_to_announce.asn, Config.INTERNET_ASN)
 
