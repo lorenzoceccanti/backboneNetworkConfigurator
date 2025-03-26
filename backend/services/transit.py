@@ -1,5 +1,5 @@
 from flask import jsonify
-from models.transit import Transit, TransitTo
+from models.transit import Transit, TransitTo, TransitThroughRouterIP
 from utils.helpers import Helper
 from config import Config
 import yaml
@@ -35,7 +35,9 @@ class TransitPolicy:
     return seq_num
   
   def _get_neighbor_address(self, local_asn, remote_asn) -> str:
-    """ Utility function in order to get the Ri neighbor address from the running-config of an ISP router
+    """ Utility function in order to get the neighbor address from the running-config
+    local_asn is the ASN of the router in which you perform the running-config
+    remote_asn in the ASN of the router neighbor router
     Returns an empty string if the neighbor address is not found
     """
     arista_response = Helper.send_arista_commands(self._transit_policy.through.mngt_ip, [f"enable", f"configure", f"show running-config"])
@@ -69,10 +71,11 @@ class TransitPolicy:
     ]
 
     for through_router_ip in self._transit_policy.through.router_ip:
-      if through_router_ip.asn == from_asn:
-        self._from_commands.append(f"   neighbor {through_router_ip.my_router_ip} remote-as {through_asn}")
-        self._from_commands.append(f"   neighbor {through_router_ip.my_router_ip} route-map RM-IN-{through_asn} in")
-        self. _from_commands.append(f"exit")
+      if isinstance(through_router_ip, TransitThroughRouterIP):
+        if through_router_ip.asn == from_asn:
+          self._from_commands.append(f"   neighbor {through_router_ip.my_router_ip} remote-as {through_asn}")
+          self._from_commands.append(f"   neighbor {through_router_ip.my_router_ip} route-map RM-IN-{through_asn} in")
+          self. _from_commands.append(f"exit")
 
   def _append_through_commands(self, to_asn, to_router_ip) -> None:
     from_asn = self._transit_policy.from_.asn
@@ -104,21 +107,20 @@ class TransitPolicy:
     self._through_commands.append(f"exit")
 
     for through_router_ip in self._transit_policy.through.router_ip:
-      if through_router_ip.asn == to_asn:
-          self._through_commands.append(f"router bgp {through_asn}")
-          self._through_commands.append(f"   neighbor {to_router_ip} remote-as {to_asn}")
-          self._through_commands.append(f"   neighbor {to_router_ip} route-map RM-IN-{to_asn} in")
-          self._through_commands.append(f"   neighbor {to_router_ip} route-map RM-OUT-{to_asn} out")
-          self._through_commands.append(f"exit")
+      if ( (isinstance(through_router_ip, TransitThroughRouterIP) and through_router_ip.asn == to_asn) or (isinstance(through_router_ip, str) and through_router_ip == "Internet") ):
+            self._through_commands.append(f"router bgp {through_asn}")
+            self._through_commands.append(f"   neighbor {to_router_ip} remote-as {to_asn}")
+            self._through_commands.append(f"   neighbor {to_router_ip} route-map RM-IN-{to_asn} in")
+            self._through_commands.append(f"   neighbor {to_router_ip} route-map RM-OUT-{to_asn} out")
+            self._through_commands.append(f"exit")
 
-          # get the sequence number for the route-map of the to as
-          new_seq = self._get_route_map_sequence_number(f"RM-OUT-{to_asn}", self._transit_policy.through.mngt_ip)
+            # get the sequence number for the route-map of the to as
+            new_seq = self._get_route_map_sequence_number(f"RM-OUT-{to_asn}", self._transit_policy.through.mngt_ip)
 
-          self._through_commands.append(f"route-map RM-OUT-{to_asn} permit {new_seq}")
-          self._through_commands.append(f"   match as-path AS{to_asn}-OUT-{self._timestamp}")
-          self._through_commands.append(f"exit")
-          self._through_commands.append(f"route-map RM-OUT-{to_asn} deny 99")
-    
+            self._through_commands.append(f"route-map RM-OUT-{to_asn} permit {new_seq}")
+            self._through_commands.append(f"   match as-path AS{to_asn}-OUT-{self._timestamp}")
+            self._through_commands.append(f"exit")
+            self._through_commands.append(f"route-map RM-OUT-{to_asn} deny 99")
 
   def _generate_through_commands(self) -> None:
     from_asn = self._transit_policy.from_.asn
@@ -180,10 +182,11 @@ class TransitPolicy:
           ]
 
           for through_router_ip in self._transit_policy.through.router_ip:
-            if through_router_ip.asn == to.asn:
-              self._to_commands[index].append(f"   neighbor {through_router_ip.my_router_ip} remote-as {through_asn}")
-              self._to_commands[index].append(f"   neighbor {through_router_ip.my_router_ip} route-map RM-IN-{through_asn} in")
-              self._to_commands[index].append(f"exit")
+            if isinstance(through_router_ip, TransitThroughRouterIP):
+              if through_router_ip.asn == to.asn:
+                self._to_commands[index].append(f"   neighbor {through_router_ip.my_router_ip} remote-as {through_asn}")
+                self._to_commands[index].append(f"   neighbor {through_router_ip.my_router_ip} route-map RM-IN-{through_asn} in")
+                self._to_commands[index].append(f"exit")
 
         if isinstance(to, str):
           if to == "Internet":
@@ -204,10 +207,12 @@ class TransitPolicy:
               ]
 
               for through_router_ip in self._transit_policy.through.router_ip:
-                if through_router_ip.asn == Config.INTERNET_ASN:
-                  self._to_commands[index].append(f"   neighbor {through_router_ip.my_router_ip} remote-as {through_asn}")
-                  self._to_commands[index].append(f"   neighbor {through_router_ip.my_router_ip} route-map RM-IN-{through_asn} in")
-                  self._to_commands[index].append(f"exit")
+                if isinstance(through_router_ip, str):
+                  if through_router_ip == "Internet":
+                    internet_my_router_ip = self._get_neighbor_address(through_asn, Config.INTERNET_ASN)
+                    self._to_commands[index].append(f"   neighbor {internet_my_router_ip} remote-as {through_asn}")
+                    self._to_commands[index].append(f"   neighbor {internet_my_router_ip} route-map RM-IN-{through_asn} in")
+                    self._to_commands[index].append(f"exit")
   
   def _generate_debug_file(self, file_name: str, commands: list[str]) -> None:
     with open(f"config/{file_name}_TRANSIT.cfg", "w") as f:
