@@ -79,7 +79,7 @@ export type LocalPreferenceConfig = {
 export type AnnounceConfig = {
   router: string;
   network_ip: string;
-  to: number[];
+  to: (number | string)[];
 }
 
 export type StopAnnounceConfig = {
@@ -141,7 +141,7 @@ export type AnnounceConfigBody = {
   asn: number;
   mngt_ip: string;
   network_to_announce: string;
-  to: AnnounceToConfigBody[]
+  to: (AnnounceToConfigBody | string)[]
 }
 
 export type StopAnnounceConfigBody = {

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import ipaddress
-from typing import List
+from typing import List, Union
 
 @dataclass
 class AnnounceTo:
@@ -22,7 +22,7 @@ class Announce:
   asn: int
   mngt_ip: str
   network_to_announce: str
-  to: List[AnnounceTo]
+  to: List[Union[AnnounceTo, str]]
 
   def __post_init__(self):
     if self.asn < 0 or self.asn > 65535:
@@ -37,7 +37,7 @@ class Announce:
       raise ValueError(f"Invalid IPv4 network for {self.network_to_announce}")
     if not self.to:
       raise ValueError("You must specify at least one network to announce")
-    self.to = [AnnounceTo(**to) for to in self.to]
+    self.to = [AnnounceTo(**to) if isinstance(to, dict) else to for to in self.to]
 
   @staticmethod
   def schema() -> dict:
@@ -59,13 +59,18 @@ class Announce:
           "type": "array",
           "minItems": 1,
           "items": {
-            "type": "object",
-            "properties": {
-              "asn": {"type": "integer"},
-              "his_router_ip": {"type": "string"}
+            "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "asn": {"type": "integer"},
+                "his_router_ip": {"type": "string"}
+              },
+              "required": ["asn", "his_router_ip"],
+              "additionalProperties": False
             },
-            "required": ["asn", "his_router_ip"],
-            "additionalProperties": False
+            { "type":"string", "enum":["Internet"]}
+            ]
           }
         }
       },

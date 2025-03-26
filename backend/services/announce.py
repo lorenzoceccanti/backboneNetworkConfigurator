@@ -1,4 +1,5 @@
 from models.announce import Announce
+from config import Config
 from utils.helpers import Helper
 
 class AnnounceNetwork:
@@ -15,6 +16,24 @@ class AnnounceNetwork:
     """
     with open(f"config/{self._network_to_announce.router}_ANNOUNCE.cfg", "w") as f:
       f.write("\n".join(self._commands))
+
+  def _get_neighbor_address(self, local_asn, remote_asn) -> str:
+    """ Utility function in order to get the Ri neighbor address from the running-config of an ISP router
+    Returns an empty string if the neighbor address is not found
+    """
+    arista_response = Helper.send_arista_commands(self._network_to_announce.mngt_ip, [f"enable", f"configure", f"show running-config"])
+    print(arista_response)
+    response_dict = arista_response[2].get("cmds", {}).get(f"router bgp {local_asn}").get("cmds")
+    neigh_addr = ""
+    for row in response_dict:
+      if row.startswith("neighbor"):
+        words = row.split()
+        if len(words) == 4 and words[3] == str(remote_asn):
+           neigh_addr = words[1]
+        else:
+           raise ValueError("No internet neighbor")
+
+    return neigh_addr
 
   def _get_prefix_list_sequence_number(self) -> int:
     """
@@ -80,6 +99,8 @@ class AnnounceNetwork:
     ]
 
     for to in self._network_to_announce.to:
+      if (to == "Internet"):
+        neighbot_ip = self._get_neighbor_address(self._network_to_announce.asn, Config.INTERNET_ASN)
       # get the sequence number for the route-map of the through as
       new_seq = self._get_route_map_sequence_number(f"RM-OUT-{to.asn}", self._network_to_announce.mngt_ip)
 

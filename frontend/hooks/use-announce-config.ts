@@ -109,12 +109,13 @@ export function useAnnounceConfig(
     router[0].neighbors.forEach((val) => {neighbor_asn.push(val.asn)});
   
     config.to.forEach((val, i) => {
-      if ( i !== toIndex ) {
+      if ( i !== toIndex && typeof val === "number") {
         used.push(val);
       }
     });
 
     const filtered = availableAS.filter((opt) => !used.includes(opt) && neighbor_asn.includes(opt));
+    filtered.push(-1);
     return filtered;
   };
   
