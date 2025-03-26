@@ -168,6 +168,16 @@ export function useMainConfig() {
     return Array.from(new Set(networkTopologyResponse.routers.map(router => router.asn)));
   };
 
+  const getAvailableASOptionsWithInternet = () => {
+    if (!networkTopologyResponse) return [];
+
+    // the set is used to remove duplicates
+    const availableASOptions: number[] = Array.from(new Set(networkTopologyResponse.routers.map(router => router.asn)));
+    // add to the available AS options the "Internet" field (-1)
+    availableASOptions.push(-1);
+    return availableASOptions;
+};
+
   const getAvailableRouters = () => {
     if (!networkTopologyResponse) return [];
 
@@ -245,30 +255,37 @@ export function useMainConfig() {
     throughToLinks: ([string, string])[],
     toRouters: RouterResponse[],
     fromRouter: RouterResponse,
-    throughInterfaceConnectedToFrom: string | null
-  ): { asn: number; my_router_ip: string }[] => {
-    const ips = throughToLinks.map(link => {
-      if (!link) return console.error("Link not found.");
-      const [link1, link2] = link;
-      const toRouter = toRouters.find(router => router.name === link2.split(":")[0] || router.name === link1.split(":")[0]);
-      if (!toRouter) return console.error("To router not found.");
-      const throughRouterInterfaceConnectedToTo = link1.split(":")[0] === throughRouter.name ? link1.split(":")[1] : link2.split(":")[1];
-      return {
-        asn: toRouter.asn,
-        my_router_ip: throughRouter.interfaces.find(int => int.name === throughRouterInterfaceConnectedToTo)?.ip.split("/")[0]
-      };
-    }).filter(Boolean) as { asn: number; my_router_ip: string }[];
+    throughInterfaceConnectedToFrom: string | null,
+    hasInternet: boolean
+  ): ({ asn: number; my_router_ip: string } | string)[] => {
+    const ips: ({ asn: number; my_router_ip: string } | string)[] 
+      = throughToLinks.map(link => {
+        if (!link) return console.error("Link not found.");
+        const [link1, link2] = link;
+        const toRouter = toRouters.find(router => router.name === link2.split(":")[0] || router.name === link1.split(":")[0]);
+        if (!toRouter) return console.error("To router not found.");
+        const throughRouterInterfaceConnectedToTo = link1.split(":")[0] === throughRouter.name ? link1.split(":")[1] : link2.split(":")[1];
+        return {
+          asn: toRouter.asn,
+          my_router_ip: throughRouter.interfaces.find(int => int.name === throughRouterInterfaceConnectedToTo)?.ip.split("/")[0]
+        };
+      }).filter(Boolean) as { asn: number; my_router_ip: string }[];
 
     ips.unshift({
       asn: fromRouter.asn,
       my_router_ip: throughRouter.interfaces.find(int => int.name === throughInterfaceConnectedToFrom)?.ip.split("/")[0] || ""
     });
 
+    if(hasInternet) {
+      ips.push("Internet");
+    }
+
     return ips;
   };
 
-  const buildToArray = (throughRouter: RouterResponse, throughToLinks: ([string, string])[], toRouters: RouterResponse[]): { asn: number; router: string; router_ip: string; mngt_ip: string }[] => {
-    return toRouters.map(toRouter => {
+  const buildToArray = (throughToLinks: ([string, string])[], toRouters: RouterResponse[], hasInternet: boolean): ({ asn: number; router: string; router_ip: string; mngt_ip: string } | string)[] => {
+    const toArray: ({ asn: number; router: string; router_ip: string; mngt_ip: string } | string)[] 
+      = toRouters.map(toRouter => {
       const link = throughToLinks.find(link => {
         if (!link) return false;
         const [link1, link2] = link;
@@ -287,52 +304,46 @@ export function useMainConfig() {
         mngt_ip: toRouter.mngt_ipv4?.split("/")[0]
       };
     }).filter((item): item is { asn: number; router: string; router_ip: string; mngt_ip: string } => item !== null);
+
+    if (hasInternet) {
+      toArray.push("Internet");
+    }
+    console.log(toArray);
+    return toArray;
   };
 
   const buildRequestBody = (
     fromRouter: RouterResponse,
     throughRouter: RouterResponse,
-    throughRouterIps: { asn: number; my_router_ip: string }[],
-    to: { asn: number; router: string; router_ip: string; mngt_ip: string }[],
+    throughRouterIps: ({ asn: number; my_router_ip: string } | string)[],
+    toArray: ({ asn: number; router: string; router_ip: string; mngt_ip: string } | string)[],
     fromInterfaceConnectedToThrough: string | null,
-
   ): TransitConfigBody => {
-    const from_ip = fromRouter.interfaces.find(int => int.name === fromInterfaceConnectedToThrough)?.ip.split("/")[0] ?? "";
-    const from_mngt = fromRouter.mngt_ipv4?.split("/")[0] ?? "";
-    const through_mngt = throughRouter.mngt_ipv4?.split("/")[0] ?? "";
+    const fromIp = fromRouter.interfaces.find(int => int.name === fromInterfaceConnectedToThrough)?.ip.split("/")[0] ?? "";
+    const fromMngt = fromRouter.mngt_ipv4?.split("/")[0] ?? "";
+    const throughMngt = throughRouter.mngt_ipv4?.split("/")[0] ?? "";
   
-    const cleanedThroughRouterIps = throughRouterIps.map(ip => ({
+    const cleanedThroughRouterIps = throughRouterIps.map(ip => 
+      typeof ip === "string" ? ip : {
       asn: ip.asn,
       my_router_ip: ip.my_router_ip ?? ""
-    }));
-  
-    const toObj = to.length > 0 ? {
-      asn: to[0].asn,
-      router: to[0].router,
-      router_ip: to[0].router_ip ?? "",
-      mngt_ip: to[0].mngt_ip ?? ""
-    } : {
-      asn: 0,
-      router: "",
-      router_ip: "",
-      mngt_ip: ""
-    };
+      }
+    );
   
     return {
       from_: {
         asn: fromRouter.asn,
         router: fromRouter.name,
-        router_ip: from_ip,
-        mngt_ip: from_mngt,
+        router_ip: fromIp,
+        mngt_ip: fromMngt,
       },
       through: {
         asn: throughRouter.asn,
         router: throughRouter.name,
-        mngt_ip: through_mngt,
+        mngt_ip: throughMngt,
         router_ip: cleanedThroughRouterIps,
       },
-      to: toObj,
-     
+      to: toArray
     };
   };
 
@@ -358,7 +369,9 @@ export function useMainConfig() {
       return;
     }
 
-    const toRouters = getRoutersByASNs(networkTopologyResponse, transitConfigs.to);
+    // if transitConfigs.to contains -1, remove -1 from the list and set the boolean hasInternet to true
+    const hasInternet = transitConfigs.to.includes(-1);
+    const toRouters = getRoutersByASNs(networkTopologyResponse, transitConfigs.to.filter(asn => asn !== -1));
     if (!toRouters.length) {
       toast({
         variant: "destructive",
@@ -411,11 +424,11 @@ export function useMainConfig() {
     const fromInterfaceConnectedToThrough = getConnectedInterface(fromRouter, fromThroughLinks);
     const throughInterfaceConnectedToFrom = getConnectedInterface(throughRouter, fromThroughLinks);
 
-    const throughRouterIps = buildThroughRouterIps(throughRouter, throughToLinks, toRouters, fromRouter, throughInterfaceConnectedToFrom);
+    const throughRouterIps = buildThroughRouterIps(throughRouter, throughToLinks, toRouters, fromRouter, throughInterfaceConnectedToFrom, hasInternet);
 
-    const to = buildToArray(throughRouter, throughToLinks, toRouters);
+    const toArray = buildToArray(throughToLinks, toRouters, hasInternet);
 
-    const body: TransitConfigBody = buildRequestBody(fromRouter, throughRouter, throughRouterIps, to, fromInterfaceConnectedToThrough);
+    const body: TransitConfigBody = buildRequestBody(fromRouter, throughRouter, throughRouterIps, toArray, fromInterfaceConnectedToThrough);
 
     if (!serverIp) {
       toast({
@@ -642,14 +655,14 @@ export function useMainConfig() {
         variant: "default",
         title: "Local Preference configuration generated!",
         description: "The configuration has been generated successfully.",
-      })
+      });
     } catch (error) {
       console.error("Error:", error);
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
-      })
+      });
     }
   };
 
@@ -823,6 +836,7 @@ export function useMainConfig() {
     handleAnnounceConfigsChange,
     handleStopAnnounceConfigsChange,
     getAvailableASOptions,
+    getAvailableASOptionsWithInternet,
     getAvailableRouters,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,

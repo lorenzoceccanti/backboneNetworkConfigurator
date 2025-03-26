@@ -107,7 +107,7 @@ export default function TransitConfiguration({
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select an AS">
-                    {value}
+                    {value === -1 ? "Internet" : value}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -116,7 +116,7 @@ export default function TransitConfiguration({
                     {getAvailableASOptions(config, availableASOptions, "to", i).map(
                       (option: number) => (
                         <SelectItem key={option} value={String(option)}>
-                          {option}
+                          {option === -1 ? "Internet" : option}
                         </SelectItem>
                       )
                     )}

@@ -67,10 +67,13 @@ export function useTransitConfig(
       }
     });
   
-    // filter out the AS numbers that are already in use
-    const filtered = availableAS.filter((opt) => !used.includes(opt));
+    let filtered = availableAS.filter((opt) => !used.includes(opt));
   
-    // calculate the current value for the field
+    if (field !== "to") {
+      // Exclude "Internet" (-1) for "from" and "through"
+      filtered = filtered.filter((opt) => opt !== -1);
+    }
+  
     let currentValue: number | null = null;
     if (field === "from") {
       currentValue = config.from;
@@ -80,7 +83,6 @@ export function useTransitConfig(
       currentValue = config.to[toIndex!];
     }
   
-    // add the current value if it's not null and not already in the list
     if (currentValue !== null && !filtered.includes(currentValue)) {
       filtered.push(currentValue);
     }

@@ -55,6 +55,7 @@ export default function MainConfiguration() {
     handleAnnounceConfigsChange,
     handleStopAnnounceConfigsChange,
     getAvailableASOptions,
+    getAvailableASOptionsWithInternet,
     getAvailableRouters,
     handleTransitConfigsSend,
     handlePeeringConfigsSend,
@@ -203,7 +204,7 @@ export default function MainConfiguration() {
               <AccordionContent>
                 <TransitConfiguration
                   initialValues={transitConfigs}
-                  availableASOptions={getAvailableASOptions()}
+                  availableASOptions={getAvailableASOptionsWithInternet()}
                   onChange={handleTransitConfigsChange}
                 />
                 <Button className="w-fit" onClick={handleTransitConfigsSend}>
