@@ -308,7 +308,7 @@ export function useMainConfig() {
     if (hasInternet) {
       toArray.push("Internet");
     }
-    console.log(toArray);
+
     return toArray;
   };
 
@@ -347,6 +347,16 @@ export function useMainConfig() {
     };
   };
 
+  const isInternetLinkPresent = (throughRouter: RouterResponse): boolean => {
+    // we need to check if there is a neighbor in the through AS
+    // which ASN is not present in the available AS options
+    const throughRouterNeighbors = throughRouter.neighbors;
+    const availableASOptions = getAvailableASOptions();
+    const throughRouterNeighborASNs = throughRouterNeighbors.map(neighbor => neighbor.asn);
+    const internetLinkPresent = throughRouterNeighborASNs.some(neighborASN => !availableASOptions.includes(neighborASN));
+    return internetLinkPresent;
+  }
+
   const handleTransitConfigsSend = async () => {
     if (!networkTopologyResponse || !transitConfigs) return;
 
@@ -369,16 +379,16 @@ export function useMainConfig() {
       return;
     }
 
-    // if transitConfigs.to contains -1, remove -1 from the list and set the boolean hasInternet to true
-    const hasInternet = transitConfigs.to.includes(-1);
     const toRouters = getRoutersByASNs(networkTopologyResponse, transitConfigs.to.filter(asn => asn !== -1));
-    if (!toRouters.length) {
-      toast({
-        variant: "destructive",
-        title: "To router not found.",
-        description: "The router with the ASN provided was not found.",
-      });
-      return;
+    if(!(transitConfigs.to.length === 1 && transitConfigs.to[0] === -1)) {
+      if (!toRouters.length) {
+        toast({
+          variant: "destructive",
+          title: "To router not found.",
+          description: "The router with the ASN provided was not found.",
+        });
+        return;
+      }
     }
 
     const fromThroughLinks = findLinksBetweenRouters(networkTopologyResponse, fromRouters, throughRouters);
@@ -407,6 +417,18 @@ export function useMainConfig() {
         variant: "destructive",
         title: "Through router not found.",
         description: "The through router was not found.",
+      });
+      return;
+    }
+
+    // if transitConfigs.to contains -1, remove -1 from the list and set the boolean hasInternet to true
+    const hasInternet = transitConfigs.to.includes(-1);
+
+    if(hasInternet && !isInternetLinkPresent(throughRouter)) {
+      toast({
+        variant: "destructive",
+        title: "Internet link not found.",
+        description: "The internet link was not found.",
       });
       return;
     }
