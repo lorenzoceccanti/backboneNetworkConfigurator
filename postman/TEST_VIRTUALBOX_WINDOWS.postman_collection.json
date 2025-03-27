@@ -1,0 +1,496 @@
+{
+	"info": {
+		"_postman_id": "a200732d-bffd-4313-bd55-a16eff26eb20",
+		"name": "TEST_VIRTUALBOX_WINDOWS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42691518"
+	},
+	"item": [
+		{
+			"name": "00 - CONFIGURE",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"project_name\": \"prod01\",\r\n    \"routers\": [\r\n        {\r\n            \"name\": \"R2\",\r\n            \"asn\": 55002,\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Loopback0\",\r\n                    \"ip\": \"1.1.1.2/32\",\r\n                    \"peer\": {\r\n                        \"name\": \"\",\r\n                        \"interface\": \"\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"ip\": \"192.168.102.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"H1\",\r\n                        \"interface\": \"Ethernet1\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet2\",\r\n                    \"ip\": \"131.114.28.2/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R1\",\r\n                        \"interface\": \"Ethernet1\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet3\",\r\n                    \"ip\": \"134.114.28.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R10\",\r\n                        \"interface\": \"Ethernet2\"\r\n                    }\r\n                }\r\n            ],\r\n            \"neighbors\": [\r\n                {\r\n                    \"ip\": \"131.114.28.1\",\r\n                    \"asn\": 55001\r\n                },\r\n                {\r\n                    \"ip\": \"134.114.28.2\",\r\n                    \"asn\": 55010\r\n                }\r\n            ],\r\n            \"dhcp\": {\r\n                \"enabled\": true,\r\n                \"subnet\": \"192.168.102.0/24\",\r\n                \"interface\": \"Ethernet1\",\r\n                \"range\": [\r\n                    \"192.168.102.10\",\r\n                    \"192.168.102.99\"\r\n                ]\r\n            },\r\n            \"redistribute_bgp\": false\r\n        },\r\n        {\r\n            \"name\": \"R1\",\r\n            \"asn\": 55001,\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Loopback0\",\r\n                    \"ip\": \"1.1.1.1/32\",\r\n                    \"peer\": {\r\n                        \"name\": \"\",\r\n                        \"interface\": \"\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"ip\": \"131.114.28.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R2\",\r\n                        \"interface\": \"Ethernet2\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet2\",\r\n                    \"ip\": \"132.114.28.2/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R20\",\r\n                        \"interface\": \"Ethernet1\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet3\",\r\n                    \"ip\": \"192.168.101.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"H2\",\r\n                        \"interface\": \"Ethernet1\"\r\n                    }\r\n                }\r\n            ],\r\n            \"neighbors\": [\r\n                {\r\n                    \"ip\": \"131.114.28.2\",\r\n                    \"asn\": 55002\r\n                },\r\n                {\r\n                    \"ip\": \"132.114.28.1\",\r\n                    \"asn\": 54020\r\n                }\r\n            ],\r\n            \"dhcp\": {\r\n                \"enabled\": true,\r\n                \"subnet\": \"192.168.101.0/24\",\r\n                \"interface\": \"Ethernet3\",\r\n                \"range\": [\r\n                    \"192.168.101.10\",\r\n                    \"192.168.101.99\"\r\n                ]\r\n            },\r\n            \"redistribute_bgp\": false\r\n        },\r\n        {\r\n            \"name\": \"R20\",\r\n            \"asn\": 54020,\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Loopback0\",\r\n                    \"ip\": \"1.1.1.20/32\",\r\n                    \"peer\": {\r\n                        \"name\": \"\",\r\n                        \"interface\": \"\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"ip\": \"132.114.28.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R1\",\r\n                        \"interface\": \"Ethernet2\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet2\",\r\n                    \"ip\": \"133.114.28.2/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R10\",\r\n                        \"interface\": \"Ethernet1\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet3\",\r\n                    \"ip\": \"192.168.120.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"H3\",\r\n                        \"interface\": \"Ethernet1\"\r\n                    }\r\n                }\r\n            ],\r\n            \"neighbors\": [\r\n                {\r\n                    \"ip\": \"132.114.28.2\",\r\n                    \"asn\": 55001\r\n                },\r\n                {\r\n                    \"ip\": \"133.114.28.1\",\r\n                    \"asn\": 55010\r\n                }\r\n            ],\r\n            \"dhcp\": {\r\n                \"enabled\": true,\r\n                \"subnet\": \"192.168.120.0/24\",\r\n                \"interface\": \"Ethernet3\",\r\n                \"range\": [\r\n                    \"192.168.120.10\",\r\n                    \"192.168.120.99\"\r\n                ]\r\n            },\r\n            \"internet_iface\": {\r\n                    \"enabled\": true,\r\n                    \"name\": \"Ethernet4\",\r\n                    \"ip\": \"140.114.28.1/24\"\r\n            },\r\n            \"redistribute_bgp\": false\r\n        },\r\n        {\r\n            \"name\": \"R10\",\r\n            \"asn\": 55010,\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Loopback0\",\r\n                    \"ip\": \"1.1.1.10/32\",\r\n                    \"peer\": {\r\n                        \"name\": \"\",\r\n                        \"interface\": \"\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"ip\": \"133.114.28.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R20\",\r\n                        \"interface\": \"Ethernet2\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet2\",\r\n                    \"ip\": \"134.114.28.2/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R2\",\r\n                        \"interface\": \"Ethernet3\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet3\",\r\n                    \"ip\": \"192.168.1.2/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R11\",\r\n                        \"interface\": \"Ethernet2\"\r\n                    }\r\n                }\r\n            ],\r\n            \"neighbors\": [\r\n                {\r\n                    \"ip\": \"133.114.28.2\",\r\n                    \"asn\": 54020\r\n                },\r\n                {\r\n                    \"ip\": \"134.114.28.1\",\r\n                    \"asn\": 55002\r\n                },\r\n                {\r\n                    \"ip\": \"192.168.1.1\",\r\n                    \"asn\": 55010\r\n                }\r\n            ],\r\n            \"redistribute_bgp\": true\r\n        },\r\n        {\r\n            \"name\": \"R11\",\r\n            \"asn\": 55010,\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Loopback0\",\r\n                    \"ip\": \"1.1.1.11/32\",\r\n                    \"peer\": {\r\n                        \"name\": \"\",\r\n                        \"interface\": \"\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"ip\": \"192.168.110.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"H4\",\r\n                        \"interface\": \"Ethernet1\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet2\",\r\n                    \"ip\": \"192.168.1.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R10\",\r\n                        \"interface\": \"Ethernet3\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet3\",\r\n                    \"ip\": \"135.114.28.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R30\",\r\n                        \"interface\": \"Ethernet1\"\r\n                    }\r\n                }\r\n            ],\r\n            \"neighbors\": [\r\n                {\r\n                    \"ip\": \"135.114.28.2\",\r\n                    \"asn\": 54030\r\n                },\r\n                {\r\n                    \"ip\": \"192.168.1.2\",\r\n                    \"asn\": 55010\r\n                }\r\n            ],\r\n            \"dhcp\": {\r\n                \"enabled\": true,\r\n                \"subnet\": \"192.168.110.0/24\",\r\n                \"interface\": \"Ethernet1\",\r\n                \"range\": [\r\n                    \"192.168.110.10\",\r\n                    \"192.168.110.99\"\r\n                ]\r\n            },\r\n            \"redistribute_bgp\": false\r\n        },\r\n        {\r\n            \"name\": \"R30\",\r\n            \"asn\": 54030,\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Loopback0\",\r\n                    \"ip\": \"1.1.1.30/32\",\r\n                    \"peer\": {\r\n                        \"name\": \"\",\r\n                        \"interface\": \"\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"ip\": \"135.114.28.2/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"R11\",\r\n                        \"interface\": \"Ethernet3\"\r\n                    }\r\n                },\r\n                {\r\n                    \"name\": \"Ethernet3\",\r\n                    \"ip\": \"192.168.130.1/24\",\r\n                    \"peer\": {\r\n                        \"name\": \"H5\",\r\n                        \"interface\": \"Ethernet1\"\r\n                    }\r\n                }\r\n            ],\r\n            \"neighbors\": [\r\n                {\r\n                    \"ip\": \"135.114.28.1\",\r\n                    \"asn\": 55010\r\n                }\r\n            ],\r\n            \"dhcp\": {\r\n                \"enabled\": true,\r\n                \"subnet\": \"192.168.130.0/24\",\r\n                \"interface\": \"Ethernet3\",\r\n                \"range\": [\r\n                    \"192.168.130.10\",\r\n                    \"192.168.130.99\"\r\n                ]\r\n            },\r\n            \"internet_iface\": {\r\n                \"enabled\": true,\r\n                \"name\": \"Ethernet2\",\r\n                \"ip\": \"141.114.28.1/24\"\r\n            },\r\n            \"redistribute_bgp\": false\r\n        } \r\n    ],\r\n    \"hosts\": [\r\n        {\r\n            \"name\": \"H1\",\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"dhcp\": true\r\n                }\r\n            ],\r\n            \"gateway\": \"\"\r\n        },\r\n        {\r\n            \"name\": \"H2\",\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"dhcp\": true\r\n                }\r\n            ],\r\n            \"gateway\": \"\"\r\n        },\r\n        {\r\n            \"name\": \"H3\",\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"dhcp\": true\r\n                }\r\n            ],\r\n            \"gateway\": \"\"\r\n        },\r\n        {\r\n            \"name\": \"H4\",\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"dhcp\": true\r\n                }\r\n            ],\r\n            \"gateway\": \"\"\r\n        },\r\n        {\r\n            \"name\": \"H5\",\r\n            \"interfaces\": [\r\n                {\r\n                    \"name\": \"Ethernet1\",\r\n                    \"dhcp\": true\r\n                }\r\n            ],\r\n            \"gateway\": \"\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/configure",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"configure"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "00 - DEPLOY",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "192.168.56.101:5000/deploy",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"deploy"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "01 - TRANSIT 1",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n            \"from_\": {\r\n                \"asn\": 55002,\r\n                \"router\": \"R2\",\r\n                \"router_ip\": \"131.114.28.2\",\r\n                \"mngt_ip\": \"172.20.20.2\"\r\n            },\r\n            \"through\": {\r\n                \"asn\": 55001,\r\n                \"router\": \"R1\",\r\n                \"router_ip\": [\r\n                    {\r\n                        \"asn\": 55002,\r\n                        \"my_router_ip\": \"131.114.28.1\"\r\n                    },\r\n                    {\r\n                        \"asn\": 54020,\r\n                        \"my_router_ip\": \"132.114.28.2\"\r\n                    }\r\n                ],\r\n                \"mngt_ip\": \"172.20.20.3\"\r\n            },\r\n            \"to\": [\r\n                {\r\n                    \"asn\": 54020,\r\n                    \"router\": \"R20\",\r\n                    \"router_ip\": \"132.114.28.1\",\r\n                    \"mngt_ip\": \"172.20.20.4\"\r\n                }\r\n            ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/transit",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"transit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "02 - TRANSIT 2",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n            \"from_\": {\r\n                \"asn\": 55001,\r\n                \"router\": \"R1\",\r\n                \"router_ip\": \"132.114.28.2\",\r\n                \"mngt_ip\": \"172.20.20.3\"\r\n            },\r\n            \"through\": {\r\n                \"asn\": 54020,\r\n                \"router\": \"R20\",\r\n                \"router_ip\": [\r\n                    {\r\n                        \"asn\": 55001,\r\n                        \"my_router_ip\": \"132.114.28.1\"\r\n                    },\r\n                    {\r\n                        \"asn\": 55010,\r\n                        \"my_router_ip\": \"133.114.28.2\"\r\n                    },\r\n                    \"Internet\"\r\n                ],\r\n                \"mngt_ip\": \"172.20.20.4\"\r\n            },\r\n            \"to\": [\r\n                {\r\n                    \"asn\": 55010,\r\n                    \"router\": \"R10\",\r\n                    \"router_ip\": \"133.114.28.1\",\r\n                    \"mngt_ip\": \"172.20.20.5\"\r\n                },\r\n                \"Internet\"\r\n            ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/transit",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"transit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "03 - TRANSIT 3",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n            \"from_\": {\r\n                \"asn\": 55010,\r\n                \"router\": \"R11\",\r\n                \"router_ip\": \"135.114.28.1\",\r\n                \"mngt_ip\": \"172.20.20.6\"\r\n            },\r\n            \"through\": {\r\n                \"asn\": 54030,\r\n                \"router\": \"R30\",\r\n                \"router_ip\": [\r\n                    {\r\n                        \"asn\": 55010,\r\n                        \"my_router_ip\": \"135.114.28.2\"\r\n                    },\r\n                    \"Internet\"\r\n                ],\r\n                \"mngt_ip\": \"172.20.20.7\"\r\n            },\r\n            \"to\": [\r\n                \"Internet\"\r\n            ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/transit",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"transit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "03 - TRANSIT 4",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n            \"from_\": {\r\n                \"asn\": 55010,\r\n                \"router\": \"R10\",\r\n                \"router_ip\": \"133.114.28.1\",\r\n                \"mngt_ip\": \"172.20.20.5\"\r\n            },\r\n            \"through\": {\r\n                \"asn\": 54020,\r\n                \"router\": \"R20\",\r\n                \"router_ip\": [\r\n                    {\r\n                        \"asn\": 55010,\r\n                        \"my_router_ip\": \"133.114.28.2\"\r\n                    },\r\n                    \"Internet\"\r\n                ],\r\n                \"mngt_ip\": \"172.20.20.4\"\r\n            },\r\n            \"to\": [\r\n                \"Internet\"\r\n            ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/transit",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"transit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "04 - PEERING",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{    \r\n    \"asn\": 55002,\r\n    \"router_ip\": \"134.114.28.1\",\r\n    \"mngt_ip\": \"172.20.20.2\",\r\n    \"peer\": \r\n        {\r\n            \"asn\": 55010,\r\n            \"router_ip\": \"134.114.28.2\",\r\n            \"mngt_ip\": \"172.20.20.5\"\r\n        }      \r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/peering",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"peering"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "05 - ANNOUNCE R2",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"router\": \"R2\",\r\n    \"asn\": 55002,\r\n    \"mngt_ip\": \"172.20.20.2\",\r\n    \"network_to_announce\": \"192.168.102.0/24\",\r\n    \"to\": [\r\n        {\r\n            \"asn\": 55001,\r\n            \"his_router_ip\": \"131.114.28.1\"\r\n        },\r\n        {\r\n            \"asn\": 55010,\r\n            \"his_router_ip\": \"134.114.28.2\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/announce",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"announce"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "06 - ANNOUNCE R20",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"router\": \"R20\",\r\n    \"asn\": 54020,\r\n    \"mngt_ip\": \"172.20.20.4\",\r\n    \"network_to_announce\": \"192.168.120.0/24\",\r\n    \"to\": [\r\n        {\r\n            \"asn\": 55001,\r\n            \"his_router_ip\": \"132.114.28.2\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/announce",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"announce"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "07 - ANNOUNCE R1",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"router\": \"R1\",\r\n    \"asn\": 55001,\r\n    \"mngt_ip\": \"172.20.20.3\",\r\n    \"network_to_announce\": \"192.168.101.0/24\",\r\n    \"to\": [\r\n        {\r\n            \"asn\": 54020,\r\n            \"his_router_ip\": \"132.114.28.1\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/announce",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"announce"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "08 - ANNOUNCE R10",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"router\": \"R10\",\r\n    \"asn\": 55010,\r\n    \"mngt_ip\": \"172.20.20.5\",\r\n    \"network_to_announce\": \"192.168.1.0/24\",\r\n    \"to\": [\r\n        {\r\n            \"asn\": 54020,\r\n            \"his_router_ip\": \"133.114.28.2\"\r\n        }, \r\n        {\r\n            \"asn\": 55002,\r\n            \"his_router_ip\": \"134.114.28.1\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/announce",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"announce"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "09 - ANNOUNCE R10 .110",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"router\": \"R10\",\r\n    \"asn\": 55010,\r\n    \"mngt_ip\": \"172.20.20.5\",\r\n    \"network_to_announce\": \"192.168.110.0/24\",\r\n    \"to\": [\r\n        {\r\n            \"asn\": 54020,\r\n            \"his_router_ip\": \"133.114.28.2\"\r\n        }, \r\n        {\r\n            \"asn\": 55002,\r\n            \"his_router_ip\": \"134.114.28.1\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/announce",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"announce"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "10 - ANNOUNCE R11",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"router\": \"R11\",\r\n    \"asn\": 55010,\r\n    \"mngt_ip\": \"172.20.20.6\",\r\n    \"network_to_announce\": \"192.168.110.0/24\",\r\n    \"to\": [\r\n        {\r\n            \"asn\": 54030,\r\n            \"his_router_ip\": \"135.114.28.2\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/announce",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"announce"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "11 - LOCAL PREF R11",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"asn\": 55010,\r\n    \"router\": \"R11\",\r\n    \"mngt_ip\": \"172.20.20.6\",\r\n    \"neighbor_ip\": \"135.114.28.2\",\r\n    \"local_preference\": 300,\r\n    \"network\": \"0.0.0.0/0\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/local-preference",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"local-preference"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "12 - REDISTRIBUTE BGP [per passare di nuovo di sopra]",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"mngt_ip\": \"172.20.20.5\",\r\n    \"redistribute\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "192.168.56.101:5000/redistribute-bgp",
+					"host": [
+						"192",
+						"168",
+						"56",
+						"101"
+					],
+					"port": "5000",
+					"path": [
+						"redistribute-bgp"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
