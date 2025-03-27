@@ -133,7 +133,7 @@ export default function TransitConfiguration({
                 onClick={() => removeToAS(i)}
                 className="text-red-500 hover:text-red-700 md:border-none md:bg-transparent md:p-0 border border-red-500 rounded-md px-2 py-1 flex items-center md:hidden"
               >
-                <span className="mr-1">Delete Interface</span>
+                <span className="mr-1">Delete AS</span>
                 <X size={20} />
               </button>
               <button
