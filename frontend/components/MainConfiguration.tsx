@@ -250,7 +250,7 @@ export default function MainConfiguration() {
               <AccordionContent>
                 <AnnounceConfiguration
                   initialValues={announceConfigs}
-                  availableASOptions={getAvailableASOptions()}
+                  availableASOptions={getAvailableASOptionsWithInternet()}
                   availableRouterOptions={getAvailableRouters()}
                   onChange={handleAnnounceConfigsChange}
                 />

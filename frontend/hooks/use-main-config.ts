@@ -85,6 +85,7 @@ export function useMainConfig() {
     }
 
     try {
+      console.log(JSON.stringify(body));
       const data = await sendConfiguration(body, serverIp);
       setNetworkTopologyResponse(data);
       toast({
@@ -691,7 +692,7 @@ export function useMainConfig() {
   const buildAnnounceRequestBody = (
     router: RouterResponse,
     network: string,
-    to_list: AnnounceToConfigBody[]
+    to_list: (AnnounceToConfigBody | string)[]
   ): AnnounceConfigBody => {
     return {
       router: router.name,
@@ -704,20 +705,29 @@ export function useMainConfig() {
 
   const getTolist = (
     router: RouterResponse,
-  ): AnnounceToConfigBody[]  => {
-    if(!announceConfigs) return [];
-    
-    const filteredNeighbors = announceConfigs.to.map((val) => router.neighbors.filter((neig) => neig.asn === val)).flat()
-    
-    const to_list: AnnounceToConfigBody[] = [];
-    filteredNeighbors.forEach((val) => {
-      const obj: AnnounceToConfigBody = {asn: 0, his_router_ip: ""};
-      obj.asn = val.asn;
-      obj.his_router_ip = val.ip;
-      to_list.push(obj);
+  ): (AnnounceToConfigBody | string)[] => {
+    if (!announceConfigs) return [];
+  
+    const to_list: (AnnounceToConfigBody | string)[] = [];
+  
+    announceConfigs.to.forEach((val) => {
+      if (val === -1) {
+        to_list.push("Internet");
+      } else {
+        const filteredNeighbors = router.neighbors.filter((neig) => neig.asn === val);
+        
+        filteredNeighbors.forEach((neig) => {
+          to_list.push({
+            asn: neig.asn,
+            his_router_ip: neig.ip,
+          });
+        });
+      }
     });
+  
     return to_list;
-  }
+  };
+  
 
   const handleAnnounceConfigSend = async() =>{
     if(!networkTopologyResponse || !announceConfigs) return;
@@ -733,6 +743,17 @@ export function useMainConfig() {
     }
 
     const to_list = getTolist(router[0]);
+
+    if(to_list.includes("Internet") && !isInternetLinkPresent(router[0])){
+      toast({
+        variant: "destructive",
+        title: "Internet link not found",
+        description: "The internet link was not found",
+      });
+      return;
+
+    }
+
 
     const body : AnnounceConfigBody = buildAnnounceRequestBody(router[0], announceConfigs.network_ip, to_list);
     if (!serverIp) {

@@ -106,7 +106,7 @@ export default function LocalPreferenceConfiguration({
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a Network">
-                {config.network_ip ?? "Select"}
+                {config.network_ip === "0.0.0.0/0" ? "Internet" : config.network_ip ?? "Select"}
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
@@ -115,7 +115,7 @@ export default function LocalPreferenceConfiguration({
                 {getAvailableNetworksOptions(config, availableRouters).map(
                   (option: string) => (
                     <SelectItem key={option} value={option}>
-                      {option}
+                      {option == "0.0.0.0/0" ? "Internet" : option}
                     </SelectItem>
                   )
                 )}

@@ -101,7 +101,7 @@ export default function AnnounceConfiguration({
         {/* To */}
         <div>
           <label className="block font-semibold mb-1">To AS</label>
-            {config.to.map((value: number, i: number) => (
+            {config.to.map((value: number | string, i: number) => (
               <div key={i} className="flex space-x-4 mb-2">
                 <Select
                   value={String(value)}
@@ -109,7 +109,7 @@ export default function AnnounceConfiguration({
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select an AS">
-                      {value}
+                      {value === -1 ? "Internet" : value}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
@@ -118,7 +118,7 @@ export default function AnnounceConfiguration({
                       {getAvailableASOptions(config, availableASOptions, availableRouterOptions, i).map(
                         (option: number) => (
                           <SelectItem key={option} value={String(option)}>
-                            {option}
+                            {option === -1 ? "Internet" : option}
                           </SelectItem>
                         )
                       )}

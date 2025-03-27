@@ -93,7 +93,10 @@ export const localPreferenceConfigurationFormSchema = z.object({
 export const announceConfigurationFormSchema = z.object({
   router: z.string().nonempty("Router name is required"),
   network_ip: ipWithMaskSchema.nonempty("Network IP is required"),
-  to: z.array(z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534")),
+  to: z.array(z.union([
+    z.number().min(1, "ASN must be at least 1").max(65534, "ASN must be at most 65534"),
+    z.string(),
+  ]))
 }); 
 
 export const stopAnnounceConfigFormSchema = z.object({
