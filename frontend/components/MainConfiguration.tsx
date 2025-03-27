@@ -46,6 +46,11 @@ export default function MainConfiguration() {
     announcedNetworks,
     isConfigGenerated,
     isDeploying,
+    isTransitPolicyLoading,
+    isPeeringPolicyLoading,
+    isLocalPreferenceLoading,
+    isAnnounceLoading,
+    isStopAnnounceLoading,
     getNetworkTopologyResponse,
     handleGenerateConfiguration,
     handleDeployNetwork,
@@ -208,7 +213,7 @@ export default function MainConfiguration() {
                   onChange={handleTransitConfigsChange}
                 />
                 <Button className="w-fit" onClick={handleTransitConfigsSend}>
-                  Send Transit Configuration
+                  Send Transit Configuration {isTransitPolicyLoading ? <Spinner /> : ""}
                 </Button>
               </AccordionContent>
             </AccordionItem>
@@ -223,7 +228,7 @@ export default function MainConfiguration() {
                   onChange={handlePeeringConfigsChange}
                 />
                 <Button className="w-fit" onClick={handlePeeringConfigsSend}>
-                  Send Peering Configuration
+                  Send Peering Configuration {isPeeringPolicyLoading ? <Spinner /> : ""}
                 </Button>
               </AccordionContent>
             </AccordionItem>
@@ -239,7 +244,7 @@ export default function MainConfiguration() {
                   onChange={handleLocalPreferenceConfigsChange}
                 />
                 <Button className="w-fit" onClick={handleLocalPreferenceConfigsSend}>
-                  Send Local Preference Configuration
+                  Send Local Preference Configuration {isLocalPreferenceLoading ? <Spinner /> : ""}
                 </Button>
               </AccordionContent>
             </AccordionItem>
@@ -255,7 +260,7 @@ export default function MainConfiguration() {
                   onChange={handleAnnounceConfigsChange}
                 />
                 <Button className="w-fit" onClick={handleAnnounceConfigSend}>
-                  Send Announce Configuration
+                  Send Announce Configuration {isAnnounceLoading ? <Spinner /> : ""}
                 </Button>
               </AccordionContent>
             </AccordionItem>
@@ -271,7 +276,7 @@ export default function MainConfiguration() {
                   onChange={handleStopAnnounceConfigsChange}
                 />
                 <Button className="w-fit" onClick={handleStopAnnounceConfigSend}>
-                  Send Stop Announce Configuration
+                  Send Stop Announce Configuration {isStopAnnounceLoading ? <Spinner /> : ""}
                 </Button>
               </AccordionContent>
             </AccordionItem>

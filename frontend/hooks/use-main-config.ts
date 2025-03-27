@@ -22,6 +22,11 @@ export function useMainConfig() {
   const [serverIp, setServerIp] = useState<string | undefined>(undefined);
   const [isConfigGenerated, setIsConfigGenerated] = useState<boolean>(false);
   const [isDeploying, setIsDeploying] = useState<boolean>(false);
+  const [isTransitPolicyLoading, setIsTransitPolicyLoading] = useState<boolean>(false);
+  const [isPeeringPolicyLoading, setIsPeeringPolicyLoading] = useState<boolean>(false);
+  const [isLocalPreferenceLoading, setIsLocalPreferenceLoading] = useState<boolean>(false);
+  const [isAnnounceLoading, setIsAnnounceLoading] = useState<boolean>(false);
+  const [isStopAnnounceLoading, setIsStopAnnounceLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof mainConfigurationFormSchema>>({
@@ -463,6 +468,7 @@ export function useMainConfig() {
     }
 
     try {
+      setIsTransitPolicyLoading(true);
       await sendTransitConfiguration(body, serverIp);
       toast({
         variant: "default",
@@ -478,6 +484,8 @@ export function useMainConfig() {
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
       });
+    } finally {
+      setIsTransitPolicyLoading(false);
     }
   };
 
@@ -567,6 +575,7 @@ export function useMainConfig() {
     }
 
     try {
+      setIsPeeringPolicyLoading(true);
       await sendPeeringConfiguration(body, serverIp);
       toast({
         variant: "default",
@@ -580,6 +589,8 @@ export function useMainConfig() {
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
       })
+    } finally {
+      setIsPeeringPolicyLoading(false);
     }
   };
 
@@ -672,7 +683,7 @@ export function useMainConfig() {
     }
 
     try {
-      console.log(JSON.stringify(body));
+      setIsLocalPreferenceLoading(true);
       await sendLocalPreferenceConfiguration(body, serverIp);
       toast({
         variant: "default",
@@ -686,6 +697,8 @@ export function useMainConfig() {
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
       });
+    } finally {
+      setIsLocalPreferenceLoading(false);
     }
   };
 
@@ -766,6 +779,7 @@ export function useMainConfig() {
     }
 
     try {
+      setIsAnnounceLoading(true);
       await sendAnnounceConfiguration(body, serverIp);
       setAnnouncedNetworks((prev = {}) => ({
         ...prev,
@@ -787,6 +801,8 @@ export function useMainConfig() {
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
       });
+    } finally {
+      setIsAnnounceLoading(false);
     }
   };
 
@@ -801,6 +817,7 @@ export function useMainConfig() {
       network_to_stop_announce: network,
     };
   };
+
   const handleStopAnnounceConfigSend = async() =>{
     if(!networkTopologyResponse || !stopAnnounceConfigs) return;
 
@@ -825,6 +842,7 @@ export function useMainConfig() {
     }
 
     try {
+      setIsStopAnnounceLoading(true);
       await sendStopAnnounceConfiguration(body, serverIp);
       setAnnouncedNetworks((prev = {}) => {
         const routerName = stopAnnounceConfigs.router;
@@ -852,6 +870,8 @@ export function useMainConfig() {
         title: "Uh oh! Something went wrong.",
         description: "There was a problem with your request: " + error,
       });
+    } finally {
+      setIsStopAnnounceLoading(false);
     }
   };
 
@@ -870,6 +890,11 @@ export function useMainConfig() {
     announcedNetworks,
     isConfigGenerated,
     isDeploying,
+    isTransitPolicyLoading,
+    isPeeringPolicyLoading,
+    isLocalPreferenceLoading,
+    isAnnounceLoading,
+    isStopAnnounceLoading,
     getNetworkTopologyResponse,
     handleGenerateConfiguration,
     handleDeployNetwork,
