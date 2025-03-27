@@ -1,8 +1,0 @@
-{
-    "asn": 55010,
-    "router": "R11",
-    "mngt_ip": "172.20.20.6",
-    "neighbor_ip": "135.114.28.2",
-    "local_preference": 300,
-    "network": "0.0.0.0/0"
-}

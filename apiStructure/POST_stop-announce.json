@@ -1,6 +1,0 @@
-{
-  "router": "R2",
-  "asn": 55002,
-  "mngt_ip": "172.20.20.2",
-  "network_to_stop_announce": "192.168.103.0/24"
-}
