@@ -1311,7 +1311,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="Q2z0fh0aWAk3wqQWWmk_" name="Pagina-5">
-    <mxGraphModel dx="1235" dy="666" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2339" math="0" shadow="0">
+    <mxGraphModel dx="1500" dy="809" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2339" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1436,9 +1436,6 @@
             <mxPoint x="-5" y="-10" as="offset" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="kDkFjIsJ4ArDhfDkFVMX-14" value="Eth3" style="text;html=1;resizable=0;labelBackgroundColor=default;align=center;verticalAlign=middle;fontStyle=1;fontColor=#333333;fontSize=13.3;" parent="1" vertex="1">
-          <mxGeometry x="1093.9999998400003" y="1329.4979999999873" as="geometry" />
-        </mxCell>
         <mxCell id="kDkFjIsJ4ArDhfDkFVMX-15" value="192.168.1.0/24" style="html=1;overflow=block;blockSpacing=1;whiteSpace=wrap;shape=cylinder3;direction=south;size=10;anchorPointDirection=0;boundedLbl=1;fontSize=16.7;spacing=3.8;strokeColor=#3a414a;strokeOpacity=100;fillOpacity=100;rounded=1;absoluteArcSize=1;arcSize=9;fillColor=#ffffff;strokeWidth=1.5;lucidId=1AuSwqd-dB_D;" parent="1" vertex="1">
           <mxGeometry x="790" y="1195" width="155" height="45" as="geometry" />
         </mxCell>
@@ -1489,7 +1486,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="X09qJzi785GqLSs3ktYr-3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="633" y="1060" width="497" height="380" as="geometry" />
+          <mxGeometry x="633" y="1060" width="487" height="390" as="geometry" />
         </mxCell>
         <mxCell id="KBRVMMJTqN0QQ-3OWz-l-1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="990" y="727.5" width="640" height="222.5" as="geometry" />
