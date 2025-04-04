@@ -23,6 +23,16 @@ def configure() -> Response:
       except ValidationError as e:
         return jsonify({"error": "JSON schema format error"}), 400
       network_topology: NetworkTopology = NetworkTopology(**request.get_json())
+      # Checking env Router
+      for router in network_topology.routers:
+        if router.name == Config.INTERNET_ROUTER_NAME:
+          return jsonify({"error": "Conflict with Internet Router user-defined name"}), 400
+        if router.asn == Config.INTERNET_ASN:
+          return jsonify({"error": "Conflict with Internet Router user-defined ASN"}), 400
+      # Checking env Host
+      for host in network_topology.hosts:
+        if host.name == Config.INTERNET_HOST_NAME:
+          return jsonify({"error": "Conflict with Internet Host user-defined name"}), 400
       configure_network = ConfigureNetwork(network_topology)
       configure_network.generate_containerlab_config()
       configure_network.generate_arista_configs()
